@@ -20,9 +20,18 @@ export default function RoutineListScreen() {
     <Link href={`/routine/${item.id}`} asChild>
       <TouchableOpacity style={styles.itemContainer}>
         <Text style={styles.itemTitle}>{item.title}</Text>
-        <Link href={`/create?routineId=${item.id}`} asChild>
-          <Ionicons name="create-outline" size={24} color="#8b949e" />
-        </Link>
+        <View style={styles.iconContainer}>
+          <Link href={`/create?routineId=${item.id}`} asChild>
+            <TouchableOpacity style={styles.iconButton}>
+              <Ionicons name="ellipsis-horizontal" size={24} color="#8b949e" />
+            </TouchableOpacity>
+          </Link>
+          <Link href={`/create?routineId=${item.id}`} asChild>
+            <TouchableOpacity style={styles.iconButton}>
+              <Ionicons name="create-outline" size={24} color="#8b949e" />
+            </TouchableOpacity>
+          </Link>
+        </View>
       </TouchableOpacity>
     </Link>
   );
@@ -84,5 +93,12 @@ const styles = StyleSheet.create({
     fontFamily: 'NunitoSans_700Bold',
     fontSize: 18,
     color: '#c9d1d9',
+    flex: 1, // Para que el título ocupe el espacio y empuje los iconos
+  },
+  iconContainer: {
+    flexDirection: 'row',
+  },
+  iconButton: {
+    marginLeft: 15, // Espacio entre iconos
   },
 });

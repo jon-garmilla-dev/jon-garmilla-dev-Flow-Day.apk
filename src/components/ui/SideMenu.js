@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
-import { Modal, View, StyleSheet, Animated, Dimensions, TouchableOpacity } from 'react-native';
+import { Modal, View, StyleSheet, Animated, Dimensions, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
 import CustomDrawerContent from '../navigation/CustomDrawerContent';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -23,51 +23,59 @@ const SideMenu = forwardRef(({ isOpen, isPreviewing, onClose }, ref) => {
   useEffect(() => {
     if (isDragging.current) return;
 
+    const animationConfig = {
+      tension: 80,
+      friction: 12,
+      useNativeDriver: true,
+    };
+
     if (isOpen && !isPreviewing) {
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        tension: 60,
-        friction: 10,
-        useNativeDriver: true,
-      }).start();
+      Animated.spring(slideAnim, { toValue: 0, ...animationConfig }).start();
     } else if (!isOpen && !isPreviewing) {
-      Animated.spring(slideAnim, {
-        toValue: -menuWidth,
-        tension: 100,
-        friction: 15,
-        useNativeDriver: true,
-      }).start();
+      Animated.spring(slideAnim, { toValue: -menuWidth, ...animationConfig }).start();
     }
   }, [isOpen, isPreviewing, slideAnim]);
 
   return (
     <Modal
-      visible={isOpen || isPreviewing}
       transparent={true}
+      visible={isOpen || isPreviewing}
       onRequestClose={onClose}
-      animationType="fade"
     >
-      <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose}>
+      <View style={styles.container}>
+        {/* Overlay clickable que cierra el menú */}
+        <TouchableOpacity
+          style={styles.overlay}
+          activeOpacity={1}
+          onPress={onClose}
+        />
+
+        {/* Contenedor del menú animado */}
         <Animated.View style={[styles.menuContainer, { transform: [{ translateX: slideAnim }] }]}>
-          <CustomDrawerContent navigation={{ closeDrawer: onClose }} />
+          {/* Wrapper para que los toques dentro del menú no lo cierren */}
+          <TouchableWithoutFeedback>
+            <View style={{ flex: 1 }}>
+              <CustomDrawerContent navigation={{ closeDrawer: onClose }} />
+            </View>
+          </TouchableWithoutFeedback>
         </Animated.View>
-      </TouchableOpacity>
+      </View>
     </Modal>
   );
 });
 
 const styles = StyleSheet.create({
-  overlay: {
+  container: {
     flex: 1,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   menuContainer: {
     width: menuWidth,
     height: '100%',
     backgroundColor: '#0d1117',
-    position: 'absolute',
-    left: 0,
-    top: 0,
   },
 });
 

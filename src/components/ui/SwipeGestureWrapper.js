@@ -19,7 +19,8 @@ const SwipeGestureWrapper = ({ children, onSwipeLeft, onPanMove, onPanStart, onP
       
       // Activar si el menú ya está abierto (para cerrarlo)
       if (isSideMenuOpen) {
-        return true;
+        // Solo capturar si es un deslizamiento real, no un simple toque.
+        return Math.abs(gestureState.dx) > 5;
       }
 
       // Activar si el gesto empieza en el borde izquierdo (para abrir menú)
