@@ -73,6 +73,7 @@ const useRoutineStore = create((set, get) => ({
     });
     set({ routines: updatedRoutines });
     get().saveRoutines(updatedRoutines);
+    return newBlock.id;
   },
 
   updateBlock: (routineId, blockId, name) => {

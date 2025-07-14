@@ -21,8 +21,12 @@ const formatDuration = (totalMinutes) => {
 const calculateBlockDuration = (block) => {
   if (!block || !block.actions) return 0;
   return block.actions.reduce((blockSum, action) => {
-    if (action.type === 'focus') return blockSum + (parseInt(action.duration, 10) || 0);
-    if (action.type === 'pomodoro') return blockSum + (parseInt(action.workDuration, 10) || 0) + (parseInt(action.breakDuration, 10) || 0);
+    if (action.type === 'text' || action.type === 'focus') {
+      return blockSum + (parseInt(action.duration, 10) || 0);
+    }
+    if (action.type === 'pomodoro') {
+      return blockSum + (parseInt(action.workDuration, 10) || 0) + (parseInt(action.breakDuration, 10) || 0);
+    }
     return blockSum;
   }, 0);
 };
@@ -67,9 +71,20 @@ export default function CreateEditRoutineScreen() {
   const addActionToBlock = (type) => {
     if (targetBlockIndex === null) return;
     const newBlocks = [...blocks];
-    const newAction = type === 'focus'
-      ? { id: uuidv4(), type: 'focus', duration: '5' }
-      : { id: uuidv4(), type: 'pomodoro', workDuration: '25', breakDuration: '5' };
+    let newAction;
+    switch (type) {
+      case 'text':
+        newAction = { id: uuidv4(), type: 'text', text: '', duration: '30' };
+        break;
+      case 'focus':
+        newAction = { id: uuidv4(), type: 'focus', text: 'Warm up', duration: '5' };
+        break;
+      case 'pomodoro':
+        newAction = { id: uuidv4(), type: 'pomodoro', workDuration: '25', breakDuration: '5' };
+        break;
+      default:
+        return;
+    }
     if (!newBlocks[targetBlockIndex].actions) {
       newBlocks[targetBlockIndex].actions = [];
     }
@@ -81,43 +96,75 @@ export default function CreateEditRoutineScreen() {
     setBlocks([...blocks, { id: uuidv4(), name: '', actions: [] }]);
   };
 
-  const handleSave = () => { /* ... */ router.back(); };
+  const handleSave = () => {
+    if (title.trim() === '') {
+      alert('Please enter a routine title.');
+      return;
+    }
+
+    if (isEditing) {
+      // La actualización completa (syncing) es compleja.
+      // Por ahora, solo actualizamos el título como antes.
+      // Una solución completa requeriría borrar y re-crear bloques/acciones
+      // o una lógica de comparación más detallada en el store.
+      updateRoutine(routineId, title);
+    } else {
+      // Lógica de creación completa
+      const newRoutineId = addRoutine(title);
+      blocks.forEach(block => {
+        if (block.name.trim() !== '') {
+          const newBlockId = addBlock(newRoutineId, block.name);
+          (block.actions || []).forEach(action => {
+            // Quitamos el id temporal del frontend antes de guardar
+            const { id, ...actionData } = action;
+            if (action.type === 'text' && action.text.trim() === '') return;
+            
+            addAction(newRoutineId, newBlockId, actionData);
+          });
+        }
+      });
+    }
+    router.back();
+  };
 
   const renderActionItem = (action, blockIndex, actionIndex) => {
-    const actionInput = (actionType) => {
-      if (actionType === 'focus') {
+    switch (action.type) {
+      case 'text':
         return (
-          <>
+          <View style={styles.actionRow}>
+            <Ionicons name="document-text-outline" size={20} color="#8b949e" style={styles.actionIcon} />
+            <TextInput style={[styles.actionInput, {flex: 1}]} value={action.text} onChangeText={(val) => handleUpdateValue(blockIndex, actionIndex, 'text', val)} placeholder="Task description..." placeholderTextColor="#8b949e" />
+            <TextInput style={[styles.actionInput, {minWidth: 50, flex: 0, marginLeft: 10}]} value={action.duration} onChangeText={(val) => handleUpdateValue(blockIndex, actionIndex, 'duration', val)} keyboardType="numeric" />
+            <Text style={styles.actionUnit}>min</Text>
+          </View>
+        );
+      case 'focus':
+        return (
+          <View style={styles.actionRow}>
             <Ionicons name="time-outline" size={20} color="#8b949e" style={styles.actionIcon} />
-            <TextInput style={styles.actionInput} value={action.duration} onChangeText={(val) => handleUpdateValue(blockIndex, actionIndex, 'duration', val)} placeholder="5" keyboardType="numeric" placeholderTextColor="#8b949e" />
+            <TextInput style={[styles.actionInput, {flex: 1}]} value={action.text} onChangeText={(val) => handleUpdateValue(blockIndex, actionIndex, 'text', val)} placeholder="Focus task..." placeholderTextColor="#8b949e" />
+            <TextInput style={[styles.actionInput, {minWidth: 50, flex: 0, marginLeft: 10}]} value={action.duration} onChangeText={(val) => handleUpdateValue(blockIndex, actionIndex, 'duration', val)} keyboardType="numeric" />
             <Text style={styles.actionUnit}>min</Text>
-          </>
+          </View>
         );
-      }
-      if (actionType === 'pomodoro') {
+      case 'pomodoro':
         return (
-          <>
+          <View style={styles.actionRow}>
             <Ionicons name="hourglass-outline" size={20} color="#8b949e" style={styles.actionIcon} />
-            <TextInput style={styles.actionInput} value={action.workDuration} onChangeText={(val) => handleUpdateValue(blockIndex, actionIndex, 'workDuration', val)} placeholder="25" keyboardType="numeric" placeholderTextColor="#8b949e" />
+            <Text style={styles.pomodoroLabel}>Pomodoro:</Text>
+            <TextInput style={styles.actionInput} value={action.workDuration} onChangeText={(val) => handleUpdateValue(blockIndex, actionIndex, 'workDuration', val)} keyboardType="numeric" />
             <Text style={styles.actionUnit}>min /</Text>
-            <TextInput style={styles.actionInput} value={action.breakDuration} onChangeText={(val) => handleUpdateValue(blockIndex, actionIndex, 'breakDuration', val)} placeholder="5" keyboardType="numeric" placeholderTextColor="#8b949e" />
+            <TextInput style={styles.actionInput} value={action.breakDuration} onChangeText={(val) => handleUpdateValue(blockIndex, actionIndex, 'breakDuration', val)} keyboardType="numeric" />
             <Text style={styles.actionUnit}>min</Text>
-          </>
+          </View>
         );
-      }
-      return null;
-    };
-
-    return (
-      <View style={styles.actionRow}>
-        <View style={{flex: 1, flexDirection: 'row', alignItems: 'center', marginLeft: 5}}>
-          {actionInput(action.type)}
-        </View>
-      </View>
-    );
+      default:
+        return null;
+    }
   };
 
   const actionOptions = [
+    { label: 'Text', value: 'text', icon: 'document-text-outline', details: '30 min' },
     { label: 'Focus', value: 'focus', icon: 'time-outline', details: '5 min' },
     { label: 'Pomodoro', value: 'pomodoro', icon: 'hourglass-outline', details: '25/5 min' },
   ];
@@ -162,28 +209,14 @@ const styles = StyleSheet.create({
   scrollContainer: { padding: 20 },
   titleInput: { fontFamily: 'NunitoSans_700Bold', fontSize: 28, color: '#c9d1d9', borderBottomWidth: 1, borderColor: '#30363d', paddingBottom: 10, marginBottom: 30 },
   blockContainer: { backgroundColor: '#161b22', borderRadius: 5, padding: 15, marginBottom: 20 },
-  blockHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  blockTitleInput: { 
-    fontFamily: 'NunitoSans_700Bold', 
-    fontSize: 20, 
-    color: '#c9d1d9',
-    flex: 1,
-  },
-  blockDurationText: {
-    fontFamily: 'NunitoSans_400Regular',
-    color: '#8b949e',
-    fontSize: 16,
-    marginLeft: 10,
-  },
-  actionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  blockHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
+  blockTitleInput: { fontFamily: 'NunitoSans_700Bold', fontSize: 20, color: '#c9d1d9', flex: 1 },
+  blockDurationText: { fontFamily: 'NunitoSans_400Regular', color: '#8b949e', fontSize: 16, marginLeft: 10 },
+  actionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, marginLeft: 10 },
   actionIcon: { marginRight: 10 },
-  actionInput: { fontFamily: 'NunitoSans_400Regular', borderWidth: 1, borderColor: '#30363d', backgroundColor: '#0d1117', paddingHorizontal: 10, paddingVertical: 5, fontSize: 16, borderRadius: 5, color: '#c9d1d9', minWidth: 40, textAlign: 'center' },
+  actionInput: { fontFamily: 'NunitoSans_400Regular', borderWidth: 1, borderColor: '#30363d', backgroundColor: '#0d1117', paddingHorizontal: 10, paddingVertical: 5, fontSize: 16, borderRadius: 5, color: '#c9d1d9', textAlign: 'left' },
   actionUnit: { color: '#8b949e', marginLeft: 5 },
+  pomodoroLabel: { color: '#c9d1d9', marginRight: 10, fontSize: 16 },
   addButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, marginTop: 5 },
   addButtonText: { color: '#58a6ff', marginLeft: 5, fontSize: 16 },
   headerRightText: { fontFamily: 'NunitoSans_400Regular', color: '#8b949e', fontSize: 16 },

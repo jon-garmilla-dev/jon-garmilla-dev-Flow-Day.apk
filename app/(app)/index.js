@@ -20,8 +20,8 @@ const formatDuration = (totalMinutes) => {
 const calculateRoutineDuration = (routine) => {
   if (!routine || !routine.blocks) return 0;
   return routine.blocks.reduce((total, block) => {
-    const blockTotal = block.actions.reduce((blockSum, action) => {
-      if (action.type === 'focus') {
+    const blockTotal = (block.actions || []).reduce((blockSum, action) => {
+      if (action.type === 'text' || action.type === 'focus') {
         return blockSum + (parseInt(action.duration, 10) || 0);
       }
       if (action.type === 'pomodoro') {
