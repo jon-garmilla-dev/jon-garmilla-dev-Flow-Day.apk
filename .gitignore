@@ -1,6 +1,37 @@
-# Dependencies
+# Node
 /node_modules
+npm-debug.log
+yarn-error.log
 
 # Expo
 .expo/
 dist/
+.idea/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig
+
+# Android
+/android/app/build/
+/android/.gradle/
+/android/app/src/main/assets/
+/android/app/src/main/res/drawable-hdpi/
+/android/app/src/main/res/drawable-mdpi/
+/android/app/src/main/res/drawable-xhdpi/
+/android/app/src/main/res/drawable-xxhdpi/
+/android/app/src/main/res/drawable-xxxhdpi/
+/android/app/src/main/res/raw/
+/android/build/
+/android/gradle.properties
+/android/local.properties
+/android/settings.gradle
+
+# iOS
+/ios/build/
+/ios/Pods/
+/ios/*.xcworkspace
+/ios/*.xcodeproj/project.xcworkspace/
+/ios/*.xcodeproj/xcuserdata/
