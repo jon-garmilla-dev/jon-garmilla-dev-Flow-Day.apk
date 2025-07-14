@@ -26,7 +26,7 @@ const CustomDrawerContent = (props) => {
       </ScrollView>
       <View style={styles.footer}>
         <TouchableOpacity style={styles.addItem} onPress={() => handleNavigation('/create')}>
-          <Text style={styles.addItemText}>+ Añadir Workflow</Text>
+          <Text style={styles.addItemText}>+ Add Workflow</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

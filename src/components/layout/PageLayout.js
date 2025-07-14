@@ -2,6 +2,7 @@ import React, { useState, createContext, useContext, useRef } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { useRouter } from 'expo-router';
 import SwipeGestureWrapper from '../ui/SwipeGestureWrapper';
 import SideMenu from '../ui/SideMenu';
 
@@ -12,6 +13,7 @@ const PageLayoutContext = createContext();
 export const usePageLayout = () => useContext(PageLayoutContext);
 
 const PageLayout = ({ children }) => {
+  const router = useRouter();
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const sideMenuRef = useRef(null);
@@ -74,6 +76,11 @@ const PageLayout = ({ children }) => {
         onPanMove={handlePanMove}
         onPanEnd={handlePanEnd}
         isSideMenuOpen={isSideMenuOpen}
+        onSwipeLeft={() => {
+          if (router.canGoBack()) {
+            router.back();
+          }
+        }}
       >
         <View style={styles.container}>
           <SafeAreaView style={{ flex: 1, backgroundColor: '#0d1117' }} edges={['top', 'left', 'right']}>
