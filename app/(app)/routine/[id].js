@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import useRoutineStore from '../../src/store/useRoutineStore';
-import useProgressStore from '../../src/store/useProgressStore';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { FlatList } from 'react-native-gesture-handler';
+import useRoutineStore from '../../../src/store/useRoutineStore';
+import useProgressStore from '../../../src/store/useProgressStore';
 import { useLocalSearchParams, Stack, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Header from '../../src/components/Header';
+import Header from '../../../src/components/Header';
 
 const ActionBubbles = ({ actions, actionStatuses }) => (
   <View style={styles.actionBubblesContainer}>

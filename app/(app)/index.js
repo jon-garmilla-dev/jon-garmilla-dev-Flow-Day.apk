@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
-import useRoutineStore from '../src/store/useRoutineStore';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { FlatList } from 'react-native-gesture-handler';
+import useRoutineStore from '../../src/store/useRoutineStore';
 import { Link, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 

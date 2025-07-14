@@ -1,4 +1,9 @@
 {
+  "expo": {
+    "name": "flow-day-mobile",
+    "slug": "flow-day-mobile",
+    "scheme": "flow-day-mobile"
+  },
   "plugins": [
     "expo-font"
   ]

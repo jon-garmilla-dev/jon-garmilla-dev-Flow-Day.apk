@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, ScrollView, FlatList, TouchableOpacity } from 'react-native';
-import useRoutineStore from '../src/store/useRoutineStore';
+import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity } from 'react-native';
+import { ScrollView, FlatList } from 'react-native-gesture-handler';
+import useRoutineStore from '../../src/store/useRoutineStore';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
