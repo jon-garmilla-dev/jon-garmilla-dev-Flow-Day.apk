@@ -7,6 +7,32 @@ import { Ionicons } from '@expo/vector-icons';
 import Header from '../../src/components/Header';
 import { usePageLayout } from '../../src/components/layout/PageLayout';
 
+const formatDuration = (totalMinutes) => {
+  if (totalMinutes === 0) return '0m';
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  let duration = '';
+  if (hours > 0) duration += `${hours}h `;
+  if (minutes > 0) duration += `${minutes}m`;
+  return duration.trim();
+};
+
+const calculateRoutineDuration = (routine) => {
+  if (!routine || !routine.blocks) return 0;
+  return routine.blocks.reduce((total, block) => {
+    const blockTotal = block.actions.reduce((blockSum, action) => {
+      if (action.type === 'focus') {
+        return blockSum + (parseInt(action.duration, 10) || 0);
+      }
+      if (action.type === 'pomodoro') {
+        return blockSum + (parseInt(action.workDuration, 10) || 0) + (parseInt(action.breakDuration, 10) || 0);
+      }
+      return blockSum;
+    }, 0);
+    return total + blockTotal;
+  }, 0);
+};
+
 export default function RoutineListScreen() {
   const routines = useRoutineStore(state => state.routines);
   const loadRoutines = useRoutineStore(state => state.loadRoutines);
@@ -16,25 +42,31 @@ export default function RoutineListScreen() {
     loadRoutines();
   }, [loadRoutines]);
 
-  const renderItem = ({ item }) => (
-    <Link href={`/routine/${item.id}`} asChild>
-      <TouchableOpacity style={styles.itemContainer}>
-        <Text style={styles.itemTitle}>{item.title}</Text>
-        <View style={styles.iconContainer}>
-          <Link href={`/create?routineId=${item.id}`} asChild>
-            <TouchableOpacity style={styles.iconButton}>
-              <Ionicons name="ellipsis-horizontal" size={24} color="#8b949e" />
-            </TouchableOpacity>
-          </Link>
-          <Link href={`/create?routineId=${item.id}`} asChild>
-            <TouchableOpacity style={styles.iconButton}>
-              <Ionicons name="create-outline" size={24} color="#8b949e" />
-            </TouchableOpacity>
-          </Link>
-        </View>
-      </TouchableOpacity>
-    </Link>
-  );
+  const renderItem = ({ item }) => {
+    const totalDuration = calculateRoutineDuration(item);
+    return (
+      <Link href={`/routine/${item.id}`} asChild>
+        <TouchableOpacity style={styles.itemContainer}>
+          <Text style={styles.itemTitle}>{item.title}</Text>
+          <View style={styles.rightContainer}>
+            <Text style={styles.durationText}>{formatDuration(totalDuration)}</Text>
+            <View style={styles.iconContainer}>
+              <Link href={`/create?routineId=${item.id}`} asChild>
+                <TouchableOpacity style={styles.iconButton}>
+                  <Ionicons name="ellipsis-horizontal" size={24} color="#8b949e" />
+                </TouchableOpacity>
+              </Link>
+              <Link href={`/create?routineId=${item.id}`} asChild>
+                <TouchableOpacity style={styles.iconButton}>
+                  <Ionicons name="create-outline" size={24} color="#8b949e" />
+                </TouchableOpacity>
+              </Link>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Link>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -93,12 +125,22 @@ const styles = StyleSheet.create({
     fontFamily: 'NunitoSans_700Bold',
     fontSize: 18,
     color: '#c9d1d9',
-    flex: 1, // Para que el título ocupe el espacio y empuje los iconos
+    flex: 1,
+  },
+  rightContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  durationText: {
+    fontFamily: 'NunitoSans_400Regular',
+    color: '#8b949e',
+    fontSize: 16,
+    marginRight: 15,
   },
   iconContainer: {
     flexDirection: 'row',
   },
   iconButton: {
-    marginLeft: 15, // Espacio entre iconos
+    marginLeft: 15,
   },
 });
