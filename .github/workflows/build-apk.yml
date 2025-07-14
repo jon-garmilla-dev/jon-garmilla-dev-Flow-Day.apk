@@ -1,0 +1,97 @@
+name: Build and Release Android APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build_and_release:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Configure Git
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Lint code
+      run: npm run lint
+
+    - name: Create Version and Tag
+      id: tag_version
+      run: |
+        npm run release -- --skip.commit --skip.tag
+        new_version=$(node -p "require('./package.json').version")
+        git add package.json CHANGELOG.md
+        git commit -m "chore(release): $new_version"
+        new_tag="v$new_version"
+        git tag $new_tag
+        echo "new_tag=$new_tag" >> $GITHUB_OUTPUT
+
+    - name: Setup Java JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Cache Gradle
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+
+    - name: Install Expo CLI
+      run: npm install -g @expo/cli
+
+    - name: Expo prebuild
+      run: npx expo prebuild --platform android
+
+    - name: Decode Keystore
+      id: decode_keystore
+      uses: timheuer/base64-to-file@v1.2
+      with:
+        fileName: 'keystore.jks'
+        encodedString: ${{ secrets.KEYSTORE_BASE64 }}
+
+    - name: Make gradlew executable
+      run: chmod +x android/gradlew
+
+    - name: Build APK
+      run: |
+        cd android
+        ./gradlew assembleRelease -Pandroid.injected.signing.store.file=${{ steps.decode_keystore.outputs.filePath }} -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ steps.tag_version.outputs.new_tag }}
+        files: android/app/build/outputs/apk/release/app-release.apk
+        body_path: CHANGELOG.md
+        name: Release ${{ steps.tag_version.outputs.new_tag }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Push changes
+      run: git push --follow-tags origin main
