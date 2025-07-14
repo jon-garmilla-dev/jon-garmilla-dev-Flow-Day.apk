@@ -2,12 +2,15 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 import useRoutineStore from '../../src/store/useRoutineStore';
-import { Link, Stack } from 'expo-router';
+import { Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import Header from '../../src/components/Header';
+import { usePageLayout } from '../../src/components/layout/PageLayout';
 
 export default function RoutineListScreen() {
   const routines = useRoutineStore(state => state.routines);
   const loadRoutines = useRoutineStore(state => state.loadRoutines);
+  const { openMenu } = usePageLayout();
 
   useEffect(() => {
     loadRoutines();
@@ -26,7 +29,14 @@ export default function RoutineListScreen() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ headerStyle: { backgroundColor: '#0d1117' }, headerTintColor: '#c9d1d9' }} />
+      <Header 
+        title="Flow Day"
+        leftElement={
+          <TouchableOpacity onPress={openMenu}>
+            <Ionicons name="menu" size={28} color="#c9d1d9" />
+          </TouchableOpacity>
+        }
+      />
       {routines.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Link href="/create" asChild>

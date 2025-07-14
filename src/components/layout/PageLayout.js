@@ -1,5 +1,7 @@
 import React, { useState, createContext, useContext, useRef } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import SwipeGestureWrapper from '../ui/SwipeGestureWrapper';
 import SideMenu from '../ui/SideMenu';
 
@@ -74,7 +76,10 @@ const PageLayout = ({ children }) => {
         isSideMenuOpen={isSideMenuOpen}
       >
         <View style={styles.container}>
-          {children}
+          <SafeAreaView style={{ flex: 1, backgroundColor: '#0d1117' }} edges={['top', 'left', 'right']}>
+            <StatusBar style="light" />
+            {children}
+          </SafeAreaView>
           <SideMenu 
             ref={sideMenuRef} 
             isOpen={isSideMenuOpen} 

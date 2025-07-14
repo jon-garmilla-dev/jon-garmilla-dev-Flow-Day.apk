@@ -44,9 +44,9 @@ const styles = StyleSheet.create({
     borderBottomColor: '#30363d',
   },
   headerText: {
+    fontFamily: 'NunitoSans_700Bold',
+    fontSize: 22,
     color: '#f0f6fc',
-    fontSize: 20,
-    fontWeight: 'bold',
   },
   content: {
     flex: 1,

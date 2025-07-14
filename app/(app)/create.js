@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity } from 'react-native';
 import { ScrollView, FlatList } from 'react-native-gesture-handler';
 import useRoutineStore from '../../src/store/useRoutineStore';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import Header from '../../src/components/Header';
 
 export default function CreateEditRoutineScreen() {
   const { routineId } = useLocalSearchParams();
@@ -57,69 +58,78 @@ export default function CreateEditRoutineScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Stack.Screen options={{ headerStyle: { backgroundColor: '#0d1117' }, headerTintColor: '#c9d1d9' }} />
-      <Text style={styles.label}>Routine Title</Text>
-      <TextInput
-        style={styles.input}
-        value={title}
-        onChangeText={setTitle}
-        placeholder="e.g., Morning Routine"
-        placeholderTextColor="#8b949e"
+    <View style={{flex: 1, backgroundColor: '#0d1117'}}>
+      <Header 
+        title={isEditing ? "Edit Routine" : "Create Routine"}
+        leftElement={
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={28} color="#c9d1d9" />
+          </TouchableOpacity>
+        }
       />
+      <ScrollView style={styles.container}>
+        <Text style={styles.label}>Routine Title</Text>
+        <TextInput
+          style={styles.input}
+          value={title}
+          onChangeText={setTitle}
+          placeholder="e.g., Morning Routine"
+          placeholderTextColor="#8b949e"
+        />
 
-      <Button title={isEditing ? "Save Changes" : "Create Routine"} onPress={handleSave} color="#238636" />
+        <Button title={isEditing ? "Save Changes" : "Create Routine"} onPress={handleSave} color="#238636" />
 
-      {isEditing && (
-        <View style={styles.section}>
-          <Text style={styles.label}>Blocks</Text>
-          <FlatList
-            data={currentRoutine?.blocks || []}
-            renderItem={({ item: block }) => (
-              <View style={styles.blockItem}>
-                <Text style={styles.blockTitle}>{block.name}</Text>
-                {block.actions.map(action => (
-                  <Text key={action.id} style={styles.actionItem}>- {action.name}</Text>
-                ))}
-                {addingActionToBlock === block.id ? (
-                  <View>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="New action name"
-                      value={newActionName}
-                      onChangeText={setNewActionName}
-                      placeholderTextColor="#8b949e"
-                    />
-                    <Button title="Save Action" onPress={() => handleAddAction(block.id)} color="#238636" />
-                  </View>
-                ) : (
-                  <Button title="Add Action" onPress={() => setAddingActionToBlock(block.id)} color="#007bff" />
-                )}
-              </View>
-            )}
-            keyExtractor={item => item.id}
-            ListEmptyComponent={<Text style={{color: '#c9d1d9'}}>No blocks yet. Add one below.</Text>}
-          />
-          <TextInput
-            style={styles.input}
-            value={newBlockName}
-            onChangeText={setNewBlockName}
-            placeholder="New block name"
-            placeholderTextColor="#8b949e"
-          />
-          <Button
-            title="Add Block"
-            onPress={() => {
-              if (newBlockName.trim() !== '') {
-                addBlock(routineId, newBlockName);
-                setNewBlockName('');
-              }
-            }}
-            color="#007bff"
-          />
-        </View>
-      )}
-    </ScrollView>
+        {isEditing && (
+          <View style={styles.section}>
+            <Text style={styles.label}>Blocks</Text>
+            <FlatList
+              data={currentRoutine?.blocks || []}
+              renderItem={({ item: block }) => (
+                <View style={styles.blockItem}>
+                  <Text style={styles.blockTitle}>{block.name}</Text>
+                  {block.actions.map(action => (
+                    <Text key={action.id} style={styles.actionItem}>- {action.name}</Text>
+                  ))}
+                  {addingActionToBlock === block.id ? (
+                    <View>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="New action name"
+                        value={newActionName}
+                        onChangeText={setNewActionName}
+                        placeholderTextColor="#8b949e"
+                      />
+                      <Button title="Save Action" onPress={() => handleAddAction(block.id)} color="#238636" />
+                    </View>
+                  ) : (
+                    <Button title="Add Action" onPress={() => setAddingActionToBlock(block.id)} color="#007bff" />
+                  )}
+                </View>
+              )}
+              keyExtractor={item => item.id}
+              ListEmptyComponent={<Text style={{color: '#c9d1d9'}}>No blocks yet. Add one below.</Text>}
+            />
+            <TextInput
+              style={styles.input}
+              value={newBlockName}
+              onChangeText={setNewBlockName}
+              placeholder="New block name"
+              placeholderTextColor="#8b949e"
+            />
+            <Button
+              title="Add Block"
+              onPress={() => {
+                if (newBlockName.trim() !== '') {
+                  addBlock(routineId, newBlockName);
+                  setNewBlockName('');
+                }
+              }}
+              color="#007bff"
+            />
+          </View>
+        )}
+      </ScrollView>
+    </View>
   );
 }
 

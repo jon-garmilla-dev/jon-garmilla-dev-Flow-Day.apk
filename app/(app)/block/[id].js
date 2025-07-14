@@ -69,9 +69,13 @@ export default function BlockScreen() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ headerShown: false }} />
       <Header 
         title={`${routineTitle} / ${block?.name || 'Block'}`}
+        leftElement={
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={28} color="#c9d1d9" />
+          </TouchableOpacity>
+        }
         rightElement={<Text style={styles.headerRightText}>Actions</Text>}
       />
       <FlatList
@@ -104,7 +108,7 @@ const styles = StyleSheet.create({
   headerRightText: {
     fontFamily: 'NunitoSans_400Regular',
     color: '#8b949e',
-    fontSize: 16,
+    fontSize: 14,
   },
   actionRow: {
     flexDirection: 'row',

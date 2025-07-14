@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 import useRoutineStore from '../../../src/store/useRoutineStore';
 import useProgressStore from '../../../src/store/useProgressStore';
-import { useLocalSearchParams, Stack, Link } from 'expo-router';
+import { useLocalSearchParams, Link, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../../../src/components/Header';
 
@@ -49,6 +49,7 @@ const BlockRow = ({ routine, block, status, actionStatuses }) => {
 
 export default function RoutineScreen() {
   const { id } = useLocalSearchParams();
+  const router = useRouter();
   const { routines, loadRoutines } = useRoutineStore();
   const { progress, actions, loadProgress } = useProgressStore();
 
@@ -66,9 +67,13 @@ export default function RoutineScreen() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ headerShown: false }} />
       <Header 
         title={routine?.title || 'Routine'} 
+        leftElement={
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={28} color="#c9d1d9" />
+          </TouchableOpacity>
+        }
         rightElement={<Text style={styles.headerRightText}>Blocks</Text>}
       />
       <FlatList
@@ -95,7 +100,7 @@ const styles = StyleSheet.create({
   headerRightText: {
     fontFamily: 'NunitoSans_400Regular',
     color: '#8b949e',
-    fontSize: 16,
+    fontSize: 14,
   },
   blockRow: {
     flexDirection: 'row',

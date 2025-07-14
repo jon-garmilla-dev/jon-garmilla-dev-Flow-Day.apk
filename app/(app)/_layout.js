@@ -11,27 +11,10 @@ function StackNavigator() {
   return (
     <Stack
       screenOptions={{
-        headerLeft: () => (
-          <TouchableOpacity onPress={openMenu} style={{ marginLeft: 15 }}>
-            <Ionicons name="menu" size={28} color="#c9d1d9" />
-          </TouchableOpacity>
-        ),
-        headerStyle: {
-          backgroundColor: '#161b22',
-          borderBottomWidth: 1,
-          borderBottomColor: '#30363d',
-        },
-        headerTintColor: '#c9d1d9',
-        headerTitleStyle: {
-          fontFamily: 'NunitoSans_700Bold',
-          fontSize: 22,
-          color: '#f0f6fc',
-        },
-        headerShadowVisible: false,
-        headerBackTitleVisible: false,
+        headerShown: false, // Desactivamos la cabecera por defecto
       }}
     >
-      <Stack.Screen name="index" options={{ title: 'Flow Day' }} />
+      <Stack.Screen name="index" />
       <Stack.Screen name="routine/[id]" />
       <Stack.Screen name="create" options={{ title: 'Create/Edit Routine' }} />
       <Stack.Screen name="block/[id]" />
