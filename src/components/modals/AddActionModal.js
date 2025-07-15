@@ -1,13 +1,21 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Modal } from 'react-native';
-import { theme } from '../../constants/theme';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  Modal,
+} from "react-native";
+
+import { theme } from "../../constants/theme";
 
 const AddActionModal = ({ visible, onClose, onSave }) => {
-  const [name, setName] = useState('');
-  const [icon, setIcon] = useState('barbell-outline');
-  const [type, setType] = useState('task'); // 'task' or 'timer'
-  const [duration, setDuration] = useState(''); // in seconds
+  const [name, setName] = useState("");
+  const [icon, setIcon] = useState("barbell-outline");
+  const [type, setType] = useState("task"); // 'task' or 'timer'
+  const [duration, setDuration] = useState(""); // in seconds
 
   const handleSave = () => {
     if (!name) return;
@@ -15,27 +23,27 @@ const AddActionModal = ({ visible, onClose, onSave }) => {
       name,
       icon,
       type,
-      duration: type === 'timer' ? parseInt(duration, 10) || 0 : null,
+      duration: type === "timer" ? parseInt(duration, 10) || 0 : null,
     });
     // Reset state
-    setName('');
-    setIcon('barbell-outline');
-    setType('task');
-    setDuration('');
+    setName("");
+    setIcon("barbell-outline");
+    setType("task");
+    setDuration("");
     onClose();
   };
 
   return (
     <Modal
       animationType="slide"
-      transparent={true}
+      transparent
       visible={visible}
       onRequestClose={onClose}
     >
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
           <Text style={styles.modalTitle}>Add New Action</Text>
-          
+
           <TextInput
             style={styles.input}
             placeholder="Action Name (e.g., '20 push-ups')"
@@ -43,7 +51,7 @@ const AddActionModal = ({ visible, onClose, onSave }) => {
             value={name}
             onChangeText={setName}
           />
-          
+
           <TextInput
             style={styles.input}
             placeholder="Icon Name (e.g., 'barbell-outline')"
@@ -53,21 +61,27 @@ const AddActionModal = ({ visible, onClose, onSave }) => {
           />
 
           <View style={styles.typeSelector}>
-            <TouchableOpacity 
-              style={[styles.typeButton, type === 'task' && styles.typeButtonSelected]} 
-              onPress={() => setType('task')}
+            <TouchableOpacity
+              style={[
+                styles.typeButton,
+                type === "task" && styles.typeButtonSelected,
+              ]}
+              onPress={() => setType("task")}
             >
               <Text style={styles.typeButtonText}>Task</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.typeButton, type === 'timer' && styles.typeButtonSelected]} 
-              onPress={() => setType('timer')}
+            <TouchableOpacity
+              style={[
+                styles.typeButton,
+                type === "timer" && styles.typeButtonSelected,
+              ]}
+              onPress={() => setType("timer")}
             >
               <Text style={styles.typeButtonText}>Timer</Text>
             </TouchableOpacity>
           </View>
 
-          {type === 'timer' && (
+          {type === "timer" && (
             <TextInput
               style={styles.input}
               placeholder="Duration (in seconds)"
@@ -83,7 +97,7 @@ const AddActionModal = ({ visible, onClose, onSave }) => {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-             <Ionicons name="close" size={32} color={theme.colors.gray} />
+            <Ionicons name="close" size={32} color={theme.colors.gray} />
           </TouchableOpacity>
         </View>
       </View>
@@ -94,17 +108,17 @@ const AddActionModal = ({ visible, onClose, onSave }) => {
 const styles = StyleSheet.create({
   centeredView: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.6)",
   },
   modalView: {
-    width: '90%',
+    width: "90%",
     backgroundColor: theme.colors.surface,
     borderRadius: 20,
     padding: theme.layout.spacing.lg,
-    alignItems: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -120,7 +134,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.layout.spacing.md,
   },
   input: {
-    width: '100%',
+    width: "100%",
     backgroundColor: theme.colors.background,
     borderRadius: 10,
     padding: 15,
@@ -129,7 +143,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.layout.spacing.md,
   },
   typeSelector: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: theme.layout.spacing.md,
   },
   typeButton: {
@@ -138,7 +152,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.border,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
     marginHorizontal: 5,
   },
   typeButtonSelected: {
@@ -154,8 +168,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 15,
     elevation: 2,
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
   },
   saveButtonText: {
     color: theme.colors.background,
@@ -163,7 +177,7 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSizes.md,
   },
   closeButton: {
-    position: 'absolute',
+    position: "absolute",
     top: 15,
     right: 15,
   },

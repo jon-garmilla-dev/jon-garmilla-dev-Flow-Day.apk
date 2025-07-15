@@ -1,8 +1,22 @@
-import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
-import { Modal, View, StyleSheet, Animated, Dimensions, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
-import CustomDrawerContent from '../navigation/CustomDrawerContent';
+import React, {
+  useEffect,
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
+import {
+  Modal,
+  View,
+  StyleSheet,
+  Animated,
+  Dimensions,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+} from "react-native";
 
-const { width: screenWidth } = Dimensions.get('window');
+import CustomDrawerContent from "../navigation/CustomDrawerContent";
+
+const { width: screenWidth } = Dimensions.get("window");
 const menuWidth = screenWidth * 0.75;
 
 const SideMenu = forwardRef(({ isOpen, isPreviewing, onClose }, ref) => {
@@ -12,12 +26,12 @@ const SideMenu = forwardRef(({ isOpen, isPreviewing, onClose }, ref) => {
   useImperativeHandle(ref, () => ({
     setSmoothPosition: (progress, dx) => {
       isDragging.current = true;
-      const targetPosition = -menuWidth + (menuWidth * progress);
+      const targetPosition = -menuWidth + menuWidth * progress;
       slideAnim.setValue(targetPosition);
     },
     stopDragging: () => {
       isDragging.current = false;
-    }
+    },
   }));
 
   useEffect(() => {
@@ -32,13 +46,16 @@ const SideMenu = forwardRef(({ isOpen, isPreviewing, onClose }, ref) => {
     if (isOpen && !isPreviewing) {
       Animated.spring(slideAnim, { toValue: 0, ...animationConfig }).start();
     } else if (!isOpen && !isPreviewing) {
-      Animated.spring(slideAnim, { toValue: -menuWidth, ...animationConfig }).start();
+      Animated.spring(slideAnim, {
+        toValue: -menuWidth,
+        ...animationConfig,
+      }).start();
     }
   }, [isOpen, isPreviewing, slideAnim]);
 
   return (
     <Modal
-      transparent={true}
+      transparent
       visible={isOpen || isPreviewing}
       onRequestClose={onClose}
     >
@@ -51,7 +68,12 @@ const SideMenu = forwardRef(({ isOpen, isPreviewing, onClose }, ref) => {
         />
 
         {/* Contenedor del menú animado */}
-        <Animated.View style={[styles.menuContainer, { transform: [{ translateX: slideAnim }] }]}>
+        <Animated.View
+          style={[
+            styles.menuContainer,
+            { transform: [{ translateX: slideAnim }] },
+          ]}
+        >
           {/* Wrapper para que los toques dentro del menú no lo cierren */}
           <TouchableWithoutFeedback>
             <View style={{ flex: 1 }}>
@@ -70,12 +92,12 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   menuContainer: {
     width: menuWidth,
-    height: '100%',
-    backgroundColor: '#0d1117',
+    height: "100%",
+    backgroundColor: "#0d1117",
   },
 });
 

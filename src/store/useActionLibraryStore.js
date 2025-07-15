@@ -1,14 +1,15 @@
-import { create } from 'zustand';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { v4 as uuidv4 } from 'uuid';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { v4 as uuidv4 } from "uuid";
+import { create } from "zustand";
 
-const ACTION_LIBRARY_KEY = '@FlowDay:ActionLibrary';
+const ACTION_LIBRARY_KEY = "@FlowDay:ActionLibrary";
 
 const useActionLibraryStore = create((set, get) => ({
   actionTemplates: [],
   selectedTemplateForRoutine: null, // Used to pass data back from picker
 
-  setSelectedTemplateForRoutine: (template) => set({ selectedTemplateForRoutine: template }),
+  setSelectedTemplateForRoutine: (template) =>
+    set({ selectedTemplateForRoutine: template }),
 
   loadActionTemplates: async () => {
     try {
@@ -37,15 +38,17 @@ const useActionLibraryStore = create((set, get) => ({
   },
 
   updateActionTemplate: (templateId, templateData) => {
-    const updatedTemplates = get().actionTemplates.map(t => 
-      t.id === templateId ? { ...t, ...templateData } : t
+    const updatedTemplates = get().actionTemplates.map((t) =>
+      t.id === templateId ? { ...t, ...templateData } : t,
     );
     set({ actionTemplates: updatedTemplates });
     get().saveActionTemplates(updatedTemplates);
   },
 
   deleteActionTemplate: (templateId) => {
-    const updatedTemplates = get().actionTemplates.filter(t => t.id !== templateId);
+    const updatedTemplates = get().actionTemplates.filter(
+      (t) => t.id !== templateId,
+    );
     set({ actionTemplates: updatedTemplates });
     get().saveActionTemplates(updatedTemplates);
   },

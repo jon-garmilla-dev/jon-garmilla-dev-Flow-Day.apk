@@ -1,22 +1,30 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity } from 'react-native';
-import DraggableFlatList from 'react-native-draggable-flatlist';
-import useRoutineStore from '../../src/store/useRoutineStore';
-import useActionLibraryStore from '../../src/store/useActionLibraryStore';
-import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { theme, routineColors } from '../../src/constants/theme';
-import Header from '../../src/components/Header';
-import ActionSheet from '../../src/components/ui/ActionSheet';
-import IconPickerModal from '../../src/components/modals/IconPickerModal';
-import ColorPicker from '../../src/components/ui/ColorPicker';
-import { v4 as uuidv4 } from 'uuid';
+import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
+import DraggableFlatList from "react-native-draggable-flatlist";
+import { v4 as uuidv4 } from "uuid";
+
+import Header from "../../src/components/Header";
+import IconPickerModal from "../../src/components/modals/IconPickerModal";
+import ActionSheet from "../../src/components/ui/ActionSheet";
+import ColorPicker from "../../src/components/ui/ColorPicker";
+import { theme, routineColors } from "../../src/constants/theme";
+import useActionLibraryStore from "../../src/store/useActionLibraryStore";
+import useRoutineStore from "../../src/store/useRoutineStore";
 
 const formatDuration = (totalMinutes) => {
-  if (totalMinutes === 0) return '0m';
+  if (totalMinutes === 0) return "0m";
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-  let duration = '';
+  let duration = "";
   if (hours > 0) duration += `${hours}h `;
   if (minutes > 0) duration += `${minutes}m`;
   return duration.trim();
@@ -25,7 +33,9 @@ const formatDuration = (totalMinutes) => {
 const calculateBlockDuration = (block) => {
   if (!block || !block.actions) return 0;
   return block.actions.reduce((blockSum, action) => {
-    const durationInMinutes = Math.floor((parseInt(action.duration, 10) || 0) / 60);
+    const durationInMinutes = Math.floor(
+      (parseInt(action.duration, 10) || 0) / 60,
+    );
     return blockSum + durationInMinutes;
   }, 0);
 };
@@ -33,36 +43,44 @@ const calculateBlockDuration = (block) => {
 export default function CreateEditRoutineScreen() {
   const { routineId } = useLocalSearchParams();
   const router = useRouter();
-  const { addRoutine, updateRoutine, routines, addBlock, addAction, reorderBlocks, reorderActions } = useRoutineStore();
-  const { selectedTemplateForRoutine, setSelectedTemplateForRoutine } = useActionLibraryStore();
+  const {
+    addRoutine,
+    updateRoutine,
+    routines,
+    addBlock,
+    addAction,
+    reorderBlocks,
+    reorderActions,
+  } = useRoutineStore();
+  const { selectedTemplateForRoutine, setSelectedTemplateForRoutine } =
+    useActionLibraryStore();
 
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState("");
   const [color, setColor] = useState(routineColors[0]);
-  const [icon, setIcon] = useState('apps-outline');
+  const [icon, setIcon] = useState("apps-outline");
   const [blocks, setBlocks] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
   const [targetBlockIndex, setTargetBlockIndex] = useState(null);
   const [isBlockIconPickerVisible, setBlockIconPickerVisible] = useState(false);
-  const [isRoutineIconPickerVisible, setRoutineIconPickerVisible] = useState(false);
-  const [editingBlockId, setEditingBlockId] = useState(null);
+  const [isRoutineIconPickerVisible, setRoutineIconPickerVisible] =
+    useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
 
-  const routine = useMemo(() => routines.find(r => r.id === routineId), [routineId, routines]);
+  const routine = useMemo(
+    () => routines.find((r) => r.id === routineId),
+    [routineId, routines],
+  );
 
   useEffect(() => {
     if (routine) {
       setTitle(routine.title);
       setColor(routine.color || routineColors[0]);
-      setIcon(routine.icon || 'apps-outline');
+      setIcon(routine.icon || "apps-outline");
       setBlocks(routine.blocks || []);
       setIsEditing(true);
     }
   }, [routine]);
-
-  const totalRoutineDuration = useMemo(() => {
-    return blocks.reduce((total, block) => total + calculateBlockDuration(block), 0);
-  }, [blocks]);
 
   const handleUpdateValue = (blockIndex, actionIndex, field, value) => {
     const newBlocks = [...blocks];
@@ -99,33 +117,53 @@ export default function CreateEditRoutineScreen() {
 
   const handleDeleteAction = (blockIndex, actionIndex) => {
     const newBlocks = [...blocks];
-    newBlocks[blockIndex].actions = newBlocks[blockIndex].actions.filter((_, i) => i !== actionIndex);
+    newBlocks[blockIndex].actions = newBlocks[blockIndex].actions.filter(
+      (_, i) => i !== actionIndex,
+    );
     setBlocks(newBlocks);
   };
 
   const addActionToBlock = (type) => {
     if (targetBlockIndex === null) return;
 
-    if (type === 'from_library') {
-      router.push('/actions/picker');
+    if (type === "from_library") {
+      router.push("/actions/picker");
       return;
     }
-    if (type === 'new_template') {
-      router.push('/actions/create');
+    if (type === "new_template") {
+      router.push("/actions/create");
       return;
     }
 
     const newBlocks = [...blocks];
     let newAction;
     switch (type) {
-      case 'text':
-        newAction = { id: uuidv4(), name: 'New Task', type: 'task', icon: 'document-text-outline', duration: 0 };
+      case "text":
+        newAction = {
+          id: uuidv4(),
+          name: "New Task",
+          type: "task",
+          icon: "document-text-outline",
+          duration: 0,
+        };
         break;
-      case 'focus':
-        newAction = { id: uuidv4(), name: 'Focus Block', type: 'timer', icon: 'time-outline', duration: 300 };
+      case "focus":
+        newAction = {
+          id: uuidv4(),
+          name: "Focus Block",
+          type: "timer",
+          icon: "time-outline",
+          duration: 300,
+        };
         break;
-      case 'pomodoro':
-        newAction = { id: uuidv4(), name: 'Pomodoro', type: 'timer', icon: 'hourglass-outline', duration: 1500 };
+      case "pomodoro":
+        newAction = {
+          id: uuidv4(),
+          name: "Pomodoro",
+          type: "timer",
+          icon: "hourglass-outline",
+          duration: 1500,
+        };
         break;
       default:
         return;
@@ -138,12 +176,15 @@ export default function CreateEditRoutineScreen() {
   };
 
   const handleAddNewBlock = () => {
-    setBlocks([...blocks, { id: uuidv4(), name: '', icon: 'cube-outline', actions: [] }]);
+    setBlocks([
+      ...blocks,
+      { id: uuidv4(), name: "", icon: "cube-outline", actions: [] },
+    ]);
   };
 
   const handleSave = () => {
-    if (title.trim() === '') {
-      alert('Please enter a routine title.');
+    if (title.trim() === "") {
+      alert("Please enter a routine title.");
       return;
     }
 
@@ -152,11 +193,11 @@ export default function CreateEditRoutineScreen() {
       reorderBlocks(routineId, blocks);
     } else {
       const newRoutineId = addRoutine(title, color, icon);
-      blocks.forEach(block => {
-        if (block.name.trim() !== '') {
+      blocks.forEach((block) => {
+        if (block.name.trim() !== "") {
           const { id: tempBlockId, ...blockData } = block;
           const newBlockId = addBlock(newRoutineId, blockData);
-          (block.actions || []).forEach(action => {
+          (block.actions || []).forEach((action) => {
             const { id, ...actionData } = action;
             addAction(newRoutineId, newBlockId, actionData);
           });
@@ -167,31 +208,61 @@ export default function CreateEditRoutineScreen() {
   };
 
   const renderActionItem = ({ item: action, drag, isActive, getIndex }) => {
-    const blockIndex = blocks.findIndex(b => b.actions.includes(action));
+    const blockIndex = blocks.findIndex((b) => b.actions.includes(action));
     const actionIndex = getIndex();
 
     return (
-      <View style={[styles.actionItemContainer, { backgroundColor: isActive ? theme.colors.surface : 'transparent' }]}>
+      <View
+        style={[
+          styles.actionItemContainer,
+          { backgroundColor: isActive ? theme.colors.surface : "transparent" },
+        ]}
+      >
         {isEditMode && (
-          <TouchableOpacity onLongPress={drag} disabled={isActive} style={styles.dragHandle}>
-            <Ionicons name="reorder-two-outline" size={24} color={theme.colors.gray} />
+          <TouchableOpacity
+            onLongPress={drag}
+            disabled={isActive}
+            style={styles.dragHandle}
+          >
+            <Ionicons
+              name="reorder-two-outline"
+              size={24}
+              color={theme.colors.gray}
+            />
           </TouchableOpacity>
         )}
         <View style={styles.actionRow}>
-          <Ionicons name={action.icon || 'document-text-outline'} size={20} color="#8b949e" style={styles.actionIcon} />
+          <Ionicons
+            name={action.icon || "document-text-outline"}
+            size={20}
+            color="#8b949e"
+            style={styles.actionIcon}
+          />
           <TextInput
             style={[styles.actionInput, { flex: 1 }]}
             value={action.name}
-            onChangeText={(val) => handleUpdateValue(blockIndex, actionIndex, 'name', val)}
+            onChangeText={(val) =>
+              handleUpdateValue(blockIndex, actionIndex, "name", val)
+            }
             placeholder="Action name..."
             placeholderTextColor="#8b949e"
           />
           {action.duration > 0 && (
             <>
               <TextInput
-                style={[styles.actionInput, { minWidth: 50, flex: 0, marginLeft: 10 }]}
+                style={[
+                  styles.actionInput,
+                  { minWidth: 50, flex: 0, marginLeft: 10 },
+                ]}
                 value={String(Math.floor(action.duration / 60))}
-                onChangeText={(val) => handleUpdateValue(blockIndex, actionIndex, 'duration', (parseInt(val, 10) || 0) * 60)}
+                onChangeText={(val) =>
+                  handleUpdateValue(
+                    blockIndex,
+                    actionIndex,
+                    "duration",
+                    (parseInt(val, 10) || 0) * 60,
+                  )
+                }
                 keyboardType="numeric"
               />
               <Text style={styles.actionUnit}>min</Text>
@@ -199,8 +270,15 @@ export default function CreateEditRoutineScreen() {
           )}
         </View>
         {isEditMode && (
-          <TouchableOpacity onPress={() => handleDeleteAction(blockIndex, actionIndex)} style={styles.deleteButton}>
-            <Ionicons name="remove-circle-outline" size={22} color={theme.colors.danger} />
+          <TouchableOpacity
+            onPress={() => handleDeleteAction(blockIndex, actionIndex)}
+            style={styles.deleteButton}
+          >
+            <Ionicons
+              name="remove-circle-outline"
+              size={22}
+              color={theme.colors.danger}
+            />
           </TouchableOpacity>
         )}
       </View>
@@ -210,21 +288,58 @@ export default function CreateEditRoutineScreen() {
   const renderBlockItem = ({ item: block, drag, isActive, getIndex }) => {
     const blockIndex = getIndex();
     return (
-      <View style={[styles.blockContainer, { backgroundColor: isActive ? '#20252c' : '#161b22' }]}>
+      <View
+        style={[
+          styles.blockContainer,
+          { backgroundColor: isActive ? "#20252c" : "#161b22" },
+        ]}
+      >
         <View style={styles.blockHeader}>
           {isEditMode && (
-            <TouchableOpacity onLongPress={drag} disabled={isActive} style={styles.dragHandle}>
-              <Ionicons name="reorder-three-outline" size={32} color={theme.colors.gray} />
+            <TouchableOpacity
+              onLongPress={drag}
+              disabled={isActive}
+              style={styles.dragHandle}
+            >
+              <Ionicons
+                name="reorder-three-outline"
+                size={32}
+                color={theme.colors.gray}
+              />
             </TouchableOpacity>
           )}
           <TouchableOpacity onPress={() => handleBlockIconPress(blockIndex)}>
-            <Ionicons name={block.icon || 'cube-outline'} size={24} color={color} style={styles.blockIcon} />
+            <Ionicons
+              name={block.icon || "cube-outline"}
+              size={24}
+              color={color}
+              style={styles.blockIcon}
+            />
           </TouchableOpacity>
-          <TextInput style={styles.blockTitleInput} value={block.name} onChangeText={(name) => setBlocks(prev => prev.map((b, i) => i === blockIndex ? { ...b, name } : b))} placeholder={`Block #${blockIndex + 1} Title`} placeholderTextColor="#8b949e" />
-          <Text style={styles.blockDurationText}>{formatDuration(calculateBlockDuration(block))}</Text>
+          <TextInput
+            style={styles.blockTitleInput}
+            value={block.name}
+            onChangeText={(name) =>
+              setBlocks((prev) =>
+                prev.map((b, i) => (i === blockIndex ? { ...b, name } : b)),
+              )
+            }
+            placeholder={`Block #${blockIndex + 1} Title`}
+            placeholderTextColor="#8b949e"
+          />
+          <Text style={styles.blockDurationText}>
+            {formatDuration(calculateBlockDuration(block))}
+          </Text>
           {isEditMode && (
-            <TouchableOpacity onPress={() => handleDeleteBlock(blockIndex)} style={styles.deleteButton}>
-              <Ionicons name="trash-outline" size={22} color={theme.colors.danger} />
+            <TouchableOpacity
+              onPress={() => handleDeleteBlock(blockIndex)}
+              style={styles.deleteButton}
+            >
+              <Ionicons
+                name="trash-outline"
+                size={22}
+                color={theme.colors.danger}
+              />
             </TouchableOpacity>
           )}
         </View>
@@ -242,7 +357,10 @@ export default function CreateEditRoutineScreen() {
             }
           }}
         />
-        <TouchableOpacity style={styles.addButton} onPress={() => handleAddActionPress(blockIndex)}>
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => handleAddActionPress(blockIndex)}
+        >
           <Ionicons name="add" size={24} color="#58a6ff" />
           <Text style={styles.addButtonText}>Add Action</Text>
         </TouchableOpacity>
@@ -251,11 +369,15 @@ export default function CreateEditRoutineScreen() {
   };
 
   const actionOptions = [
-    { label: 'From Library', value: 'from_library', icon: 'library-outline' },
-    { label: 'New Library Action', value: 'new_template', icon: 'add-circle-outline' },
-    { label: 'Simple Text', value: 'text', icon: 'document-text-outline' },
-    { label: 'Focus Block', value: 'focus', icon: 'time-outline' },
-    { label: 'Pomodoro', value: 'pomodoro', icon: 'hourglass-outline' },
+    { label: "From Library", value: "from_library", icon: "library-outline" },
+    {
+      label: "New Library Action",
+      value: "new_template",
+      icon: "add-circle-outline",
+    },
+    { label: "Simple Text", value: "text", icon: "document-text-outline" },
+    { label: "Focus Block", value: "focus", icon: "time-outline" },
+    { label: "Pomodoro", value: "pomodoro", icon: "hourglass-outline" },
   ];
 
   useFocusEffect(
@@ -270,7 +392,12 @@ export default function CreateEditRoutineScreen() {
         setBlocks(newBlocks);
         setSelectedTemplateForRoutine(null);
       }
-    }, [selectedTemplateForRoutine, targetBlockIndex, blocks, setSelectedTemplateForRoutine])
+    }, [
+      selectedTemplateForRoutine,
+      targetBlockIndex,
+      blocks,
+      setSelectedTemplateForRoutine,
+    ]),
   );
 
   return (
@@ -285,16 +412,24 @@ export default function CreateEditRoutineScreen() {
         onClose={() => setBlockIconPickerVisible(false)}
         onSelectIcon={handleSelectBlockIcon}
       />
-      <Header 
-        title={isEditing ? "Edit Routine" : "Create Routine"} 
-        leftElement={<TouchableOpacity onPress={() => router.back()}><Ionicons name="arrow-back" size={28} color="#c9d1d9" /></TouchableOpacity>} 
+      <Header
+        title={isEditing ? "Edit Routine" : "Create Routine"}
+        leftElement={
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={28} color="#c9d1d9" />
+          </TouchableOpacity>
+        }
         rightElement={
           <TouchableOpacity onPress={() => setIsEditMode(!isEditMode)}>
-            <Ionicons name={isEditMode ? "checkmark-done" : "pencil"} size={24} color={theme.colors.primary} />
+            <Ionicons
+              name={isEditMode ? "checkmark-done" : "pencil"}
+              size={24}
+              color={theme.colors.primary}
+            />
           </TouchableOpacity>
-        } 
+        }
       />
-      
+
       <DraggableFlatList
         data={blocks}
         renderItem={renderBlockItem}
@@ -309,40 +444,65 @@ export default function CreateEditRoutineScreen() {
         ListHeaderComponent={
           <>
             <View style={styles.titleContainer}>
-              <TouchableOpacity onPress={() => setRoutineIconPickerVisible(true)}>
-                <Ionicons name={icon} size={32} color={color} style={styles.routineIcon} />
+              <TouchableOpacity
+                onPress={() => setRoutineIconPickerVisible(true)}
+              >
+                <Ionicons
+                  name={icon}
+                  size={32}
+                  color={color}
+                  style={styles.routineIcon}
+                />
               </TouchableOpacity>
-              <TextInput style={styles.titleInput} value={title} onChangeText={setTitle} placeholder="Title" placeholderTextColor="#8b949e" />
+              <TextInput
+                style={styles.titleInput}
+                value={title}
+                onChangeText={setTitle}
+                placeholder="Title"
+                placeholderTextColor="#8b949e"
+              />
             </View>
             <ColorPicker selectedColor={color} onSelectColor={setColor} />
           </>
         }
         ListFooterComponent={
           <>
-            <TouchableOpacity style={styles.addButton} onPress={handleAddNewBlock}>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={handleAddNewBlock}
+            >
               <Ionicons name="add" size={24} color="#58a6ff" />
               <Text style={styles.addButtonText}>Add Block</Text>
             </TouchableOpacity>
             <View style={{ marginTop: 30, marginBottom: 60 }}>
-              <Button title="Save Routine" onPress={handleSave} color="#238636" />
+              <Button
+                title="Save Routine"
+                onPress={handleSave}
+                color="#238636"
+              />
             </View>
           </>
         }
         contentContainerStyle={styles.scrollContainer}
       />
-      <ActionSheet isVisible={isActionSheetVisible} onClose={() => setIsActionSheetVisible(false)} onSelect={addActionToBlock} options={actionOptions} />
+      <ActionSheet
+        isVisible={isActionSheetVisible}
+        onClose={() => setIsActionSheetVisible(false)}
+        onSelect={addActionToBlock}
+        options={actionOptions}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0d1117' },
+  container: { flex: 1, backgroundColor: "#0d1117" },
   scrollContainer: { padding: 20 },
   titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderBottomWidth: 1,
-    borderColor: '#30363d',
+    borderColor: "#30363d",
     marginBottom: 20,
   },
   routineIcon: {
@@ -350,78 +510,82 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   titleInput: {
-    fontFamily: 'NunitoSans_700Bold',
+    fontFamily: "NunitoSans_700Bold",
     fontSize: 28,
-    color: '#c9d1d9',
+    color: "#c9d1d9",
     flex: 1,
     paddingBottom: 10,
   },
-  blockContainer: { 
-    backgroundColor: '#161b22', 
-    borderRadius: 5, 
-    padding: 15, 
-    marginBottom: 20 
+  blockContainer: {
+    backgroundColor: "#161b22",
+    borderRadius: 5,
+    padding: 15,
+    marginBottom: 20,
   },
-  blockHeader: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    marginBottom: 15 
+  blockHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
   },
   blockIcon: {
     marginRight: theme.layout.spacing.sm,
   },
-  blockTitleInput: { 
-    fontFamily: 'NunitoSans_700Bold', 
-    fontSize: 20, 
-    color: '#c9d1d9', 
-    flex: 1 
+  blockTitleInput: {
+    fontFamily: "NunitoSans_700Bold",
+    fontSize: 20,
+    color: "#c9d1d9",
+    flex: 1,
   },
-  blockDurationText: { 
-    fontFamily: 'NunitoSans_400Regular', 
-    color: '#8b949e', 
-    fontSize: 16, 
-    marginLeft: 10 
+  blockDurationText: {
+    fontFamily: "NunitoSans_400Regular",
+    color: "#8b949e",
+    fontSize: 16,
+    marginLeft: 10,
   },
   actionItemContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginLeft: 10,
     marginBottom: 10,
     borderRadius: 5,
   },
   actionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
   },
   actionIcon: { marginRight: 10 },
-  actionInput: { 
-    fontFamily: 'NunitoSans_400Regular', 
-    borderWidth: 1, 
-    borderColor: '#30363d', 
-    backgroundColor: '#0d1117', 
-    paddingHorizontal: 10, 
-    paddingVertical: 5, 
-    fontSize: 16, 
-    borderRadius: 5, 
-    color: '#c9d1d9', 
-    textAlign: 'left' 
+  actionInput: {
+    fontFamily: "NunitoSans_400Regular",
+    borderWidth: 1,
+    borderColor: "#30363d",
+    backgroundColor: "#0d1117",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    fontSize: 16,
+    borderRadius: 5,
+    color: "#c9d1d9",
+    textAlign: "left",
   },
-  actionUnit: { color: '#8b949e', marginLeft: 5 },
-  addButton: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    paddingVertical: 10, 
-    marginTop: 5 
+  actionUnit: { color: "#8b949e", marginLeft: 5 },
+  addButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    marginTop: 5,
   },
-  addButtonText: { color: '#58a6ff', marginLeft: 5, fontSize: 16 },
-  headerRightText: { fontFamily: 'NunitoSans_400Regular', color: '#8b949e', fontSize: 16 },
+  addButtonText: { color: "#58a6ff", marginLeft: 5, fontSize: 16 },
+  headerRightText: {
+    fontFamily: "NunitoSans_400Regular",
+    color: "#8b949e",
+    fontSize: 16,
+  },
   deleteButton: {
     padding: 5,
     marginLeft: 10,
   },
   dragHandle: {
     marginRight: 10,
-  }
+  },
 });

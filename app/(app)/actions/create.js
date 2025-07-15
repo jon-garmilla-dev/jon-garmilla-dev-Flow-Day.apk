@@ -1,31 +1,39 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { theme } from '../../../src/constants/theme';
-import Header from '../../../src/components/Header';
-import useActionLibraryStore from '../../../src/store/useActionLibraryStore';
-import IconPickerModal from '../../../src/components/modals/IconPickerModal';
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
+
+import Header from "../../../src/components/Header";
+import IconPickerModal from "../../../src/components/modals/IconPickerModal";
+import { theme } from "../../../src/constants/theme";
+import useActionLibraryStore from "../../../src/store/useActionLibraryStore";
 
 export default function CreateActionTemplateScreen() {
   const router = useRouter();
   const { addActionTemplate } = useActionLibraryStore();
 
-  const [name, setName] = useState('');
-  const [icon, setIcon] = useState('barbell');
-  const [duration, setDuration] = useState(''); // In minutes
-  const [description, setDescription] = useState('');
+  const [name, setName] = useState("");
+  const [icon, setIcon] = useState("barbell");
+  const [duration, setDuration] = useState(""); // In minutes
+  const [description, setDescription] = useState("");
   const [isPickerVisible, setPickerVisible] = useState(false);
 
   const handleSave = () => {
     if (!name) {
-      alert('Please provide an action name.');
+      alert("Please provide an action name.");
       return;
     }
     addActionTemplate({
       name,
       icon,
-      type: 'timer', // All custom actions are of type 'timer' for now
+      type: "timer", // All custom actions are of type 'timer' for now
       duration: (parseInt(duration, 10) || 0) * 60, // Convert minutes to seconds
       description,
     });
@@ -34,12 +42,12 @@ export default function CreateActionTemplateScreen() {
 
   return (
     <View style={styles.container}>
-      <IconPickerModal 
+      <IconPickerModal
         visible={isPickerVisible}
         onClose={() => setPickerVisible(false)}
         onSelectIcon={setIcon}
       />
-      <Header 
+      <Header
         title="Create Action"
         leftElement={
           <TouchableOpacity onPress={() => router.back()}>
@@ -49,7 +57,10 @@ export default function CreateActionTemplateScreen() {
       />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.mainInputContainer}>
-          <TouchableOpacity style={styles.iconButton} onPress={() => setPickerVisible(true)}>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => setPickerVisible(true)}
+          >
             <Ionicons name={icon} size={32} color={theme.colors.primary} />
           </TouchableOpacity>
           <TextInput
@@ -62,7 +73,12 @@ export default function CreateActionTemplateScreen() {
         </View>
 
         <View style={styles.rowInputContainer}>
-          <Ionicons name="time-outline" size={24} color={theme.colors.gray} style={styles.rowIcon} />
+          <Ionicons
+            name="time-outline"
+            size={24}
+            color={theme.colors.gray}
+            style={styles.rowIcon}
+          />
           <TextInput
             style={styles.rowInput}
             placeholder="Duration"
@@ -75,7 +91,12 @@ export default function CreateActionTemplateScreen() {
         </View>
 
         <View style={styles.rowInputContainer}>
-          <Ionicons name="document-text-outline" size={24} color={theme.colors.gray} style={styles.rowIcon} />
+          <Ionicons
+            name="document-text-outline"
+            size={24}
+            color={theme.colors.gray}
+            style={styles.rowIcon}
+          />
           <TextInput
             style={styles.rowInput}
             placeholder="Description (optional)"
@@ -102,8 +123,8 @@ const styles = StyleSheet.create({
     padding: theme.layout.spacing.md,
   },
   mainInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: theme.colors.surface,
     borderRadius: 15,
     paddingHorizontal: theme.layout.spacing.md,
@@ -121,8 +142,8 @@ const styles = StyleSheet.create({
     marginLeft: theme.layout.spacing.sm,
   },
   rowInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: theme.colors.surface,
     borderRadius: 15,
     paddingHorizontal: theme.layout.spacing.md,
@@ -146,7 +167,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
     borderRadius: 10,
     padding: 15,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: theme.layout.spacing.lg,
   },
   saveButtonText: {

@@ -2,25 +2,25 @@
 
 const palette = {
   // Paleta de Grises (inspirada en GitHub Dark)
-  black: '#010409',
-  darkBlue: '#0d1117',    // Usado como fondo principal
-  mediumBlue: '#161b22',
-  lightGray: '#30363d',   // Usado para bordes
-  lighterGray: '#8b949e',
-  white: '#f0f6fc',       // Usado para el texto principal
-  
+  black: "#010409",
+  darkBlue: "#0d1117", // Usado como fondo principal
+  mediumBlue: "#161b22",
+  lightGray: "#30363d", // Usado para bordes
+  lighterGray: "#8b949e",
+  white: "#f0f6fc", // Usado para el texto principal
+
   // Colores de Acento
-  blue: '#58a6ff',
-  green: '#34a853',
-  red: '#f85149',
-  yellow: '#e3b341',
+  blue: "#58a6ff",
+  green: "#34a853",
+  red: "#f85149",
+  yellow: "#e3b341",
 
   // Paleta para Rutinas
-  indigo: '#6366F1',
-  purple: '#8B5CF6',
-  pink: '#EC4899',
-  orange: '#F97316',
-  teal: '#14B8A6',
+  indigo: "#6366F1",
+  purple: "#8B5CF6",
+  pink: "#EC4899",
+  orange: "#F97316",
+  teal: "#14B8A6",
 };
 
 export const routineColors = [
@@ -38,24 +38,24 @@ export const theme = {
     text: palette.white,
     primary: palette.blue,
     border: palette.lightGray,
-    
+
     // Colores semánticos
     success: palette.green,
     danger: palette.red,
     warning: palette.yellow,
-    
+
     // Grises
     gray: palette.lighterGray,
-    
+
     // Fondos secundarios
     surface: palette.mediumBlue, // Para tarjetas, menús, etc.
   },
-  
+
   typography: {
     fonts: {
       // Definimos alias para las fuentes cargadas
-      regular: 'NunitoSans_400Regular',
-      bold: 'NunitoSans_700Bold',
+      regular: "NunitoSans_400Regular",
+      bold: "NunitoSans_700Bold",
     },
     fontSizes: {
       xs: 12,
@@ -65,7 +65,7 @@ export const theme = {
       xl: 28,
     },
   },
-  
+
   layout: {
     spacing: {
       xs: 4,

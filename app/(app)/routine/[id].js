@@ -1,40 +1,49 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { FlatList } from 'react-native-gesture-handler';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withRepeat, withTiming, Easing } from 'react-native-reanimated';
-import { theme } from '../../../src/constants/theme';
-import useRoutineStore from '../../../src/store/useRoutineStore';
-import useProgressStore from '../../../src/store/useProgressStore';
-import { useLocalSearchParams, Link, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import Header from '../../../src/components/Header';
+import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
+import { FlatList } from "react-native-gesture-handler";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withRepeat,
+  withTiming,
+} from "react-native-reanimated";
+
+import Header from "../../../src/components/Header";
+import { theme } from "../../../src/constants/theme";
+import useProgressStore from "../../../src/store/useProgressStore";
+import useRoutineStore from "../../../src/store/useRoutineStore";
 
 const ActionBubbles = ({ actions, actionStatuses }) => (
   <View style={styles.actionBubblesContainer}>
-    {actions.slice(0, 7).map(action => { // Show up to 7 icons
+    {actions.slice(0, 7).map((action) => {
+      // Show up to 7 icons
       const status = actionStatuses[action.id];
-      
-      const isCompleted = status === 'completed';
-      const isActive = status === 'active';
 
-      let iconName = action.icon || 'ellipse-outline';
-      if (isCompleted && iconName.endsWith('-outline')) {
-        iconName = iconName.replace('-outline', '');
+      const isCompleted = status === "completed";
+      const isActive = status === "active";
+
+      let iconName = action.icon || "ellipse-outline";
+      if (isCompleted && iconName.endsWith("-outline")) {
+        iconName = iconName.replace("-outline", "");
       }
 
-      const iconColor = isCompleted 
-        ? theme.colors.success 
-        : isActive 
-          ? theme.colors.primary 
+      const iconColor = isCompleted
+        ? theme.colors.success
+        : isActive
+          ? theme.colors.primary
           : theme.colors.gray;
 
       return (
         <View key={action.id} style={styles.actionBubble}>
-          <Ionicons 
-            name={iconName} 
-            size={18} 
-            color={iconColor} 
-          />
+          <Ionicons name={iconName} size={18} color={iconColor} />
         </View>
       );
     })}
@@ -49,15 +58,23 @@ const BlockRow = ({ routine, block, status, actionStatuses }) => {
   const pulseScale = useSharedValue(1);
 
   useEffect(() => {
-    if (status === 'completed') {
+    if (status === "completed") {
       scaleCheck.value = withSpring(1, { damping: 15, stiffness: 120 });
     } else {
       scaleCheck.value = 0;
     }
 
-    if (status === 'active') {
-      pulseOpacity.value = withRepeat(withTiming(0.5, { duration: 2000 }), -1, true);
-      pulseScale.value = withRepeat(withTiming(1.1, { duration: 2000 }), -1, true);
+    if (status === "active") {
+      pulseOpacity.value = withRepeat(
+        withTiming(0.5, { duration: 2000 }),
+        -1,
+        true,
+      );
+      pulseScale.value = withRepeat(
+        withTiming(1.1, { duration: 2000 }),
+        -1,
+        true,
+      );
     } else {
       pulseOpacity.value = withTiming(0);
       pulseScale.value = withTiming(1);
@@ -75,23 +92,35 @@ const BlockRow = ({ routine, block, status, actionStatuses }) => {
 
   const getStatusIcon = () => {
     switch (status) {
-      case 'completed':
+      case "completed":
         return (
           <Animated.View style={animatedCheckStyle}>
-            <Ionicons name="checkmark-circle" size={28} color={theme.colors.success} />
+            <Ionicons
+              name="checkmark-circle"
+              size={28}
+              color={theme.colors.success}
+            />
           </Animated.View>
         );
-      case 'active':
+      case "active":
         return (
           <View style={styles.iconContainer}>
             <Animated.View style={[styles.pulseCircle, animatedPulseStyle]} />
-            <Ionicons name="play-circle" size={28} color={theme.colors.primary} />
+            <Ionicons
+              name="play-circle"
+              size={28}
+              color={theme.colors.primary}
+            />
           </View>
         );
       default:
         return (
           <View style={styles.iconContainer}>
-            <Ionicons name="ellipse-outline" size={28} color={theme.colors.gray} />
+            <Ionicons
+              name="ellipse-outline"
+              size={28}
+              color={theme.colors.gray}
+            />
           </View>
         );
     }
@@ -99,7 +128,9 @@ const BlockRow = ({ routine, block, status, actionStatuses }) => {
 
   const calculateBlockDuration = () => {
     const totalSeconds = block.actions.reduce((sum, action) => {
-      return action.type === 'timer' && action.duration ? sum + action.duration : sum;
+      return action.type === "timer" && action.duration
+        ? sum + action.duration
+        : sum;
     }, 0);
 
     if (totalSeconds === 0) return null;
@@ -114,7 +145,10 @@ const BlockRow = ({ routine, block, status, actionStatuses }) => {
   const duration = calculateBlockDuration();
 
   const handlePress = () => {
-    router.push({ pathname: `/routine/${routine.id}/run`, params: { blockId: block.id } });
+    router.push({
+      pathname: `/routine/${routine.id}/run`,
+      params: { blockId: block.id },
+    });
   };
 
   return (
@@ -142,7 +176,7 @@ export default function RoutineScreen() {
   const { routines, loadRoutines } = useRoutineStore();
   const { progress, actions, loadProgress, resetProgress } = useProgressStore();
 
-  const routine = routines.find(r => r.id === id);
+  const routine = routines.find((r) => r.id === id);
 
   useEffect(() => {
     loadRoutines();
@@ -156,15 +190,18 @@ export default function RoutineScreen() {
 
   return (
     <View style={styles.container}>
-      <Header 
-        title={routine?.title || 'Routine'} 
+      <Header
+        title={routine?.title || "Routine"}
         leftElement={
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={28} color={theme.colors.text} />
           </TouchableOpacity>
         }
         rightElement={
-          <TouchableOpacity onPress={() => resetProgress(routine)} style={styles.headerButton}>
+          <TouchableOpacity
+            onPress={() => resetProgress(routine)}
+            style={styles.headerButton}
+          >
             <Ionicons name="refresh" size={24} color={theme.colors.text} />
           </TouchableOpacity>
         }
@@ -179,7 +216,7 @@ export default function RoutineScreen() {
             actionStatuses={actions}
           />
         )}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: 0 }}
       />
     </View>
@@ -192,8 +229,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   headerRightContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   headerButton: {
     marginLeft: theme.layout.spacing.md,
@@ -210,23 +247,23 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
   },
   blockInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: theme.layout.spacing.md,
   },
   blockTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   iconContainer: {
     width: 28,
     height: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   pulseCircle: {
-    position: 'absolute',
+    position: "absolute",
     width: 28,
     height: 28,
     borderRadius: 14,
@@ -239,8 +276,8 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
   },
   actionBubblesContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   actionBubble: {
     marginRight: theme.layout.spacing.sm,
@@ -250,8 +287,8 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.bold,
   },
   durationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: theme.colors.background,
     paddingVertical: 4,
     paddingHorizontal: 8,
@@ -264,14 +301,14 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   addBlockFab: {
-    position: 'absolute',
+    position: "absolute",
     right: 30,
     bottom: 30,
     width: 60,
     height: 60,
     borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     elevation: 8,
     backgroundColor: theme.colors.primary,
   },

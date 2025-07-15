@@ -1,7 +1,8 @@
-import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import { routineColors, theme } from '../../constants/theme';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
+
+import { routineColors, theme } from "../../constants/theme";
 
 const ColorPicker = ({ selectedColor, onSelectColor }) => {
   return (
@@ -23,17 +24,17 @@ const ColorPicker = ({ selectedColor, onSelectColor }) => {
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: theme.layout.spacing.md,
   },
   colorOption: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 

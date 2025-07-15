@@ -1,18 +1,25 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
-import { useRouter, Link } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { theme } from '../../../src/constants/theme';
-import Header from '../../../src/components/Header';
-import useActionLibraryStore from '../../../src/store/useActionLibraryStore';
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter, Link } from "expo-router";
+import React, { useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+} from "react-native";
+
+import Header from "../../../src/components/Header";
+import { theme } from "../../../src/constants/theme";
+import useActionLibraryStore from "../../../src/store/useActionLibraryStore";
 
 const ActionTemplateRow = ({ template }) => (
   <View style={styles.actionRow}>
     <View style={styles.actionIconContainer}>
-      <Ionicons 
-        name={template.icon || 'barbell-outline'} 
-        size={28} 
-        color={theme.colors.primary} 
+      <Ionicons
+        name={template.icon || "barbell-outline"}
+        size={28}
+        color={theme.colors.primary}
       />
     </View>
     <View style={styles.actionTextContainer}>
@@ -37,7 +44,7 @@ export default function ActionLibraryScreen() {
 
   return (
     <View style={styles.container}>
-      <Header 
+      <Header
         title="Action Library"
         leftElement={
           <TouchableOpacity onPress={() => router.back()}>
@@ -48,11 +55,13 @@ export default function ActionLibraryScreen() {
       <FlatList
         data={actionTemplates}
         renderItem={({ item }) => <ActionTemplateRow template={item} />}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>Your action library is empty.</Text>
-            <Text style={styles.emptySubtext}>Press the '+' button to create a reusable action.</Text>
+            <Text style={styles.emptySubtext}>
+              Press the '+' button to create a reusable action.
+            </Text>
           </View>
         }
         contentContainerStyle={{ flexGrow: 1 }}
@@ -72,8 +81,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   actionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: theme.layout.spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
@@ -97,34 +106,34 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   fab: {
-    position: 'absolute',
+    position: "absolute",
     right: 30,
     bottom: 30,
     width: 60,
     height: 60,
     borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     elevation: 8,
     backgroundColor: theme.colors.primary,
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: theme.layout.spacing.lg,
   },
   emptyText: {
     fontFamily: theme.typography.fonts.bold,
     fontSize: theme.typography.fontSizes.lg,
     color: theme.colors.text,
-    textAlign: 'center',
+    textAlign: "center",
   },
   emptySubtext: {
     fontFamily: theme.typography.fonts.regular,
     fontSize: theme.typography.fontSizes.md,
     color: theme.colors.gray,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: theme.layout.spacing.sm,
   },
 });

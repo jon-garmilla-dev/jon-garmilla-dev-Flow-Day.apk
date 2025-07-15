@@ -1,27 +1,26 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { theme } from '../constants/theme';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+
+import { theme } from "../constants/theme";
 
 const Header = ({ title, leftElement, rightElement }) => {
   return (
     <View style={styles.headerContainer}>
-      <View style={styles.sideContainer}>
-        {leftElement}
-      </View>
+      <View style={styles.sideContainer}>{leftElement}</View>
       <View style={styles.titleContainer}>
-        <Text style={styles.headerTitle} numberOfLines={1}>{title}</Text>
+        <Text style={styles.headerTitle} numberOfLines={1}>
+          {title}
+        </Text>
       </View>
-      <View style={styles.sideContainer}>
-        {rightElement}
-      </View>
+      <View style={styles.sideContainer}>{rightElement}</View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     height: theme.layout.headerHeight,
     paddingHorizontal: theme.layout.spacing.md,
     backgroundColor: theme.colors.background,
@@ -30,14 +29,14 @@ const styles = StyleSheet.create({
   },
   sideContainer: {
     minWidth: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: theme.layout.spacing.sm,
   },
   titleContainer: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   headerTitle: {
     fontFamily: theme.typography.fonts.bold,

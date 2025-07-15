@@ -1,9 +1,16 @@
-import React, { useRef } from 'react';
-import { View, Dimensions, PanResponder } from 'react-native';
+import React, { useRef } from "react";
+import { View, Dimensions, PanResponder } from "react-native";
 
-const { width: screenWidth } = Dimensions.get('window');
+const { width: screenWidth } = Dimensions.get("window");
 
-const SwipeGestureWrapper = ({ children, onSwipeLeft, onPanMove, onPanStart, onPanEnd, isSideMenuOpen }) => {
+const SwipeGestureWrapper = ({
+  children,
+  onSwipeLeft,
+  onPanMove,
+  onPanStart,
+  onPanEnd,
+  isSideMenuOpen,
+}) => {
   const gestureStartX = useRef(0);
 
   const panResponder = PanResponder.create({
@@ -16,7 +23,7 @@ const SwipeGestureWrapper = ({ children, onSwipeLeft, onPanMove, onPanStart, onP
       }
 
       const edgeZone = 80; // Zona de activación en los bordes
-      
+
       // Activar si el menú ya está abierto (para cerrarlo)
       if (isSideMenuOpen) {
         // Solo capturar si es un deslizamiento real, no un simple toque.
@@ -28,28 +35,32 @@ const SwipeGestureWrapper = ({ children, onSwipeLeft, onPanMove, onPanStart, onP
       if (x0 < edgeZone || x0 > screenWidth - edgeZone) {
         return Math.abs(dx) > 5;
       }
-      
+
       return false;
     },
-    
+
     onPanResponderGrant: (evt, gestureState) => {
       gestureStartX.current = gestureState.x0;
       if (onPanStart) onPanStart(gestureState);
     },
-    
+
     onPanResponderMove: (evt, gestureState) => {
       if (onPanMove) onPanMove(gestureState);
     },
-    
+
     onPanResponderRelease: (evt, gestureState) => {
       const { dx, vx } = gestureState;
       const edgeZone = 80;
 
       // Gesto para "Atrás": Empieza en la derecha y va a la izquierda
-      if (gestureStartX.current > screenWidth - edgeZone && dx < -50 && vx < -0.5) {
+      if (
+        gestureStartX.current > screenWidth - edgeZone &&
+        dx < -50 &&
+        vx < -0.5
+      ) {
         if (onSwipeLeft) {
           onSwipeLeft();
-          return; 
+          return;
         }
       }
 
@@ -58,7 +69,7 @@ const SwipeGestureWrapper = ({ children, onSwipeLeft, onPanMove, onPanStart, onP
     },
     onPanResponderTerminate: (evt, gestureState) => {
       if (onPanEnd) onPanEnd(gestureState);
-    }
+    },
   });
 
   return (

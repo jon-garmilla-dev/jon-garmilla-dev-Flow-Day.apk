@@ -1,12 +1,13 @@
-import React, { useState, createContext, useContext, useRef } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
-import { useRouter } from 'expo-router';
-import SwipeGestureWrapper from '../ui/SwipeGestureWrapper';
-import SideMenu from '../ui/SideMenu';
+import { useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React, { useState, createContext, useContext, useRef } from "react";
+import { View, StyleSheet, Dimensions } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const { width: screenWidth } = Dimensions.get('window');
+import SideMenu from "../ui/SideMenu";
+import SwipeGestureWrapper from "../ui/SwipeGestureWrapper";
+
+const { width: screenWidth } = Dimensions.get("window");
 const menuWidth = screenWidth * 0.75;
 
 const PageLayoutContext = createContext();
@@ -28,7 +29,7 @@ const PageLayout = ({ children }) => {
     sideMenuRef.current?.stopDragging();
 
     const { dx, vx } = gestureState;
-    
+
     if (isPreviewing) {
       if (dx > screenWidth * 0.3 || vx > 0.5) {
         setIsSideMenuOpen(true);
@@ -83,15 +84,18 @@ const PageLayout = ({ children }) => {
         }}
       >
         <View style={styles.container}>
-          <SafeAreaView style={{ flex: 1, backgroundColor: '#0d1117' }} edges={['top', 'left', 'right']}>
+          <SafeAreaView
+            style={{ flex: 1, backgroundColor: "#0d1117" }}
+            edges={["top", "left", "right"]}
+          >
             <StatusBar style="light" />
             {children}
           </SafeAreaView>
-          <SideMenu 
-            ref={sideMenuRef} 
-            isOpen={isSideMenuOpen} 
-            isPreviewing={isPreviewing} 
-            onClose={closeMenu} 
+          <SideMenu
+            ref={sideMenuRef}
+            isOpen={isSideMenuOpen}
+            isPreviewing={isPreviewing}
+            onClose={closeMenu}
           />
         </View>
       </SwipeGestureWrapper>

@@ -1,13 +1,21 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
-import useRoutineStore from '../../store/useRoutineStore';
-import { useRouter } from 'expo-router';
-import { theme } from '../../constants/theme';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  SafeAreaView,
+  ScrollView,
+} from "react-native";
+
+import { theme } from "../../constants/theme";
+import useRoutineStore from "../../store/useRoutineStore";
 
 const CustomDrawerContent = (props) => {
   const router = useRouter();
-  const routines = useRoutineStore(state => state.routines);
+  const routines = useRoutineStore((state) => state.routines);
 
   const handleNavigation = (path) => {
     router.push(path);
@@ -21,15 +29,31 @@ const CustomDrawerContent = (props) => {
       </View>
       <ScrollView style={styles.content}>
         {routines.map((routine) => (
-          <TouchableOpacity key={routine.id} style={styles.item} onPress={() => handleNavigation(`/routine/${routine.id}`)}>
-            <Ionicons name={routine.icon || 'apps-outline'} size={22} color={routine.color || theme.colors.primary} style={styles.icon} />
+          <TouchableOpacity
+            key={routine.id}
+            style={styles.item}
+            onPress={() => handleNavigation(`/routine/${routine.id}`)}
+          >
+            <Ionicons
+              name={routine.icon || "apps-outline"}
+              size={22}
+              color={routine.color || theme.colors.primary}
+              style={styles.icon}
+            />
             <Text style={styles.itemText}>{routine.title}</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.footerButton} onPress={() => handleNavigation('/create')}>
-          <Ionicons name="add-circle-outline" size={22} color={theme.colors.primary} />
+        <TouchableOpacity
+          style={styles.footerButton}
+          onPress={() => handleNavigation("/create")}
+        >
+          <Ionicons
+            name="add-circle-outline"
+            size={22}
+            color={theme.colors.primary}
+          />
           <Text style={styles.footerButtonText}>Add Workflow</Text>
         </TouchableOpacity>
       </View>
@@ -57,8 +81,8 @@ const styles = StyleSheet.create({
     paddingTop: theme.layout.spacing.sm,
   },
   item: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: theme.layout.spacing.md,
     paddingHorizontal: theme.layout.spacing.lg,
   },
@@ -74,11 +98,11 @@ const styles = StyleSheet.create({
     padding: theme.layout.spacing.md,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
-    alignItems: 'center',
+    alignItems: "center",
   },
   footerButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: theme.layout.spacing.sm,
   },
   footerButtonText: {

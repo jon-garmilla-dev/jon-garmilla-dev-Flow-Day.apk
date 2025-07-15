@@ -1,39 +1,54 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { FlatList } from 'react-native-gesture-handler';
-import useRoutineStore from '../../../src/store/useRoutineStore';
-import useProgressStore from '../../../src/store/useProgressStore';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import Header from '../../../src/components/Header';
-import AddActionModal from '../../../src/components/modals/AddActionModal';
-import { theme } from '../../../src/constants/theme';
+import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { FlatList } from "react-native-gesture-handler";
+
+import Header from "../../../src/components/Header";
+import AddActionModal from "../../../src/components/modals/AddActionModal";
+import { theme } from "../../../src/constants/theme";
+import useProgressStore from "../../../src/store/useProgressStore";
+import useRoutineStore from "../../../src/store/useRoutineStore";
 
 const ActionRow = ({ action, status }) => {
-  const isCompleted = status === 'completed';
-  const isActive = status === 'active';
+  const isCompleted = status === "completed";
+  const isActive = status === "active";
 
   return (
     <View style={[styles.actionRow, isActive && styles.actionRowActive]}>
       <View style={styles.actionIconContainer}>
-        <Ionicons 
-          name={action.icon || 'barbell-outline'} 
-          size={28} 
-          color={isCompleted ? theme.colors.success : theme.colors.primary} 
+        <Ionicons
+          name={action.icon || "barbell-outline"}
+          size={28}
+          color={isCompleted ? theme.colors.success : theme.colors.primary}
         />
       </View>
       <View style={styles.actionTextContainer}>
-        <Text style={[styles.actionTitle, isCompleted && styles.actionTitleCompleted]}>
+        <Text
+          style={[
+            styles.actionTitle,
+            isCompleted && styles.actionTitleCompleted,
+          ]}
+        >
           {action.name}
         </Text>
-        {action.type === 'timer' && action.duration > 0 && (
-          <Text style={[styles.actionSubtitle, isCompleted && styles.actionTitleCompleted]}>
+        {action.type === "timer" && action.duration > 0 && (
+          <Text
+            style={[
+              styles.actionSubtitle,
+              isCompleted && styles.actionTitleCompleted,
+            ]}
+          >
             {Math.floor(action.duration / 60)}m {action.duration % 60}s
           </Text>
         )}
       </View>
       {isCompleted && (
-        <Ionicons name="checkmark-circle" size={24} color={theme.colors.success} />
+        <Ionicons
+          name="checkmark-circle"
+          size={24}
+          color={theme.colors.success}
+        />
       )}
     </View>
   );
@@ -42,12 +57,16 @@ const ActionRow = ({ action, status }) => {
 export default function BlockScreen() {
   const { id: blockId, routineId, routineTitle } = useLocalSearchParams();
   const router = useRouter();
-  const { routines, loadRoutines, addAction: addActionToStore } = useRoutineStore();
+  const {
+    routines,
+    loadRoutines,
+    addAction: addActionToStore,
+  } = useRoutineStore();
   const { actions } = useProgressStore(); // Only need actions for status
   const [isModalVisible, setModalVisible] = useState(false);
 
-  const routine = routines.find(r => r.id === routineId);
-  const block = routine?.blocks.find(b => b.id === blockId);
+  const routine = routines.find((r) => r.id === routineId);
+  const block = routine?.blocks.find((b) => b.id === blockId);
 
   useEffect(() => {
     loadRoutines();
@@ -59,13 +78,13 @@ export default function BlockScreen() {
 
   return (
     <View style={styles.container}>
-      <AddActionModal 
+      <AddActionModal
         visible={isModalVisible}
         onClose={() => setModalVisible(false)}
         onSave={handleAddAction}
       />
-      <Header 
-        title={`${routineTitle} / ${block?.name || 'Block'}`}
+      <Header
+        title={`${routineTitle} / ${block?.name || "Block"}`}
         leftElement={
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={28} color={theme.colors.text} />
@@ -76,12 +95,9 @@ export default function BlockScreen() {
       <FlatList
         data={block?.actions || []}
         renderItem={({ item }) => (
-          <ActionRow
-            action={item}
-            status={actions[item.id]}
-          />
+          <ActionRow action={item} status={actions[item.id]} />
         )}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: 100 }}
       />
       {block && (
@@ -107,8 +123,8 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSizes.sm,
   },
   actionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: theme.layout.spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
@@ -132,7 +148,7 @@ const styles = StyleSheet.create({
   },
   actionTitleCompleted: {
     color: theme.colors.gray,
-    textDecorationLine: 'line-through',
+    textDecorationLine: "line-through",
   },
   actionSubtitle: {
     fontFamily: theme.typography.fonts.regular,
@@ -141,14 +157,14 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   fab: {
-    position: 'absolute',
+    position: "absolute",
     right: 30,
     bottom: 30,
     width: 60,
     height: 60,
     borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     elevation: 8,
     backgroundColor: theme.colors.primary,
   },

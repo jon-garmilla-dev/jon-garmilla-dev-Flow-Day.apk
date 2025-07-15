@@ -1,18 +1,25 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
-import { useRouter, useLocalSearchParams, Link } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { theme } from '../../../src/constants/theme';
-import Header from '../../../src/components/Header';
-import useActionLibraryStore from '../../../src/store/useActionLibraryStore';
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter, useLocalSearchParams, Link } from "expo-router";
+import React, { useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+} from "react-native";
+
+import Header from "../../../src/components/Header";
+import { theme } from "../../../src/constants/theme";
+import useActionLibraryStore from "../../../src/store/useActionLibraryStore";
 
 const ActionTemplateRow = ({ template, onSelect }) => (
   <TouchableOpacity style={styles.actionRow} onPress={() => onSelect(template)}>
     <View style={styles.actionIconContainer}>
-      <Ionicons 
-        name={template.icon || 'barbell-outline'} 
-        size={28} 
-        color={theme.colors.primary} 
+      <Ionicons
+        name={template.icon || "barbell-outline"}
+        size={28}
+        color={theme.colors.primary}
       />
     </View>
     <View style={styles.actionTextContainer}>
@@ -28,8 +35,12 @@ const ActionTemplateRow = ({ template, onSelect }) => (
 
 export default function ActionPickerScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams();
-  const { actionTemplates, loadActionTemplates, setSelectedTemplateForRoutine } = useActionLibraryStore();
+  useLocalSearchParams();
+  const {
+    actionTemplates,
+    loadActionTemplates,
+    setSelectedTemplateForRoutine,
+  } = useActionLibraryStore();
 
   useEffect(() => {
     loadActionTemplates();
@@ -42,7 +53,7 @@ export default function ActionPickerScreen() {
 
   return (
     <View style={styles.container}>
-      <Header 
+      <Header
         title="Choose Action from Library"
         leftElement={
           <TouchableOpacity onPress={() => router.back()}>
@@ -52,13 +63,15 @@ export default function ActionPickerScreen() {
       />
       <FlatList
         data={actionTemplates}
-        renderItem={({ item }) => <ActionTemplateRow template={item} onSelect={handleSelect} />}
-        keyExtractor={item => item.id}
+        renderItem={({ item }) => (
+          <ActionTemplateRow template={item} onSelect={handleSelect} />
+        )}
+        keyExtractor={(item) => item.id}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>Your action library is empty.</Text>
             <Link href="/actions/create" asChild>
-                <Text style={styles.linkText}>Create a new action.</Text>
+              <Text style={styles.linkText}>Create a new action.</Text>
             </Link>
           </View>
         }
@@ -74,8 +87,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   actionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: theme.layout.spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
@@ -100,21 +113,21 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: theme.layout.spacing.lg,
   },
   emptyText: {
     fontFamily: theme.typography.fonts.bold,
     fontSize: theme.typography.fontSizes.lg,
     color: theme.colors.text,
-    textAlign: 'center',
+    textAlign: "center",
   },
   linkText: {
     fontFamily: theme.typography.fonts.regular,
     fontSize: theme.typography.fontSizes.md,
     color: theme.colors.primary,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: theme.layout.spacing.md,
   },
 });
