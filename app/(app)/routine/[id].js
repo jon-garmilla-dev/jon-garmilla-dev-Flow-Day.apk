@@ -42,7 +42,7 @@ const ActionBubbles = ({ actions, actionStatuses }) => (
   </View>
 );
 
-const BlockRow = ({ routine, block, status, actionStatuses, isEditMode }) => {
+const BlockRow = ({ routine, block, status, actionStatuses }) => {
   const router = useRouter();
   const scaleCheck = useSharedValue(0);
   const pulseOpacity = useSharedValue(0);
@@ -114,11 +114,7 @@ const BlockRow = ({ routine, block, status, actionStatuses, isEditMode }) => {
   const duration = calculateBlockDuration();
 
   const handlePress = () => {
-    if (isEditMode) {
-      router.push({ pathname: `/block/${block.id}`, params: { routineId: routine.id, routineTitle: routine.title } });
-    } else {
-      router.push({ pathname: `/routine/${routine.id}/run`, params: { blockId: block.id } });
-    }
+    router.push({ pathname: `/routine/${routine.id}/run`, params: { blockId: block.id } });
   };
 
   return (
@@ -145,7 +141,6 @@ export default function RoutineScreen() {
   const router = useRouter();
   const { routines, loadRoutines } = useRoutineStore();
   const { progress, actions, loadProgress, resetProgress } = useProgressStore();
-  const [isEditMode, setEditMode] = useState(false);
 
   const routine = routines.find(r => r.id === id);
 
@@ -169,16 +164,9 @@ export default function RoutineScreen() {
           </TouchableOpacity>
         }
         rightElement={
-          <View style={styles.headerRightContainer}>
-            {!isEditMode && (
-              <TouchableOpacity onPress={() => resetProgress(routine)} style={styles.headerButton}>
-                <Ionicons name="refresh" size={24} color={theme.colors.text} />
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity onPress={() => setEditMode(!isEditMode)} style={styles.headerButton}>
-              <Ionicons name={isEditMode ? "checkmark-done" : "pencil"} size={24} color={theme.colors.primary} />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity onPress={() => resetProgress(routine)} style={styles.headerButton}>
+            <Ionicons name="refresh" size={24} color={theme.colors.text} />
+          </TouchableOpacity>
         }
       />
       <FlatList
@@ -189,17 +177,11 @@ export default function RoutineScreen() {
             block={item}
             status={progress[item.id]}
             actionStatuses={actions}
-            isEditMode={isEditMode}
           />
         )}
         keyExtractor={item => item.id}
-        contentContainerStyle={{ paddingBottom: isEditMode ? 100 : 0 }}
+        contentContainerStyle={{ paddingBottom: 0 }}
       />
-      {isEditMode && (
-        <TouchableOpacity style={styles.addBlockFab}>
-          <Ionicons name="add" size={32} color={theme.colors.text} />
-        </TouchableOpacity>
-      )}
     </View>
   );
 }
