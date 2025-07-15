@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity } from 'react-native';
-import { ScrollView } from 'react-native-gesture-handler';
+import DraggableFlatList from 'react-native-draggable-flatlist';
 import useRoutineStore from '../../src/store/useRoutineStore';
 import useActionLibraryStore from '../../src/store/useActionLibraryStore';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
@@ -33,7 +33,7 @@ const calculateBlockDuration = (block) => {
 export default function CreateEditRoutineScreen() {
   const { routineId } = useLocalSearchParams();
   const router = useRouter();
-  const { addRoutine, updateRoutine, routines, addBlock, addAction } = useRoutineStore();
+  const { addRoutine, updateRoutine, routines, addBlock, addAction, reorderBlocks, reorderActions } = useRoutineStore();
   const { selectedTemplateForRoutine, setSelectedTemplateForRoutine } = useActionLibraryStore();
 
   const [title, setTitle] = useState('');
@@ -46,19 +46,19 @@ export default function CreateEditRoutineScreen() {
   const [isBlockIconPickerVisible, setBlockIconPickerVisible] = useState(false);
   const [isRoutineIconPickerVisible, setRoutineIconPickerVisible] = useState(false);
   const [editingBlockId, setEditingBlockId] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  const routine = useMemo(() => routines.find(r => r.id === routineId), [routineId, routines]);
 
   useEffect(() => {
-    if (routineId) {
-      const routine = routines.find(r => r.id === routineId);
-      if (routine) {
-        setTitle(routine.title);
-        setColor(routine.color || routineColors[0]);
-        setIcon(routine.icon || 'apps-outline');
-        setBlocks(routine.blocks || []);
-        setIsEditing(true);
-      }
+    if (routine) {
+      setTitle(routine.title);
+      setColor(routine.color || routineColors[0]);
+      setIcon(routine.icon || 'apps-outline');
+      setBlocks(routine.blocks || []);
+      setIsEditing(true);
     }
-  }, [routineId, routines]);
+  }, [routine]);
 
   const totalRoutineDuration = useMemo(() => {
     return blocks.reduce((total, block) => total + calculateBlockDuration(block), 0);
@@ -149,6 +149,7 @@ export default function CreateEditRoutineScreen() {
 
     if (isEditing) {
       updateRoutine(routineId, title, color, icon);
+      reorderBlocks(routineId, blocks);
     } else {
       const newRoutineId = addRoutine(title, color, icon);
       blocks.forEach(block => {
@@ -165,32 +166,86 @@ export default function CreateEditRoutineScreen() {
     router.back();
   };
 
-  const renderActionItem = (action, blockIndex, actionIndex) => {
-    const icon = action.icon || 'document-text-outline';
-    const name = action.name || '';
-    const durationInSeconds = action.duration || 0;
-    
+  const renderActionItem = ({ item: action, drag, isActive, getIndex }) => {
+    const blockIndex = blocks.findIndex(b => b.actions.includes(action));
+    const actionIndex = getIndex();
+
     return (
-      <View style={styles.actionRow}>
-        <Ionicons name={icon} size={20} color="#8b949e" style={styles.actionIcon} />
-        <TextInput 
-          style={[styles.actionInput, {flex: 1}]} 
-          value={name} 
-          onChangeText={(val) => handleUpdateValue(blockIndex, actionIndex, 'name', val)} 
-          placeholder="Action name..." 
-          placeholderTextColor="#8b949e" 
-        />
-        {durationInSeconds > 0 && (
-          <>
-            <TextInput 
-              style={[styles.actionInput, {minWidth: 50, flex: 0, marginLeft: 10}]} 
-              value={String(Math.floor(durationInSeconds / 60))} 
-              onChangeText={(val) => handleUpdateValue(blockIndex, actionIndex, 'duration', (parseInt(val, 10) || 0) * 60)} 
-              keyboardType="numeric" 
-            />
-            <Text style={styles.actionUnit}>min</Text>
-          </>
+      <TouchableOpacity
+        style={[styles.actionItemContainer, { backgroundColor: isActive ? theme.colors.surface : 'transparent' }]}
+        onLongPress={drag}
+        disabled={isActive}
+      >
+        {isEditMode && <Ionicons name="reorder-two-outline" size={24} color={theme.colors.gray} style={styles.dragHandle} />}
+        <View style={styles.actionRow}>
+          <Ionicons name={action.icon || 'document-text-outline'} size={20} color="#8b949e" style={styles.actionIcon} />
+          <TextInput
+            style={[styles.actionInput, { flex: 1 }]}
+            value={action.name}
+            onChangeText={(val) => handleUpdateValue(blockIndex, actionIndex, 'name', val)}
+            placeholder="Action name..."
+            placeholderTextColor="#8b949e"
+          />
+          {action.duration > 0 && (
+            <>
+              <TextInput
+                style={[styles.actionInput, { minWidth: 50, flex: 0, marginLeft: 10 }]}
+                value={String(Math.floor(action.duration / 60))}
+                onChangeText={(val) => handleUpdateValue(blockIndex, actionIndex, 'duration', (parseInt(val, 10) || 0) * 60)}
+                keyboardType="numeric"
+              />
+              <Text style={styles.actionUnit}>min</Text>
+            </>
+          )}
+        </View>
+        {isEditMode && (
+          <TouchableOpacity onPress={() => handleDeleteAction(blockIndex, actionIndex)} style={styles.deleteButton}>
+            <Ionicons name="remove-circle-outline" size={22} color={theme.colors.danger} />
+          </TouchableOpacity>
         )}
+      </TouchableOpacity>
+    );
+  };
+
+  const renderBlockItem = ({ item: block, drag, isActive, getIndex }) => {
+    const blockIndex = getIndex();
+    return (
+      <View style={[styles.blockContainer, { backgroundColor: isActive ? '#20252c' : '#161b22' }]}>
+        <View style={styles.blockHeader}>
+          {isEditMode && (
+            <TouchableOpacity onLongPress={drag} disabled={isActive}>
+              <Ionicons name="reorder-three-outline" size={32} color={theme.colors.gray} style={styles.dragHandle} />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={() => handleBlockIconPress(blockIndex)}>
+            <Ionicons name={block.icon || 'cube-outline'} size={24} color={color} style={styles.blockIcon} />
+          </TouchableOpacity>
+          <TextInput style={styles.blockTitleInput} value={block.name} onChangeText={(name) => setBlocks(prev => prev.map((b, i) => i === blockIndex ? { ...b, name } : b))} placeholder={`Block #${blockIndex + 1} Title`} placeholderTextColor="#8b949e" />
+          <Text style={styles.blockDurationText}>{formatDuration(calculateBlockDuration(block))}</Text>
+          {isEditMode && (
+            <TouchableOpacity onPress={() => handleDeleteBlock(blockIndex)} style={styles.deleteButton}>
+              <Ionicons name="trash-outline" size={22} color={theme.colors.danger} />
+            </TouchableOpacity>
+          )}
+        </View>
+        <DraggableFlatList
+          data={block.actions || []}
+          renderItem={renderActionItem}
+          keyExtractor={(item) => `action-${item.id}`}
+          dragEnabled={isEditMode}
+          onDragEnd={({ data }) => {
+            const newBlocks = [...blocks];
+            newBlocks[blockIndex].actions = data;
+            setBlocks(newBlocks);
+            if (isEditing) {
+              reorderActions(routineId, block.id, data);
+            }
+          }}
+        />
+        <TouchableOpacity style={styles.addButton} onPress={() => handleAddActionPress(blockIndex)}>
+          <Ionicons name="add" size={24} color="#58a6ff" />
+          <Text style={styles.addButtonText}>Add Action</Text>
+        </TouchableOpacity>
       </View>
     );
   };
@@ -215,7 +270,7 @@ export default function CreateEditRoutineScreen() {
         setBlocks(newBlocks);
         setSelectedTemplateForRoutine(null);
       }
-    }, [selectedTemplateForRoutine])
+    }, [selectedTemplateForRoutine, targetBlockIndex, blocks, setSelectedTemplateForRoutine])
   );
 
   return (
@@ -225,64 +280,57 @@ export default function CreateEditRoutineScreen() {
         onClose={() => setRoutineIconPickerVisible(false)}
         onSelectIcon={handleSelectRoutineIcon}
       />
-      <IconPickerModal 
+      <IconPickerModal
         visible={isBlockIconPickerVisible}
         onClose={() => setBlockIconPickerVisible(false)}
         onSelectIcon={handleSelectBlockIcon}
       />
-      <Header title={isEditing ? "Edit Routine" : "Create Routine"} leftElement={<TouchableOpacity onPress={() => router.back()}><Ionicons name="arrow-back" size={28} color="#c9d1d9" /></TouchableOpacity>} rightElement={<Text style={styles.headerRightText}>{formatDuration(totalRoutineDuration)}</Text>} />
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.titleContainer}>
-          <TouchableOpacity onPress={() => setRoutineIconPickerVisible(true)}>
-            <Ionicons name={icon} size={32} color={color} style={styles.routineIcon} />
+      <Header 
+        title={isEditing ? "Edit Routine" : "Create Routine"} 
+        leftElement={<TouchableOpacity onPress={() => router.back()}><Ionicons name="arrow-back" size={28} color="#c9d1d9" /></TouchableOpacity>} 
+        rightElement={
+          <TouchableOpacity onPress={() => setIsEditMode(!isEditMode)}>
+            <Ionicons name={isEditMode ? "checkmark-done" : "pencil"} size={24} color={theme.colors.primary} />
           </TouchableOpacity>
-          <TextInput style={styles.titleInput} value={title} onChangeText={setTitle} placeholder="Title" placeholderTextColor="#8b949e" />
-        </View>
-        <ColorPicker selectedColor={color} onSelectColor={setColor} />
-        {blocks.map((block, blockIndex) => {
-          const isBlockInEditMode = editingBlockId === block.id;
-          return (
-            <View key={block.id} style={styles.blockContainer}>
-              <View style={styles.blockHeader}>
-                <TouchableOpacity onPress={() => handleBlockIconPress(blockIndex)}>
-                  <Ionicons name={block.icon || 'cube-outline'} size={24} color={color} style={styles.blockIcon} />
-                </TouchableOpacity>
-                <TextInput style={styles.blockTitleInput} value={block.name} onChangeText={(name) => setBlocks(prev => prev.map((b, i) => i === blockIndex ? {...b, name} : b))} placeholder={`Block #${blockIndex + 1} Title`} placeholderTextColor="#8b949e" />
-                <Text style={styles.blockDurationText}>{formatDuration(calculateBlockDuration(block))}</Text>
-                <TouchableOpacity onPress={() => setEditingBlockId(isBlockInEditMode ? null : block.id)} style={styles.deleteButton}>
-                  <Ionicons name={isBlockInEditMode ? "checkmark-done" : "pencil"} size={22} color={theme.colors.gray} />
-                </TouchableOpacity>
-                {isBlockInEditMode && (
-                  <TouchableOpacity onPress={() => handleDeleteBlock(blockIndex)} style={styles.deleteButton}>
-                    <Ionicons name="trash-outline" size={22} color={theme.colors.danger} />
-                  </TouchableOpacity>
-                )}
-              </View>
-              {(block.actions || []).map((action, actionIndex) => (
-                <View key={action.id} style={styles.actionItemContainer}>
-                  {renderActionItem(action, blockIndex, actionIndex)}
-                  {isBlockInEditMode && (
-                    <TouchableOpacity onPress={() => handleDeleteAction(blockIndex, actionIndex)} style={styles.deleteButton}>
-                      <Ionicons name="remove-circle-outline" size={22} color={theme.colors.danger} />
-                    </TouchableOpacity>
-                  )}
-                </View>
-              ))}
-              <TouchableOpacity style={styles.addButton} onPress={() => handleAddActionPress(blockIndex)}>
-                <Ionicons name="add" size={24} color="#58a6ff" />
-                <Text style={styles.addButtonText}>Add Action</Text>
+        } 
+      />
+      
+      <DraggableFlatList
+        data={blocks}
+        renderItem={renderBlockItem}
+        keyExtractor={(item) => `block-${item.id}`}
+        dragEnabled={isEditMode}
+        onDragEnd={({ data }) => {
+          setBlocks(data);
+          if (isEditing) {
+            reorderBlocks(routineId, data);
+          }
+        }}
+        ListHeaderComponent={
+          <>
+            <View style={styles.titleContainer}>
+              <TouchableOpacity onPress={() => setRoutineIconPickerVisible(true)}>
+                <Ionicons name={icon} size={32} color={color} style={styles.routineIcon} />
               </TouchableOpacity>
+              <TextInput style={styles.titleInput} value={title} onChangeText={setTitle} placeholder="Title" placeholderTextColor="#8b949e" />
             </View>
-          );
-        })}
-        <TouchableOpacity style={styles.addButton} onPress={handleAddNewBlock}>
-          <Ionicons name="add" size={24} color="#58a6ff" />
-          <Text style={styles.addButtonText}>Add Block</Text>
-        </TouchableOpacity>
-        <View style={{ marginTop: 30, marginBottom: 60 }}>
-          <Button title="Save Routine" onPress={handleSave} color="#238636" />
-        </View>
-      </ScrollView>
+            <ColorPicker selectedColor={color} onSelectColor={setColor} />
+          </>
+        }
+        ListFooterComponent={
+          <>
+            <TouchableOpacity style={styles.addButton} onPress={handleAddNewBlock}>
+              <Ionicons name="add" size={24} color="#58a6ff" />
+              <Text style={styles.addButtonText}>Add Block</Text>
+            </TouchableOpacity>
+            <View style={{ marginTop: 30, marginBottom: 60 }}>
+              <Button title="Save Routine" onPress={handleSave} color="#238636" />
+            </View>
+          </>
+        }
+        contentContainerStyle={styles.scrollContainer}
+      />
+
       <ActionSheet isVisible={isActionSheetVisible} onClose={() => setIsActionSheetVisible(false)} onSelect={addActionToBlock} options={actionOptions} />
     </View>
   );
@@ -302,40 +350,79 @@ const styles = StyleSheet.create({
     marginRight: theme.layout.spacing.md,
     paddingBottom: 10,
   },
-  titleInput: { 
-    fontFamily: 'NunitoSans_700Bold', 
-    fontSize: 28, 
-    color: '#c9d1d9', 
+  titleInput: {
+    fontFamily: 'NunitoSans_700Bold',
+    fontSize: 28,
+    color: '#c9d1d9',
     flex: 1,
     paddingBottom: 10,
   },
-  blockContainer: { backgroundColor: '#161b22', borderRadius: 5, padding: 15, marginBottom: 20 },
-  blockHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
+  blockContainer: { 
+    backgroundColor: '#161b22', 
+    borderRadius: 5, 
+    padding: 15, 
+    marginBottom: 20 
+  },
+  blockHeader: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginBottom: 15 
+  },
   blockIcon: {
     marginRight: theme.layout.spacing.sm,
   },
-  blockTitleInput: { fontFamily: 'NunitoSans_700Bold', fontSize: 20, color: '#c9d1d9', flex: 1 },
-  blockDurationText: { fontFamily: 'NunitoSans_400Regular', color: '#8b949e', fontSize: 16, marginLeft: 10 },
+  blockTitleInput: { 
+    fontFamily: 'NunitoSans_700Bold', 
+    fontSize: 20, 
+    color: '#c9d1d9', 
+    flex: 1 
+  },
+  blockDurationText: { 
+    fontFamily: 'NunitoSans_400Regular', 
+    color: '#8b949e', 
+    fontSize: 16, 
+    marginLeft: 10 
+  },
   actionItemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginLeft: 10,
     marginBottom: 10,
+    borderRadius: 5,
   },
-  actionRow: { 
-    flexDirection: 'row', 
+  actionRow: {
+    flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
   actionIcon: { marginRight: 10 },
-  actionInput: { fontFamily: 'NunitoSans_400Regular', borderWidth: 1, borderColor: '#30363d', backgroundColor: '#0d1117', paddingHorizontal: 10, paddingVertical: 5, fontSize: 16, borderRadius: 5, color: '#c9d1d9', textAlign: 'left' },
+  actionInput: { 
+    fontFamily: 'NunitoSans_400Regular', 
+    borderWidth: 1, 
+    borderColor: '#30363d', 
+    backgroundColor: '#0d1117', 
+    paddingHorizontal: 10, 
+    paddingVertical: 5, 
+    fontSize: 16, 
+    borderRadius: 5, 
+    color: '#c9d1d9', 
+    textAlign: 'left' 
+  },
   actionUnit: { color: '#8b949e', marginLeft: 5 },
-  pomodoroLabel: { color: '#c9d1d9', marginRight: 10, fontSize: 16 },
-  addButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, marginTop: 5 },
+  addButton: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    paddingVertical: 10, 
+    marginTop: 5 
+  },
   addButtonText: { color: '#58a6ff', marginLeft: 5, fontSize: 16 },
   headerRightText: { fontFamily: 'NunitoSans_400Regular', color: '#8b949e', fontSize: 16 },
   deleteButton: {
     padding: 5,
     marginLeft: 10,
   },
+  dragHandle: {
+    marginRight: 10,
+  }
 });

@@ -133,6 +133,12 @@ const useRoutineStore = create((set, get) => ({
     });
   },
 
+  reorderBlocks: (routineId, reorderedBlocks) => {
+    get()._updateAndSave(routineId, routine => {
+      routine.blocks = reorderedBlocks;
+    });
+  },
+
   // --- Actions ---
   addAction: (routineId, blockId, actionData) => {
     const newAction = { ...actionData, id: uuidv4() };
@@ -159,6 +165,15 @@ const useRoutineStore = create((set, get) => ({
       const block = routine.blocks.find(b => b.id === blockId);
       if (block) {
         block.actions = block.actions.filter(a => a.id !== actionId);
+      }
+    });
+  },
+
+  reorderActions: (routineId, blockId, reorderedActions) => {
+    get()._updateAndSave(routineId, routine => {
+      const block = routine.blocks.find(b => b.id === blockId);
+      if (block) {
+        block.actions = reorderedActions;
       }
     });
   },
