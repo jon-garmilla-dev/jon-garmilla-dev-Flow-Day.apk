@@ -24,7 +24,6 @@ const formatDuration = (totalMinutes) => {
 const calculateBlockDuration = (block) => {
   if (!block || !block.actions) return 0;
   return block.actions.reduce((blockSum, action) => {
-    // New model stores duration in seconds. We format it as minutes here for display.
     const durationInMinutes = Math.floor((parseInt(action.duration, 10) || 0) / 60);
     return blockSum + durationInMinutes;
   }, 0);
@@ -42,6 +41,7 @@ export default function CreateEditRoutineScreen() {
   const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
   const [targetBlockIndex, setTargetBlockIndex] = useState(null);
   const [isBlockIconPickerVisible, setBlockIconPickerVisible] = useState(false);
+  const [editingBlockId, setEditingBlockId] = useState(null);
 
   useEffect(() => {
     if (routineId) {
@@ -81,6 +81,17 @@ export default function CreateEditRoutineScreen() {
     setIsActionSheetVisible(true);
   };
 
+  const handleDeleteBlock = (blockIndex) => {
+    const newBlocks = blocks.filter((_, i) => i !== blockIndex);
+    setBlocks(newBlocks);
+  };
+
+  const handleDeleteAction = (blockIndex, actionIndex) => {
+    const newBlocks = [...blocks];
+    newBlocks[blockIndex].actions = newBlocks[blockIndex].actions.filter((_, i) => i !== actionIndex);
+    setBlocks(newBlocks);
+  };
+
   const addActionToBlock = (type) => {
     if (targetBlockIndex === null) return;
 
@@ -95,16 +106,15 @@ export default function CreateEditRoutineScreen() {
 
     const newBlocks = [...blocks];
     let newAction;
-    // Unify the default actions to the new data model
     switch (type) {
       case 'text':
         newAction = { id: uuidv4(), name: 'New Task', type: 'task', icon: 'document-text-outline', duration: 0 };
         break;
       case 'focus':
-        newAction = { id: uuidv4(), name: 'Focus Block', type: 'timer', icon: 'time-outline', duration: 300 }; // 5 minutes
+        newAction = { id: uuidv4(), name: 'Focus Block', type: 'timer', icon: 'time-outline', duration: 300 };
         break;
       case 'pomodoro':
-        newAction = { id: uuidv4(), name: 'Pomodoro', type: 'timer', icon: 'hourglass-outline', duration: 1500 }; // 25 minutes
+        newAction = { id: uuidv4(), name: 'Pomodoro', type: 'timer', icon: 'hourglass-outline', duration: 1500 };
         break;
       default:
         return;
@@ -127,34 +137,15 @@ export default function CreateEditRoutineScreen() {
     }
 
     if (isEditing) {
-      // La actualización completa (syncing) es compleja.
-      // Por ahora, solo actualizamos el título como antes.
-      // Una solución completa requeriría borrar y re-crear bloques/acciones
-      // o una lógica de comparación más detallada en el store.
       updateRoutine(routineId, title);
     } else {
-      // Lógica de creación completa
       const newRoutineId = addRoutine(title);
       blocks.forEach(block => {
         if (block.name.trim() !== '') {
-          // Explicitly pass the block data to ensure icon is included
-          const blockData = {
-            name: block.name,
-            icon: block.icon || 'cube-outline', // Ensure a default icon
-            actions: [] // Actions will be added separately
-          };
+          const { id: tempBlockId, ...blockData } = block;
           const newBlockId = addBlock(newRoutineId, blockData);
-          
           (block.actions || []).forEach(action => {
-            // Quitamos el id temporal del frontend antes de guardar
             const { id, ...actionData } = action;
-            if (action.type === 'text' && action.text.trim() === '') return;
-            
-            // Ensure name property exists for enriched actions
-            if (action.type !== 'text' && action.type !== 'focus' && action.type !== 'pomodoro') {
-              actionData.name = action.name || 'Untitled Action';
-            }
-
             addAction(newRoutineId, newBlockId, actionData);
           });
         }
@@ -165,34 +156,9 @@ export default function CreateEditRoutineScreen() {
 
   const renderActionItem = (action, blockIndex, actionIndex) => {
     const icon = action.icon || 'document-text-outline';
-    const name = action.name || action.text || ''; // Handle legacy 'text' property
+    const name = action.name || '';
     const durationInSeconds = action.duration || 0;
     
-    // Handle legacy pomodoro structure
-    if (action.type === 'pomodoro' && action.workDuration) {
-      const work = parseInt(action.workDuration, 10) || 0;
-      const brake = parseInt(action.breakDuration, 10) || 0;
-      return (
-         <View style={styles.actionRow}>
-          <Ionicons name={icon} size={20} color="#8b949e" style={styles.actionIcon} />
-          <Text style={styles.pomodoroLabel}>Pomodoro: {work}m / {brake}m</Text>
-        </View>
-      );
-    }
-
-    // Handle legacy text/focus actions
-    if (action.type === 'text' || action.type === 'focus') {
-       return (
-          <View style={styles.actionRow}>
-            <Ionicons name={icon} size={20} color="#8b949e" style={styles.actionIcon} />
-            <TextInput style={[styles.actionInput, {flex: 1}]} value={action.text} onChangeText={(val) => handleUpdateValue(blockIndex, actionIndex, 'text', val)} placeholder="Task description..." placeholderTextColor="#8b949e" />
-            <TextInput style={[styles.actionInput, {minWidth: 50, flex: 0, marginLeft: 10}]} value={action.duration} onChangeText={(val) => handleUpdateValue(blockIndex, actionIndex, 'duration', val)} keyboardType="numeric" />
-            <Text style={styles.actionUnit}>min</Text>
-          </View>
-        );
-    }
-
-    // Render new unified action model
     return (
       <View style={styles.actionRow}>
         <Ionicons name={icon} size={20} color="#8b949e" style={styles.actionIcon} />
@@ -222,24 +188,18 @@ export default function CreateEditRoutineScreen() {
     { label: 'From Library', value: 'from_library', icon: 'library-outline' },
     { label: 'New Library Action', value: 'new_template', icon: 'add-circle-outline' },
     { label: 'Simple Text', value: 'text', icon: 'document-text-outline' },
-    { label: 'Focus', value: 'focus', icon: 'time-outline' },
-    { label: 'Pomodoro', value: 'pomodoro', icon: 'hourglass-outline' },
   ];
 
   useFocusEffect(
     useCallback(() => {
       if (selectedTemplateForRoutine && targetBlockIndex !== null) {
         const newBlocks = [...blocks];
-        // Create a new action instance from the template
         const newAction = { ...selectedTemplateForRoutine, id: uuidv4() };
-        
         if (!newBlocks[targetBlockIndex].actions) {
           newBlocks[targetBlockIndex].actions = [];
         }
         newBlocks[targetBlockIndex].actions.push(newAction);
         setBlocks(newBlocks);
-        
-        // Reset the shared state
         setSelectedTemplateForRoutine(null);
       }
     }, [selectedTemplateForRoutine])
@@ -255,26 +215,42 @@ export default function CreateEditRoutineScreen() {
       <Header title={isEditing ? "Edit Routine" : "Create Routine"} leftElement={<TouchableOpacity onPress={() => router.back()}><Ionicons name="arrow-back" size={28} color="#c9d1d9" /></TouchableOpacity>} rightElement={<Text style={styles.headerRightText}>{formatDuration(totalRoutineDuration)}</Text>} />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <TextInput style={styles.titleInput} value={title} onChangeText={setTitle} placeholder="Title" placeholderTextColor="#8b949e" />
-        {blocks.map((block, blockIndex) => (
-          <View key={block.id} style={styles.blockContainer}>
-            <View style={styles.blockHeader}>
-              <TouchableOpacity onPress={() => handleBlockIconPress(blockIndex)}>
-                <Ionicons name={block.icon || 'cube-outline'} size={24} color={theme.colors.primary} style={styles.blockIcon} />
-              </TouchableOpacity>
-              <TextInput style={styles.blockTitleInput} value={block.name} onChangeText={(name) => setBlocks(prev => prev.map((b, i) => i === blockIndex ? {...b, name} : b))} placeholder={`Block #${blockIndex + 1} Title`} placeholderTextColor="#8b949e" />
-              <Text style={styles.blockDurationText}>{formatDuration(calculateBlockDuration(block))}</Text>
-            </View>
-            {(block.actions || []).map((action, actionIndex) => (
-              <View key={action.id}>
-                {renderActionItem(action, blockIndex, actionIndex)}
+        {blocks.map((block, blockIndex) => {
+          const isBlockInEditMode = editingBlockId === block.id;
+          return (
+            <View key={block.id} style={styles.blockContainer}>
+              <View style={styles.blockHeader}>
+                <TouchableOpacity onPress={() => handleBlockIconPress(blockIndex)}>
+                  <Ionicons name={block.icon || 'cube-outline'} size={24} color={theme.colors.primary} style={styles.blockIcon} />
+                </TouchableOpacity>
+                <TextInput style={styles.blockTitleInput} value={block.name} onChangeText={(name) => setBlocks(prev => prev.map((b, i) => i === blockIndex ? {...b, name} : b))} placeholder={`Block #${blockIndex + 1} Title`} placeholderTextColor="#8b949e" />
+                <Text style={styles.blockDurationText}>{formatDuration(calculateBlockDuration(block))}</Text>
+                <TouchableOpacity onPress={() => setEditingBlockId(isBlockInEditMode ? null : block.id)} style={styles.deleteButton}>
+                  <Ionicons name={isBlockInEditMode ? "checkmark-done" : "pencil"} size={22} color={theme.colors.gray} />
+                </TouchableOpacity>
+                {isBlockInEditMode && (
+                  <TouchableOpacity onPress={() => handleDeleteBlock(blockIndex)} style={styles.deleteButton}>
+                    <Ionicons name="trash-outline" size={22} color={theme.colors.danger} />
+                  </TouchableOpacity>
+                )}
               </View>
-            ))}
-            <TouchableOpacity style={styles.addButton} onPress={() => handleAddActionPress(blockIndex)}>
-              <Ionicons name="add" size={24} color="#58a6ff" />
-              <Text style={styles.addButtonText}>Add Action</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
+              {(block.actions || []).map((action, actionIndex) => (
+                <View key={action.id} style={styles.actionItemContainer}>
+                  {renderActionItem(action, blockIndex, actionIndex)}
+                  {isBlockInEditMode && (
+                    <TouchableOpacity onPress={() => handleDeleteAction(blockIndex, actionIndex)} style={styles.deleteButton}>
+                      <Ionicons name="remove-circle-outline" size={22} color={theme.colors.danger} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ))}
+              <TouchableOpacity style={styles.addButton} onPress={() => handleAddActionPress(blockIndex)}>
+                <Ionicons name="add" size={24} color="#58a6ff" />
+                <Text style={styles.addButtonText}>Add Action</Text>
+              </TouchableOpacity>
+            </View>
+          );
+        })}
         <TouchableOpacity style={styles.addButton} onPress={handleAddNewBlock}>
           <Ionicons name="add" size={24} color="#58a6ff" />
           <Text style={styles.addButtonText}>Add Block</Text>
@@ -299,7 +275,17 @@ const styles = StyleSheet.create({
   },
   blockTitleInput: { fontFamily: 'NunitoSans_700Bold', fontSize: 20, color: '#c9d1d9', flex: 1 },
   blockDurationText: { fontFamily: 'NunitoSans_400Regular', color: '#8b949e', fontSize: 16, marginLeft: 10 },
-  actionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, marginLeft: 10 },
+  actionItemContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 10,
+    marginBottom: 10,
+  },
+  actionRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center',
+    flex: 1,
+  },
   actionIcon: { marginRight: 10 },
   actionInput: { fontFamily: 'NunitoSans_400Regular', borderWidth: 1, borderColor: '#30363d', backgroundColor: '#0d1117', paddingHorizontal: 10, paddingVertical: 5, fontSize: 16, borderRadius: 5, color: '#c9d1d9', textAlign: 'left' },
   actionUnit: { color: '#8b949e', marginLeft: 5 },
@@ -307,4 +293,8 @@ const styles = StyleSheet.create({
   addButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, marginTop: 5 },
   addButtonText: { color: '#58a6ff', marginLeft: 5, fontSize: 16 },
   headerRightText: { fontFamily: 'NunitoSans_400Regular', color: '#8b949e', fontSize: 16 },
+  deleteButton: {
+    padding: 5,
+    marginLeft: 10,
+  },
 });
