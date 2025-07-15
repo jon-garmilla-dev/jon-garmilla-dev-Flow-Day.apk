@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, BackHandler, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
-import { TapGestureHandler, State } from 'react-native-gesture-handler';
+import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import CircularProgress from 'react-native-circular-progress-indicator';
@@ -60,7 +60,6 @@ export default function RoutineRunnerScreen() {
   const [countdown, setCountdown] = useState(0);
   const [isActionLocked, setIsActionLocked] = useState(false);
   const [isFocusLocked, setIsFocusLocked] = useState(true);
-
   // Animation
   const focusProgress = useSharedValue(0);
 
@@ -82,7 +81,6 @@ export default function RoutineRunnerScreen() {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        // Directly use the shared value in the callback, which is fine.
         if (focusProgress.value > 0.5 && isFocusLocked) {
           return true; // Block back press in focus mode
         }
@@ -90,7 +88,7 @@ export default function RoutineRunnerScreen() {
       };
       const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
       return () => subscription.remove();
-    }, [isFocusLocked]) // Removed focusProgress from dependencies
+    }, [isFocusLocked])
   );
 
   useEffect(() => {
@@ -126,7 +124,8 @@ export default function RoutineRunnerScreen() {
 
   // Handlers
   const handleComplete = () => {
-    if (!currentTask) return;
+    if (!currentTask || (focusProgress.value > 0.5 && isActionLocked)) return;
+
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     completeAction(routine, currentTask.action.id);
   };
@@ -142,32 +141,24 @@ export default function RoutineRunnerScreen() {
     }
   }, [currentTask, actions]);
 
-  const onDoubleTap = event => {
-    if (event.nativeEvent.state === State.ACTIVE) {
+  const doubleTap = Gesture.Tap()
+    .numberOfTaps(2)
+    .maxDuration(250)
+    .onStart(() => {
       const targetValue = focusProgress.value > 0.5 ? 0 : 1;
       focusProgress.value = withTiming(targetValue, {
         duration: 350,
         easing: Easing.inOut(Easing.ease),
       });
-    }
-  };
+    });
 
   // --- Animated Styles ---
-  const animatedCardStyle = useAnimatedStyle(() => {
-    const cardWidth = interpolate(focusProgress.value, [0, 1], [screenWidth * 0.9, screenWidth]);
-    const cardHeight = interpolate(focusProgress.value, [0, 1], [screenHeight * 0.7, screenHeight]);
-    const borderRadius = interpolate(focusProgress.value, [0, 1], [20, 0]);
-    const padding = interpolate(focusProgress.value, [0, 1], [theme.layout.spacing.lg, theme.layout.spacing.md]);
-    return {
-      width: cardWidth,
-      height: cardHeight,
-      borderRadius,
-      padding,
-    };
-  });
+  const animatedMainContentStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(focusProgress.value, [0, 0.5], [1, 0], Extrapolate.CLAMP),
+  }));
 
   const animatedFocusOpacity = useAnimatedStyle(() => ({
-    opacity: interpolate(focusProgress.value, [0.7, 1], [0, 1]),
+    opacity: interpolate(focusProgress.value, [0.5, 1], [0, 1], Extrapolate.CLAMP),
   }));
 
   const animatedActionTitleStyle = useAnimatedStyle(() => ({
@@ -180,6 +171,7 @@ export default function RoutineRunnerScreen() {
       scale: interpolate(focusProgress.value, [0, 1], [1, 1.2]),
     }]
   }));
+
 
   // --- Render Logic ---
   if (!routine) return <View style={styles.container}><Text style={styles.actionTitle}>Routine not found.</Text></View>;
@@ -194,74 +186,115 @@ export default function RoutineRunnerScreen() {
             <Text style={styles.actionTitle}>{block?.name || 'Block'} Complete</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.completeButton} onPress={() => router.back()}>
-          <Ionicons name="checkmark-done" size={32} color={theme.colors.background} />
-        </TouchableOpacity>
+        <View style={styles.bottomContainer}>
+          <TouchableOpacity style={styles.completeButton} onPress={() => router.back()}>
+            <Ionicons name="checkmark-done" size={32} color={theme.colors.background} />
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Header title={routine.title} leftElement={<TouchableOpacity onPress={() => router.back()}><Ionicons name="close" size={28} color={theme.colors.text} /></TouchableOpacity>} rightElement={<View style={styles.timerContainer}><Ionicons name="timer-outline" size={20} color={theme.colors.primary} /><Text style={styles.timerText}>{currentTask.action.type === 'timer' && currentTask.action.duration > 0 ? formatTime(countdown) : formatTime(elapsedTime)}</Text></View>} />
-
-      <TapGestureHandler onHandlerStateChange={onDoubleTap} numberOfTaps={2}>
-        <View style={styles.content}>
-          <Animated.View style={[styles.card, animatedCardStyle]}>
-            {/* Card Header */}
-            <View>
-              <View style={styles.blockHeader}>
-                <Ionicons name={currentTask.action.icon || 'ellipse-outline'} size={22} color={theme.colors.gray} />
-                <Text style={styles.blockTitle}>{currentTask.action.name}</Text>
-                <Text style={styles.progressText}>{`${currentIndex + 1}/${totalTasks}`}</Text>
+    <GestureDetector gesture={doubleTap}>
+      <View style={styles.container}>
+        <Animated.View style={[StyleSheet.absoluteFill, animatedMainContentStyle]}>
+          <Header title={routine.title} leftElement={<TouchableOpacity onPress={() => router.back()}><Ionicons name="close" size={28} color={theme.colors.text} /></TouchableOpacity>} rightElement={<View style={styles.timerContainer}><Ionicons name="timer-outline" size={20} color={theme.colors.primary} /><Text style={styles.timerText}>{currentTask.action.type === 'timer' && currentTask.action.duration > 0 ? formatTime(countdown) : formatTime(elapsedTime)}</Text></View>} />
+          <View style={styles.content}>
+            <View style={styles.card}>
+              {/* Card Header */}
+              <View>
+                <View style={styles.blockHeader}>
+                  <Ionicons name={currentTask.action.icon || 'ellipse-outline'} size={22} color={theme.colors.gray} />
+                  <Text style={styles.blockTitle}>{currentTask.action.name}</Text>
+                  <Text style={styles.progressText}>{`${currentIndex + 1}/${totalTasks}`}</Text>
+                </View>
+                <AnimatedProgressBar current={currentIndex + 1} total={totalTasks} progress={focusProgress} />
               </View>
-              <AnimatedProgressBar current={currentIndex + 1} total={totalTasks} progress={focusProgress} />
+
+              {/* Main Content */}
+              <View style={styles.actionContent}>
+                {currentTask.action.type === 'timer' && currentTask.action.duration > 0 ? (
+                  <CircularProgress value={countdown} maxValue={currentTask.action.duration} radius={100} duration={0} progressValueColor={theme.colors.text} activeStrokeColor={theme.colors.primary} inActiveStrokeColor={theme.colors.border} inActiveStrokeOpacity={0.5} inActiveStrokeWidth={20} activeStrokeWidth={20} title={formatTime(countdown)} titleStyle={styles.timerTitle} showProgressValue={false} />
+                ) : (
+                  <Animated.View style={[{alignItems: 'center'}, animatedMainIconSize]}>
+                    <Ionicons name={currentTask.action.icon || 'barbell-outline'} size={64} color={theme.colors.primary} />
+                    <Animated.Text style={[styles.actionTitle, animatedActionTitleStyle]}>{currentTask.action.name}</Animated.Text>
+                  </Animated.View>
+                )}
+              </View>
+
+              {/* Footer */}
+              <View style={styles.footer}>{nextTask ? <Text style={styles.nextUpText}>Up next: {nextTask.action.name}</Text> : <Text style={styles.nextUpText}>Last action!</Text>}</View>
             </View>
+          </View>
+          {/* Bottom Buttons */}
+          <View style={styles.bottomContainer}>
+            <TouchableOpacity style={[styles.completeButton, isActionLocked && styles.completeButtonLocked]} onPress={handleComplete} disabled={isActionLocked}>
+              <Ionicons name="checkmark-done" size={40} color={theme.colors.background} />
+            </TouchableOpacity>
+            {isActionLocked && (
+              <TouchableOpacity style={styles.unlockButton} onPress={() => setIsActionLocked(false)}>
+                <Ionicons name="lock-open-outline" size={24} color={theme.colors.text} />
+              </TouchableOpacity>
+            )}
+          </View>
+        </Animated.View>
 
-            {/* Main Content */}
-            <View style={styles.actionContent}>
-              {currentTask.action.type === 'timer' && currentTask.action.duration > 0 ? (
-                <CircularProgress value={countdown} maxValue={currentTask.action.duration} radius={100} duration={0} progressValueColor={theme.colors.text} activeStrokeColor={theme.colors.primary} inActiveStrokeColor={theme.colors.border} inActiveStrokeOpacity={0.5} inActiveStrokeWidth={20} activeStrokeWidth={20} title={formatTime(countdown)} titleStyle={styles.timerTitle} showProgressValue={false} />
-              ) : (
-                <Animated.View style={[{alignItems: 'center'}, animatedMainIconSize]}>
-                  <Ionicons name={currentTask.action.icon || 'barbell-outline'} size={64} color={theme.colors.primary} />
-                  <Animated.Text style={[styles.actionTitle, animatedActionTitleStyle]}>{currentTask.action.name}</Animated.Text>
-                </Animated.View>
-              )}
-            </View>
-
-            {/* Footer */}
-            <View style={styles.footer}>{nextTask ? <Text style={styles.nextUpText}>Up next: {nextTask.action.name}</Text> : <Text style={styles.nextUpText}>Last action!</Text>}</View>
-          </Animated.View>
-        </View>
-      </TapGestureHandler>
-
-      {/* Focus Mode Elements */}
-      <Animated.View style={[styles.focusLock, animatedFocusOpacity]}>
-        <TouchableOpacity onPress={() => setIsFocusLocked(!isFocusLocked)}>
-          <Ionicons name={isFocusLocked ? "lock-closed" : "lock-open"} size={28} color={theme.colors.gray} />
-        </TouchableOpacity>
-      </Animated.View>
-
-      {/* Bottom Buttons */}
-      <View style={styles.bottomContainer}>
-        <TouchableOpacity style={[styles.completeButton, isActionLocked && styles.completeButtonLocked]} onPress={handleComplete} disabled={isActionLocked}>
-          <Ionicons name="checkmark-done" size={40} color={theme.colors.background} />
-        </TouchableOpacity>
-        {isActionLocked && (
-          <TouchableOpacity style={styles.unlockButton} onPress={() => setIsActionLocked(false)}>
-            <Ionicons name="lock-open-outline" size={24} color={theme.colors.text} />
+        <Animated.View 
+          style={[styles.focusOverlay, animatedFocusOpacity]}
+        >
+          <TouchableOpacity style={styles.focusLock} onPress={() => setIsFocusLocked(!isFocusLocked)}>
+            <Ionicons name={isFocusLocked ? "lock-closed" : "lock-open"} size={28} color="white" />
           </TouchableOpacity>
-        )}
+          <View style={styles.focusCard}>
+            <View style={styles.blockHeader}>
+              <Ionicons name={currentTask.action.icon || 'ellipse-outline'} size={22} color={'white'} />
+              <Text style={[styles.blockTitle, {color: 'white'}]}>{currentTask.action.name}</Text>
+              <Text style={[styles.progressText, {color: 'rgba(255,255,255,0.7)'}]}>{`${currentIndex + 1}/${totalTasks}`}</Text>
+            </View>
+            <View style={styles.focusProgressContainer}>
+              <View style={[styles.focusProgressBar, { width: `${totalTasks > 0 ? ((currentIndex + 1) / totalTasks) * 100 : 0}%` }]} />
+            </View>
+          </View>
+          <View style={styles.actionContent}>
+            {currentTask.action.type === 'timer' && currentTask.action.duration > 0 ? (
+              <CircularProgress value={countdown} maxValue={currentTask.action.duration} radius={120} duration={0} progressValueColor={'white'} activeStrokeColor={theme.colors.primary} inActiveStrokeColor={'rgba(255,255,255,0.2)'} inActiveStrokeOpacity={0.5} inActiveStrokeWidth={20} activeStrokeWidth={20} title={formatTime(countdown)} titleStyle={[styles.timerTitle, {color: 'white'}]} showProgressValue={false} />
+            ) : (
+              <Animated.View style={[{alignItems: 'center'}, animatedMainIconSize]}>
+                <Ionicons name={currentTask.action.icon || 'barbell-outline'} size={80} color={'white'} />
+                <Animated.Text style={[styles.actionTitle, {color: 'white', fontSize: 40, marginTop: 20}, animatedActionTitleStyle]}>{currentTask.action.name}</Animated.Text>
+              </Animated.View>
+            )}
+          </View>
+          <View style={styles.bottomContainer}>
+            <TouchableOpacity style={[styles.completeButton, isActionLocked && styles.completeButtonLocked]} onPress={handleComplete} disabled={isActionLocked}>
+              <Ionicons name="checkmark-done" size={40} color={theme.colors.background} />
+            </TouchableOpacity>
+            {isActionLocked && (
+              <TouchableOpacity style={styles.unlockButton} onPress={() => setIsActionLocked(false)}>
+                <Ionicons name="lock-open-outline" size={24} color={'white'} />
+              </TouchableOpacity>
+            )}
+          </View>
+        </Animated.View>
       </View>
-    </View>
+    </GestureDetector>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background, alignItems: 'center' },
-  content: { flex: 1, justifyContent: 'flex-start', alignItems: 'center', paddingTop: 20 },
-  card: { backgroundColor: theme.colors.surface, justifyContent: 'space-between', overflow: 'hidden' },
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  content: { flex: 1, alignItems: 'center', paddingTop: 20 },
+  card: { 
+    width: '90%',
+    height: '70%',
+    backgroundColor: theme.colors.surface, 
+    justifyContent: 'space-between', 
+    overflow: 'hidden',
+    borderRadius: 20,
+    padding: theme.layout.spacing.lg,
+  },
   progressBarContainer: {
     height: 8,
     backgroundColor: theme.colors.border,
@@ -313,5 +346,58 @@ const styles = StyleSheet.create({
   unlockButton: { position: 'absolute', bottom: 0, right: 0, padding: 10 },
   timerContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.surface, paddingVertical: theme.layout.spacing.xs, paddingHorizontal: theme.layout.spacing.sm, borderRadius: 8 },
   timerText: { color: theme.colors.primary, fontFamily: theme.typography.fonts.bold, fontSize: theme.typography.fontSizes.md, marginLeft: theme.layout.spacing.xs },
-  focusLock: { position: 'absolute', top: 60, right: 20, padding: 10, zIndex: 10 },
+  focusOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    justifyContent: 'space-between',
+    paddingTop: 40,
+    paddingBottom: 60,
+    paddingHorizontal: 20,
+  },
+  focusLock: { position: 'absolute', top: 100, right: 20, padding: 10 },
+  focusHeader: {
+    width: '100%',
+  },
+  focusHeaderTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.layout.spacing.lg,
+  },
+  focusRoutineTitle: {
+    color: 'white',
+    fontFamily: theme.typography.fonts.bold,
+    fontSize: theme.typography.fontSizes.lg,
+  },
+  focusTimerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingVertical: theme.layout.spacing.xs,
+    paddingHorizontal: theme.layout.spacing.sm,
+    borderRadius: 8,
+  },
+  focusTimerText: {
+    color: 'white',
+    fontFamily: theme.typography.fonts.bold,
+    fontSize: theme.typography.fontSizes.md,
+    marginLeft: theme.layout.spacing.xs,
+  },
+  checkContainer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  focusProgressContainer: {
+    height: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginTop: theme.layout.spacing.md,
+  },
+  focusProgressBar: { 
+    height: '100%', 
+    backgroundColor: theme.colors.primary, 
+    borderRadius: 4 
+  },
 });
