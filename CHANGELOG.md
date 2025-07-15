@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.2.0...v1.3.0) (2025-07-15)
+
+
+### Features
+
+* Refactor completeAction to improve state update and save progress handling ([61de468](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/61de468f1cbb44e9ec60bbbc930b4b7b9d08fef5))
+
 ## [1.2.0](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.1.0...v1.2.0) (2025-07-15)
 
 
