@@ -65,6 +65,9 @@ jobs:
     - name: Install Expo CLI
       run: npm install -g @expo/cli
 
+    - name: Create adaptive icon
+      run: cp src/assets/icon.png src/assets/adaptive-icon.png
+
     - name: Expo prebuild
       run: npx expo prebuild --platform android
 
