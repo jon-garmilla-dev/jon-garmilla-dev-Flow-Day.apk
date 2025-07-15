@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { theme } from '../constants/theme';
 
 const Header = ({ title, leftElement, rightElement }) => {
   return (
@@ -21,27 +22,27 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 64, // Altura estándar de cabecera
-    paddingHorizontal: 10,
-    backgroundColor: '#0d1117',
+    height: theme.layout.headerHeight,
+    paddingHorizontal: theme.layout.spacing.md,
+    backgroundColor: theme.colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: '#30363d',
+    borderBottomColor: theme.colors.border,
   },
   sideContainer: {
-    minWidth: 40, // Un ancho mínimo para mantener el equilibrio
+    minWidth: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 5,
+    paddingHorizontal: theme.layout.spacing.sm,
   },
   titleContainer: {
-    flex: 1, // El título ocupa el espacio restante
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
-    fontFamily: 'NunitoSans_700Bold',
-    fontSize: 22,
-    color: '#f0f6fc',
+    fontFamily: theme.typography.fonts.bold,
+    fontSize: theme.typography.fontSizes.lg,
+    color: theme.colors.text,
   },
 });
 
