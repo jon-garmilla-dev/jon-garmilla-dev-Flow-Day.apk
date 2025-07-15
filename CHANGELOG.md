@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.1.0...v1.2.0) (2025-07-15)
+
+
+### Features
+
+* Add splash screen asset and handle potential undefined task info in RoutineRunnerScreen ([7b5f8c8](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/7b5f8c8ee5e53d7a4157d3698bbf866322e557ec))
+
 ## 1.1.0 (2025-07-15)
 
 
