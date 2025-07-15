@@ -35,6 +35,7 @@ const RoutineRow = ({ item, isEditMode, onDelete }) => {
   if (isEditMode) {
     return (
       <View style={styles.itemContainer}>
+        <Ionicons name={item.icon || 'apps-outline'} size={28} color={item.color || theme.colors.primary} style={styles.icon} />
         <Text style={styles.itemTitle}>{item.title}</Text>
         <TouchableOpacity onPress={onDelete} style={styles.deleteButton}>
           <Ionicons name="close-circle" size={28} color={theme.colors.danger} />
@@ -46,6 +47,7 @@ const RoutineRow = ({ item, isEditMode, onDelete }) => {
   return (
     <Link href={`/routine/${item.id}`} asChild>
       <TouchableOpacity style={styles.itemContainer}>
+        <Ionicons name={item.icon || 'apps-outline'} size={28} color={item.color || theme.colors.primary} style={styles.icon} />
         <Text style={styles.itemTitle}>{item.title}</Text>
         <View style={styles.rightContainer}>
           {totalMinutes > 0 && (
@@ -151,6 +153,9 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSizes.lg,
     color: theme.colors.text,
     flex: 1,
+  },
+  icon: {
+    marginRight: theme.layout.spacing.md,
   },
   durationText: {
     fontFamily: theme.typography.fonts.regular,

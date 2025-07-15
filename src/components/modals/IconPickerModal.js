@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Animated } from 'react-native';
 import { theme } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -16,15 +16,38 @@ const iconList = [
 ];
 
 const IconPickerModal = ({ visible, onClose, onSelectIcon }) => {
+  const slideAnim = useRef(new Animated.Value(600)).current; // Start from below screen
+
+  useEffect(() => {
+    if (visible) {
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 60,
+        friction: 15,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(slideAnim, {
+        toValue: 600,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [visible]);
+
   return (
     <Modal
-      animationType="slide"
+      animationType="fade"
       transparent={true}
       visible={visible}
       onRequestClose={onClose}
     >
-      <View style={styles.centeredView}>
-        <View style={styles.modalView}>
+      <TouchableOpacity style={styles.centeredView} activeOpacity={1} onPress={onClose}>
+        <Animated.View 
+          style={[styles.modalView, { transform: [{ translateY: slideAnim }] }]}
+          // To prevent the TouchableOpacity from triggering onClose when tapping inside the modal
+          onStartShouldSetResponder={() => true} 
+        >
           <Text style={styles.modalTitle}>Choose an Icon</Text>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
              <Ionicons name="close" size={32} color={theme.colors.gray} />
@@ -45,8 +68,8 @@ const IconPickerModal = ({ visible, onClose, onSelectIcon }) => {
               ))}
             </View>
           </ScrollView>
-        </View>
-      </View>
+        </Animated.View>
+      </TouchableOpacity>
     </Modal>
   );
 };

@@ -55,18 +55,20 @@ const useRoutineStore = create((set, get) => ({
   },
 
   // --- Routines ---
-  addRoutine: (title) => {
-    const newRoutine = { id: uuidv4(), title, blocks: [] };
+  addRoutine: (title, color = '#6366F1', icon = 'apps-outline') => {
+    const newRoutine = { id: uuidv4(), title, color, icon, blocks: [] };
     set(state => ({ routines: [...state.routines, newRoutine] }));
     saveRoutine(newRoutine, true); // true to update index
     return newRoutine.id;
   },
 
-  updateRoutine: (routineId, title) => {
+  updateRoutine: (routineId, title, color, icon) => {
     const updatedRoutines = produce(get().routines, draft => {
       const routine = draft.find(r => r.id === routineId);
       if (routine) {
         routine.title = title;
+        if (color) routine.color = color;
+        if (icon) routine.icon = icon;
       }
     });
     set({ routines: updatedRoutines });

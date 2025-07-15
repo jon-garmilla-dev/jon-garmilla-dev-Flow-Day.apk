@@ -5,10 +5,11 @@ import useRoutineStore from '../../src/store/useRoutineStore';
 import useActionLibraryStore from '../../src/store/useActionLibraryStore';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '../../src/constants/theme';
+import { theme, routineColors } from '../../src/constants/theme';
 import Header from '../../src/components/Header';
 import ActionSheet from '../../src/components/ui/ActionSheet';
 import IconPickerModal from '../../src/components/modals/IconPickerModal';
+import ColorPicker from '../../src/components/ui/ColorPicker';
 import { v4 as uuidv4 } from 'uuid';
 
 const formatDuration = (totalMinutes) => {
@@ -36,11 +37,14 @@ export default function CreateEditRoutineScreen() {
   const { selectedTemplateForRoutine, setSelectedTemplateForRoutine } = useActionLibraryStore();
 
   const [title, setTitle] = useState('');
+  const [color, setColor] = useState(routineColors[0]);
+  const [icon, setIcon] = useState('apps-outline');
   const [blocks, setBlocks] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
   const [targetBlockIndex, setTargetBlockIndex] = useState(null);
   const [isBlockIconPickerVisible, setBlockIconPickerVisible] = useState(false);
+  const [isRoutineIconPickerVisible, setRoutineIconPickerVisible] = useState(false);
   const [editingBlockId, setEditingBlockId] = useState(null);
 
   useEffect(() => {
@@ -48,6 +52,8 @@ export default function CreateEditRoutineScreen() {
       const routine = routines.find(r => r.id === routineId);
       if (routine) {
         setTitle(routine.title);
+        setColor(routine.color || routineColors[0]);
+        setIcon(routine.icon || 'apps-outline');
         setBlocks(routine.blocks || []);
         setIsEditing(true);
       }
@@ -69,11 +75,16 @@ export default function CreateEditRoutineScreen() {
     setBlockIconPickerVisible(true);
   };
 
-  const handleSelectBlockIcon = (icon) => {
+  const handleSelectBlockIcon = (selectedIcon) => {
     if (targetBlockIndex === null) return;
     const newBlocks = [...blocks];
-    newBlocks[targetBlockIndex].icon = icon;
+    newBlocks[targetBlockIndex].icon = selectedIcon;
     setBlocks(newBlocks);
+  };
+
+  const handleSelectRoutineIcon = (selectedIcon) => {
+    setIcon(selectedIcon);
+    setRoutineIconPickerVisible(false);
   };
 
   const handleAddActionPress = (blockIndex) => {
@@ -137,9 +148,9 @@ export default function CreateEditRoutineScreen() {
     }
 
     if (isEditing) {
-      updateRoutine(routineId, title);
+      updateRoutine(routineId, title, color, icon);
     } else {
-      const newRoutineId = addRoutine(title);
+      const newRoutineId = addRoutine(title, color, icon);
       blocks.forEach(block => {
         if (block.name.trim() !== '') {
           const { id: tempBlockId, ...blockData } = block;
@@ -188,6 +199,8 @@ export default function CreateEditRoutineScreen() {
     { label: 'From Library', value: 'from_library', icon: 'library-outline' },
     { label: 'New Library Action', value: 'new_template', icon: 'add-circle-outline' },
     { label: 'Simple Text', value: 'text', icon: 'document-text-outline' },
+    { label: 'Focus Block', value: 'focus', icon: 'time-outline' },
+    { label: 'Pomodoro', value: 'pomodoro', icon: 'hourglass-outline' },
   ];
 
   useFocusEffect(
@@ -207,6 +220,11 @@ export default function CreateEditRoutineScreen() {
 
   return (
     <View style={styles.container}>
+      <IconPickerModal
+        visible={isRoutineIconPickerVisible}
+        onClose={() => setRoutineIconPickerVisible(false)}
+        onSelectIcon={handleSelectRoutineIcon}
+      />
       <IconPickerModal 
         visible={isBlockIconPickerVisible}
         onClose={() => setBlockIconPickerVisible(false)}
@@ -214,14 +232,20 @@ export default function CreateEditRoutineScreen() {
       />
       <Header title={isEditing ? "Edit Routine" : "Create Routine"} leftElement={<TouchableOpacity onPress={() => router.back()}><Ionicons name="arrow-back" size={28} color="#c9d1d9" /></TouchableOpacity>} rightElement={<Text style={styles.headerRightText}>{formatDuration(totalRoutineDuration)}</Text>} />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <TextInput style={styles.titleInput} value={title} onChangeText={setTitle} placeholder="Title" placeholderTextColor="#8b949e" />
+        <View style={styles.titleContainer}>
+          <TouchableOpacity onPress={() => setRoutineIconPickerVisible(true)}>
+            <Ionicons name={icon} size={32} color={color} style={styles.routineIcon} />
+          </TouchableOpacity>
+          <TextInput style={styles.titleInput} value={title} onChangeText={setTitle} placeholder="Title" placeholderTextColor="#8b949e" />
+        </View>
+        <ColorPicker selectedColor={color} onSelectColor={setColor} />
         {blocks.map((block, blockIndex) => {
           const isBlockInEditMode = editingBlockId === block.id;
           return (
             <View key={block.id} style={styles.blockContainer}>
               <View style={styles.blockHeader}>
                 <TouchableOpacity onPress={() => handleBlockIconPress(blockIndex)}>
-                  <Ionicons name={block.icon || 'cube-outline'} size={24} color={theme.colors.primary} style={styles.blockIcon} />
+                  <Ionicons name={block.icon || 'cube-outline'} size={24} color={color} style={styles.blockIcon} />
                 </TouchableOpacity>
                 <TextInput style={styles.blockTitleInput} value={block.name} onChangeText={(name) => setBlocks(prev => prev.map((b, i) => i === blockIndex ? {...b, name} : b))} placeholder={`Block #${blockIndex + 1} Title`} placeholderTextColor="#8b949e" />
                 <Text style={styles.blockDurationText}>{formatDuration(calculateBlockDuration(block))}</Text>
@@ -267,7 +291,24 @@ export default function CreateEditRoutineScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0d1117' },
   scrollContainer: { padding: 20 },
-  titleInput: { fontFamily: 'NunitoSans_700Bold', fontSize: 28, color: '#c9d1d9', borderBottomWidth: 1, borderColor: '#30363d', paddingBottom: 10, marginBottom: 30 },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderColor: '#30363d',
+    marginBottom: 20,
+  },
+  routineIcon: {
+    marginRight: theme.layout.spacing.md,
+    paddingBottom: 10,
+  },
+  titleInput: { 
+    fontFamily: 'NunitoSans_700Bold', 
+    fontSize: 28, 
+    color: '#c9d1d9', 
+    flex: 1,
+    paddingBottom: 10,
+  },
   blockContainer: { backgroundColor: '#161b22', borderRadius: 5, padding: 15, marginBottom: 20 },
   blockHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
   blockIcon: {

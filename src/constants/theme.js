@@ -14,7 +14,23 @@ const palette = {
   green: '#34a853',
   red: '#f85149',
   yellow: '#e3b341',
+
+  // Paleta para Rutinas
+  indigo: '#6366F1',
+  purple: '#8B5CF6',
+  pink: '#EC4899',
+  orange: '#F97316',
+  teal: '#14B8A6',
 };
+
+export const routineColors = [
+  palette.indigo,
+  palette.purple,
+  palette.pink,
+  palette.orange,
+  palette.teal,
+  palette.blue,
+];
 
 export const theme = {
   colors: {
