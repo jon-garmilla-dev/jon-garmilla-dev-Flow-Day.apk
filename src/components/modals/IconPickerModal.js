@@ -3,16 +3,27 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Animated }
 import { theme } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 
-const iconList = [
-  'barbell', 'bicycle', 'body', 'walk', 'water', 'restaurant', 'nutrition',
-  'book', 'briefcase', 'build', 'business', 'cafe', 'call', 'chatbubbles',
-  'code-slash', 'color-palette', 'compass', 'construct', 'desktop', 'earth',
-  'fast-food', 'film', 'flag', 'flask', 'football', 'game-controller',
-  'gift', 'golf', 'headset', 'heart', 'home', 'hourglass', 'ice-cream',
-  'image', 'journal', 'key', 'laptop', 'leaf', 'library', 'lock-closed',
-  'mail', 'map', 'medal', 'medkit', 'moon', 'musical-notes', 'paw',
-  'pencil', 'people', 'pizza', 'planet', 'pulse', 'rocket', 'school',
-  'shirt', 'storefront', 'sunny', 'trophy', 'videocam', 'wallet', 'watch'
+const iconCategories = [
+  {
+    title: 'Health & Fitness',
+    color: theme.colors.success, // Green
+    icons: ['barbell', 'bicycle', 'body', 'walk', 'water', 'restaurant', 'nutrition', 'pulse', 'heart', 'medkit'],
+  },
+  {
+    title: 'Work & Study',
+    color: '#6366F1', // Indigo/Purple
+    icons: ['book', 'briefcase', 'build', 'business', 'cafe', 'call', 'chatbubbles', 'code-slash', 'desktop', 'journal', 'laptop', 'mail', 'pencil', 'school'],
+  },
+  {
+    title: 'Home & Life',
+    color: theme.colors.warning, // Yellow
+    icons: ['home', 'construct', 'fast-food', 'gift', 'ice-cream', 'key', 'leaf', 'lock-closed', 'moon', 'paw', 'people', 'pizza', 'shirt', 'storefront', 'sunny', 'wallet', 'watch'],
+  },
+  {
+    title: 'Hobbies & Leisure',
+    color: '#EC4899', // Pink
+    icons: ['color-palette', 'compass', 'earth', 'film', 'flag', 'flask', 'football', 'game-controller', 'golf', 'headset', 'image', 'library', 'map', 'medal', 'musical-notes', 'planet', 'rocket', 'trophy', 'videocam'],
+  }
 ];
 
 const IconPickerModal = ({ visible, onClose, onSelectIcon }) => {
@@ -53,20 +64,25 @@ const IconPickerModal = ({ visible, onClose, onSelectIcon }) => {
              <Ionicons name="close" size={32} color={theme.colors.gray} />
           </TouchableOpacity>
           <ScrollView>
-            <View style={styles.iconGrid}>
-              {iconList.map(iconName => (
-                <TouchableOpacity 
-                  key={iconName} 
-                  style={styles.iconContainer} 
-                  onPress={() => {
-                    onSelectIcon(iconName);
-                    onClose();
-                  }}
-                >
-                  <Ionicons name={iconName} size={32} color={theme.colors.text} />
-                </TouchableOpacity>
-              ))}
-            </View>
+            {iconCategories.map(category => (
+              <View key={category.title} style={styles.categoryContainer}>
+                <Text style={styles.categoryTitle}>{category.title}</Text>
+                <View style={styles.iconGrid}>
+                  {category.icons.map(iconName => (
+                    <TouchableOpacity 
+                      key={iconName} 
+                      style={styles.iconContainer} 
+                      onPress={() => {
+                        onSelectIcon(iconName);
+                        onClose();
+                      }}
+                    >
+                      <Ionicons name={iconName} size={32} color={category.color} />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            ))}
           </ScrollView>
         </Animated.View>
       </TouchableOpacity>
@@ -103,6 +119,16 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 15,
     right: 15,
+  },
+  categoryContainer: {
+    marginBottom: theme.layout.spacing.lg,
+  },
+  categoryTitle: {
+    fontFamily: theme.typography.fonts.bold,
+    fontSize: theme.typography.fontSizes.md,
+    color: theme.colors.gray,
+    marginBottom: theme.layout.spacing.sm,
+    marginLeft: theme.layout.spacing.xs,
   },
   iconGrid: {
     flexDirection: 'row',
