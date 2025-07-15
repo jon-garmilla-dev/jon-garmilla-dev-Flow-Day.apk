@@ -12,14 +12,23 @@ const ActionBubbles = ({ actions, actionStatuses }) => (
   <View style={styles.actionBubblesContainer}>
     {actions.slice(0, 7).map(action => { // Show up to 7 icons
       const status = actionStatuses[action.id];
-      const isCompleted = status === 'completed';
       
+      const getIconColor = () => {
+        if (status === 'completed') {
+          return theme.colors.success;
+        }
+        if (status === 'active') {
+          return theme.colors.primary;
+        }
+        return theme.colors.gray;
+      };
+
       return (
         <View key={action.id} style={styles.actionBubble}>
           <Ionicons 
             name={action.icon || 'ellipse-outline'} 
             size={18} 
-            color={isCompleted ? theme.colors.gray : theme.colors.text} 
+            color={getIconColor()} 
           />
         </View>
       );

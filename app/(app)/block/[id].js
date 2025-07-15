@@ -19,7 +19,7 @@ const ActionRow = ({ action, status }) => {
         <Ionicons 
           name={action.icon || 'barbell-outline'} 
           size={28} 
-          color={isCompleted ? theme.colors.gray : theme.colors.primary} 
+          color={isCompleted ? theme.colors.success : theme.colors.primary} 
         />
       </View>
       <View style={styles.actionTextContainer}>
