@@ -53,19 +53,22 @@ const useProgressStore = create((set, get) => ({
   },
 
   completeAction: (routine, completedActionId) => {
-    set(produce(draft => {
-      draft.actions[completedActionId] = 'completed';
-      draft.currentActionId = null; // Ready for the next manual start
+    set(
+      produce(draft => {
+        draft.actions[completedActionId] = 'completed';
+        draft.currentActionId = null;
 
-      const currentBlock = routine.blocks.find(b => b.id === draft.currentBlockId);
-      if (!currentBlock) return;
+        const currentBlock = routine.blocks.find(b => b.id === draft.currentBlockId);
+        if (!currentBlock) return;
 
-      const isBlockComplete = currentBlock.actions.every(a => draft.actions[a.id] === 'completed');
-      if (isBlockComplete) {
-        draft.progress[draft.currentBlockId] = 'completed';
-      }
-    }));
-    get().saveProgress(routine.id);
+        const isBlockComplete = currentBlock.actions.every(a => draft.actions[a.id] === 'completed');
+        if (isBlockComplete) {
+          draft.progress[draft.currentBlockId] = 'completed';
+        }
+      }),
+      false,
+      () => get().saveProgress(routine.id)
+    );
   },
 
   saveProgress: async (routineId) => {
