@@ -45,7 +45,7 @@ const BlockRow = ({ routine, block, status, actionStatuses, isEditMode }) => {
       case 'completed':
         return <Ionicons name="checkmark-circle" size={28} color={theme.colors.success} />;
       case 'active':
-        return <Ionicons name="ellipse" size={28} color={theme.colors.primary} />;
+        return <Ionicons name="play-circle" size={28} color={theme.colors.primary} />;
       default:
         return <Ionicons name="ellipse-outline" size={28} color={theme.colors.gray} />;
     }

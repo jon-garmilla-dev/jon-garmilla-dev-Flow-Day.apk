@@ -152,10 +152,11 @@ export default function RoutineRunnerScreen() {
       
       <View style={styles.focusHeader}>
         <View style={styles.blockHeader}>
-            <Ionicons name={currentTask.action.icon || 'ellipse-outline'} size={18} color={theme.colors.gray} />
-            <Text style={styles.blockTitle}>{currentTask.block.name}</Text>
+            <Ionicons name={currentTask.action.icon || 'ellipse-outline'} size={22} color={theme.colors.gray} />
+            <Text style={styles.blockTitle}>{currentTask.action.name}</Text>
             <Text style={styles.progressText}>{`${currentIndex + 1} / ${totalTasks}`}</Text>
         </View>
+        <ProgressBar current={currentIndex + 1} total={totalTasks} />
       </View>
 
       <View style={styles.actionContent}>
@@ -189,7 +190,7 @@ export default function RoutineRunnerScreen() {
       <View style={styles.container}>
         <Header title="Block Complete!" />
         <View style={styles.content}>
-          <View style={styles.card}>
+          <View style={[styles.card, { justifyContent: 'center', alignItems: 'center' }]}>
             <Ionicons name="trophy" size={64} color={theme.colors.success} />
             <Text style={styles.actionTitle}>{block?.name || 'Block'} Complete</Text>
           </View>
@@ -211,13 +212,17 @@ export default function RoutineRunnerScreen() {
 
   return (
     <View style={styles.container}>
-      <Header title={routine.title} leftElement={<TouchableOpacity onPress={() => router.back()}><Ionicons name="close" size={28} color={theme.colors.text} /></TouchableOpacity>} rightElement={<View style={styles.timerContainer}><Ionicons name="timer-outline" size={20} color={theme.colors.primary} /><Text style={styles.timerText}>{currentTask.action.type === 'timer' && currentTask.action.duration > 0 ? `${formatTime(countdown)} / ${formatTime(currentTask.action.duration)}` : formatTime(elapsedTime)}</Text></View>} />
+      <Header title={routine.title} leftElement={<TouchableOpacity onPress={() => router.back()}><Ionicons name="close" size={28} color={theme.colors.text} /></TouchableOpacity>} rightElement={<View style={styles.timerContainer}><Ionicons name="timer-outline" size={20} color={theme.colors.primary} /><Text style={styles.timerText}>{currentTask.action.type === 'timer' && currentTask.action.duration > 0 ? formatTime(countdown) : formatTime(elapsedTime)}</Text></View>} />
       <View style={styles.content}>
         <TapGestureHandler onHandlerStateChange={onDoubleTap} numberOfTaps={2}>
           <View style={styles.card}>
             <View>
-              <ProgressBar current={currentIndex} total={totalTasks} />
-              <View style={styles.blockHeader}><Ionicons name={currentTask.action.icon || 'ellipse-outline'} size={18} color={theme.colors.gray} /><Text style={styles.blockTitle}>{currentTask.block.name}</Text><Text style={styles.progressText}>{`${currentIndex + 1} / ${totalTasks}`}</Text></View>
+              <View style={styles.blockHeader}>
+                <Ionicons name={currentTask.action.icon || 'ellipse-outline'} size={22} color={theme.colors.gray} />
+                <Text style={styles.blockTitle}>{currentTask.action.name}</Text>
+                <Text style={styles.progressText}>{`${currentIndex + 1}/${totalTasks}`}</Text>
+              </View>
+              <ProgressBar current={currentIndex + 1} total={totalTasks} />
             </View>
             <View style={styles.actionContent}>
               {currentTask.action.type === 'timer' && currentTask.action.duration > 0 ? (
@@ -260,19 +265,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.layout.spacing.md,
   },
   content: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: theme.layout.spacing.md },
-  card: { backgroundColor: theme.colors.surface, borderRadius: 20, padding: theme.layout.spacing.lg, width: '100%', flex: 0.9, justifyContent: 'center', alignItems: 'center' },
+  card: { backgroundColor: theme.colors.surface, borderRadius: 20, padding: theme.layout.spacing.lg, width: '100%', flex: 0.9, justifyContent: 'space-between' },
   progressBarContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 6,
+    height: 8,
     backgroundColor: theme.colors.border,
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginTop: theme.layout.spacing.md,
   },
-  progressBar: { height: '100%', backgroundColor: theme.colors.primary, borderRadius: 2 },
+  progressBar: { height: '100%', backgroundColor: theme.colors.primary, borderRadius: 4 },
   progressText: { fontFamily: theme.typography.fonts.bold, fontSize: theme.typography.fontSizes.sm, color: 'rgba(88, 166, 255, 0.7)', letterSpacing: 1 },
-  blockHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: theme.layout.spacing.sm, marginTop: theme.layout.spacing.md },
-  blockTitle: { fontFamily: theme.typography.fonts.regular, fontSize: theme.typography.fontSizes.md, color: theme.colors.gray, flex: 1, textAlign: 'center' },
+  blockHeader: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    paddingHorizontal: theme.layout.spacing.sm, 
+    marginTop: theme.layout.spacing.md 
+  },
+  blockTitle: { 
+    fontFamily: theme.typography.fonts.bold, 
+    fontSize: theme.typography.fontSizes.lg, 
+    color: theme.colors.text, 
+    flex: 1, 
+    textAlign: 'center',
+    marginHorizontal: theme.layout.spacing.sm,
+  },
   actionContent: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   timerTitle: { fontFamily: theme.typography.fonts.bold, fontSize: 42, color: theme.colors.text },
   actionTitle: { fontFamily: theme.typography.fonts.bold, fontSize: 32, color: theme.colors.text, textAlign: 'center', marginTop: theme.layout.spacing.md },
