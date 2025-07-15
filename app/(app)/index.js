@@ -32,15 +32,21 @@ const RoutineRow = ({ item, drag, isActive, isEditMode, onDelete }) => {
   const totalSeconds = calculateRoutineDuration(item);
   const totalMinutes = Math.floor(totalSeconds / 60);
 
-  const content = (
-    <>
+  return (
+    <View style={[styles.itemContainer, { backgroundColor: isActive ? theme.colors.surface : 'transparent' }]}>
       {isEditMode && (
-        <TouchableOpacity onLongPress={drag} disabled={isActive}>
-          <Ionicons name="reorder-three-outline" size={32} color={theme.colors.gray} style={styles.dragHandle} />
+        <TouchableOpacity onLongPress={drag} disabled={isActive} style={styles.dragHandle}>
+          <Ionicons name="reorder-three-outline" size={32} color={theme.colors.gray} />
         </TouchableOpacity>
       )}
-      <Ionicons name={item.icon || 'apps-outline'} size={28} color={item.color || theme.colors.primary} style={styles.icon} />
-      <Text style={styles.itemTitle}>{item.title}</Text>
+
+      <Link href={`/routine/${item.id}`} asChild>
+        <TouchableOpacity style={styles.mainContent}>
+          <Ionicons name={item.icon || 'apps-outline'} size={28} color={item.color || theme.colors.primary} style={styles.icon} />
+          <Text style={styles.itemTitle}>{item.title}</Text>
+        </TouchableOpacity>
+      </Link>
+
       <View style={styles.rightContainer}>
         {isEditMode ? (
           <TouchableOpacity onPress={onDelete} style={styles.deleteButton}>
@@ -59,23 +65,7 @@ const RoutineRow = ({ item, drag, isActive, isEditMode, onDelete }) => {
           </>
         )}
       </View>
-    </>
-  );
-
-  if (isEditMode) {
-    return (
-      <View style={[styles.itemContainer, { backgroundColor: isActive ? theme.colors.surface : 'transparent' }]}>
-        {content}
-      </View>
-    );
-  }
-
-  return (
-    <Link href={`/routine/${item.id}`} asChild>
-      <TouchableOpacity style={styles.itemContainer}>
-        {content}
-      </TouchableOpacity>
-    </Link>
+    </View>
   );
 };
 
@@ -184,6 +174,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
   },
+  mainContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   itemTitle: {
     fontFamily: theme.typography.fonts.bold,
     fontSize: theme.typography.fontSizes.lg,
@@ -194,7 +189,7 @@ const styles = StyleSheet.create({
     marginRight: theme.layout.spacing.md,
   },
   dragHandle: {
-    marginRight: theme.layout.spacing.sm,
+    paddingRight: theme.layout.spacing.md,
   },
   durationText: {
     fontFamily: theme.typography.fonts.regular,

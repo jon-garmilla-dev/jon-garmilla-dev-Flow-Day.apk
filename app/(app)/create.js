@@ -171,12 +171,12 @@ export default function CreateEditRoutineScreen() {
     const actionIndex = getIndex();
 
     return (
-      <TouchableOpacity
-        style={[styles.actionItemContainer, { backgroundColor: isActive ? theme.colors.surface : 'transparent' }]}
-        onLongPress={drag}
-        disabled={isActive}
-      >
-        {isEditMode && <Ionicons name="reorder-two-outline" size={24} color={theme.colors.gray} style={styles.dragHandle} />}
+      <View style={[styles.actionItemContainer, { backgroundColor: isActive ? theme.colors.surface : 'transparent' }]}>
+        {isEditMode && (
+          <TouchableOpacity onLongPress={drag} disabled={isActive} style={styles.dragHandle}>
+            <Ionicons name="reorder-two-outline" size={24} color={theme.colors.gray} />
+          </TouchableOpacity>
+        )}
         <View style={styles.actionRow}>
           <Ionicons name={action.icon || 'document-text-outline'} size={20} color="#8b949e" style={styles.actionIcon} />
           <TextInput
@@ -203,7 +203,7 @@ export default function CreateEditRoutineScreen() {
             <Ionicons name="remove-circle-outline" size={22} color={theme.colors.danger} />
           </TouchableOpacity>
         )}
-      </TouchableOpacity>
+      </View>
     );
   };
 
@@ -213,8 +213,8 @@ export default function CreateEditRoutineScreen() {
       <View style={[styles.blockContainer, { backgroundColor: isActive ? '#20252c' : '#161b22' }]}>
         <View style={styles.blockHeader}>
           {isEditMode && (
-            <TouchableOpacity onLongPress={drag} disabled={isActive}>
-              <Ionicons name="reorder-three-outline" size={32} color={theme.colors.gray} style={styles.dragHandle} />
+            <TouchableOpacity onLongPress={drag} disabled={isActive} style={styles.dragHandle}>
+              <Ionicons name="reorder-three-outline" size={32} color={theme.colors.gray} />
             </TouchableOpacity>
           )}
           <TouchableOpacity onPress={() => handleBlockIconPress(blockIndex)}>
@@ -330,7 +330,6 @@ export default function CreateEditRoutineScreen() {
         }
         contentContainerStyle={styles.scrollContainer}
       />
-
       <ActionSheet isVisible={isActionSheetVisible} onClose={() => setIsActionSheetVisible(false)} onSelect={addActionToBlock} options={actionOptions} />
     </View>
   );

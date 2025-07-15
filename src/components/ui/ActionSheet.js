@@ -1,13 +1,20 @@
 import React, { useEffect, useRef } from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Animated, TouchableWithoutFeedback } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 const ActionSheet = ({ isVisible, onClose, onSelect, options }) => {
-  const slideAnim = useRef(new Animated.Value(400)).current; // Empezar desde abajo
+  // Use two separate animated values for opacity and transform
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(300)).current;
 
   useEffect(() => {
-    console.log(`ACTION_SHEET: Visibility changed to: ${isVisible}`);
     if (isVisible) {
+      // Animate overlay opacity and slide-up together
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
       Animated.spring(slideAnim, {
         toValue: 0,
         tension: 60,
@@ -15,23 +22,39 @@ const ActionSheet = ({ isVisible, onClose, onSelect, options }) => {
         useNativeDriver: true,
       }).start();
     } else {
+      // Animate out
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
       Animated.timing(slideAnim, {
-        toValue: 400,
+        toValue: 300,
         duration: 200,
         useNativeDriver: true,
       }).start();
     }
-  }, [isVisible]);
+  }, [isVisible, fadeAnim, slideAnim]);
+
+  // If not visible, don't render anything to avoid capturing touches
+  if (!isVisible) {
+    return null;
+  }
 
   return (
-    <Modal
-      transparent={true}
-      visible={isVisible}
-      onRequestClose={onClose}
-      animationType="fade"
-    >
-      <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose}>
-        <Animated.View style={[styles.animatedContainer, { transform: [{ translateY: slideAnim }] }]}>
+    // This is the main overlay that covers the whole screen
+    <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
+      {/* This TouchableOpacity allows closing the sheet by tapping the background */}
+      <TouchableOpacity
+        style={StyleSheet.absoluteFill} // Make it fill the entire overlay
+        activeOpacity={1}
+        onPress={onClose}
+      />
+      
+      {/* This is the animated container for the sheet content */}
+      <Animated.View style={[styles.animatedContainer, { transform: [{ translateY: slideAnim }] }]}>
+        {/* This wrapper prevents taps inside the sheet from closing it */}
+        <TouchableWithoutFeedback>
           <SafeAreaView>
             <View style={styles.container}>
               {options.map((option, index) => (
@@ -57,20 +80,20 @@ const ActionSheet = ({ isVisible, onClose, onSelect, options }) => {
               <Text style={[styles.optionText, styles.cancelText]}>Cancel</Text>
             </TouchableOpacity>
           </SafeAreaView>
-        </Animated.View>
-      </TouchableOpacity>
-    </Modal>
+        </TouchableWithoutFeedback>
+      </Animated.View>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
   overlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
+    ...StyleSheet.absoluteFillObject, // This is crucial
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'flex-end', // Align content to the bottom
   },
   animatedContainer: {
-    width: '100%',
+    // No absolute positioning needed here, it's positioned by the overlay's justifyContent
   },
   container: {
     backgroundColor: '#21262d',
@@ -92,7 +115,7 @@ const styles = StyleSheet.create({
   optionText: {
     color: '#c9d1d9',
     fontSize: 18,
-    flex: 1, // Para que ocupe el espacio
+    flex: 1,
     marginLeft: 15,
   },
   detailsText: {
@@ -102,9 +125,11 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     marginTop: 8,
+    marginHorizontal: 10,
     backgroundColor: '#21262d',
     borderRadius: 12,
     justifyContent: 'center',
+    marginBottom: 10, // Add some space from the bottom edge
   },
   cancelText: {
     color: '#f0f6fc',
