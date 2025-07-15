@@ -1,11 +1,12 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 import useRoutineStore from '../../src/store/useRoutineStore';
 import { Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../../src/components/Header';
 import { usePageLayout } from '../../src/components/layout/PageLayout';
+import { theme } from '../../src/constants/theme';
 
 const formatDuration = (totalMinutes) => {
   if (totalMinutes === 0) return '0m';
@@ -21,50 +22,63 @@ const calculateRoutineDuration = (routine) => {
   if (!routine || !routine.blocks) return 0;
   return routine.blocks.reduce((total, block) => {
     const blockTotal = (block.actions || []).reduce((blockSum, action) => {
-      if (action.type === 'text' || action.type === 'focus') {
-        return blockSum + (parseInt(action.duration, 10) || 0);
-      }
-      if (action.type === 'pomodoro') {
-        return blockSum + (parseInt(action.workDuration, 10) || 0) + (parseInt(action.breakDuration, 10) || 0);
-      }
-      return blockSum;
+      return blockSum + (action.duration || 0); // Now uses seconds
     }, 0);
     return total + blockTotal;
   }, 0);
 };
 
+const RoutineRow = ({ item, isEditMode, onDelete }) => {
+  const totalSeconds = calculateRoutineDuration(item);
+  const totalMinutes = Math.floor(totalSeconds / 60);
+
+  if (isEditMode) {
+    return (
+      <View style={styles.itemContainer}>
+        <Text style={styles.itemTitle}>{item.title}</Text>
+        <TouchableOpacity onPress={onDelete} style={styles.deleteButton}>
+          <Ionicons name="close-circle" size={28} color={theme.colors.danger} />
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  return (
+    <Link href={`/routine/${item.id}`} asChild>
+      <TouchableOpacity style={styles.itemContainer}>
+        <Text style={styles.itemTitle}>{item.title}</Text>
+        <View style={styles.rightContainer}>
+          {totalMinutes > 0 && (
+            <Text style={styles.durationText}>{formatDuration(totalMinutes)}</Text>
+          )}
+          <Link href={`/create?routineId=${item.id}`} asChild>
+            <TouchableOpacity style={styles.iconButton}>
+              <Ionicons name="ellipsis-horizontal" size={24} color={theme.colors.gray} />
+            </TouchableOpacity>
+          </Link>
+        </View>
+      </TouchableOpacity>
+    </Link>
+  );
+};
+
 export default function RoutineListScreen() {
-  const routines = useRoutineStore(state => state.routines);
-  const loadRoutines = useRoutineStore(state => state.loadRoutines);
+  const { routines, loadRoutines, deleteRoutine } = useRoutineStore();
   const { openMenu } = usePageLayout();
+  const [isEditMode, setEditMode] = useState(false);
 
   useEffect(() => {
     loadRoutines();
   }, [loadRoutines]);
 
-  const renderItem = ({ item }) => {
-    const totalDuration = calculateRoutineDuration(item);
-    return (
-      <Link href={`/routine/${item.id}`} asChild>
-        <TouchableOpacity style={styles.itemContainer}>
-          <Text style={styles.itemTitle}>{item.title}</Text>
-          <View style={styles.rightContainer}>
-            <Text style={styles.durationText}>{formatDuration(totalDuration)}</Text>
-            <View style={styles.iconContainer}>
-              <Link href={`/create?routineId=${item.id}`} asChild>
-                <TouchableOpacity style={styles.iconButton}>
-                  <Ionicons name="ellipsis-horizontal" size={24} color="#8b949e" />
-                </TouchableOpacity>
-              </Link>
-              <Link href={`/create?routineId=${item.id}`} asChild>
-                <TouchableOpacity style={styles.iconButton}>
-                  <Ionicons name="create-outline" size={24} color="#8b949e" />
-                </TouchableOpacity>
-              </Link>
-            </View>
-          </View>
-        </TouchableOpacity>
-      </Link>
+  const handleDeletePress = (routine) => {
+    Alert.alert(
+      "Delete Workflow",
+      `Are you sure you want to delete "${routine.title}"? This cannot be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: () => deleteRoutine(routine.id) }
+      ]
     );
   };
 
@@ -74,7 +88,12 @@ export default function RoutineListScreen() {
         title="Flow Day"
         leftElement={
           <TouchableOpacity onPress={openMenu}>
-            <Ionicons name="menu" size={28} color="#c9d1d9" />
+            <Ionicons name="menu" size={28} color={theme.colors.text} />
+          </TouchableOpacity>
+        }
+        rightElement={
+          <TouchableOpacity onPress={() => setEditMode(!isEditMode)}>
+            <Ionicons name={isEditMode ? "checkmark-done" : "pencil"} size={24} color={theme.colors.primary} />
           </TouchableOpacity>
         }
       />
@@ -82,15 +101,21 @@ export default function RoutineListScreen() {
         <View style={styles.emptyContainer}>
           <Link href="/create" asChild>
             <TouchableOpacity>
-              <Ionicons name="add-circle-outline" size={100} color="#8b949e" />
+              <Ionicons name="add-circle-outline" size={100} color={theme.colors.gray} />
             </TouchableOpacity>
           </Link>
-          <Text style={styles.emptyText}>Create your first routine</Text>
+          <Text style={styles.emptyText}>Create your first workflow</Text>
         </View>
       ) : (
         <FlatList
           data={routines}
-          renderItem={renderItem}
+          renderItem={({ item }) => (
+            <RoutineRow 
+              item={item} 
+              isEditMode={isEditMode}
+              onDelete={() => handleDeletePress(item)}
+            />
+          )}
           keyExtractor={item => item.id}
         />
       )}
@@ -101,7 +126,7 @@ export default function RoutineListScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0d1117',
+    backgroundColor: theme.colors.background,
   },
   emptyContainer: {
     flex: 1,
@@ -109,38 +134,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#8b949e',
+    marginTop: theme.layout.spacing.md,
+    fontSize: theme.typography.fontSizes.md,
+    color: theme.colors.gray,
   },
   itemContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    padding: theme.layout.spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#30363d',
+    borderBottomColor: theme.colors.border,
   },
   itemTitle: {
-    fontFamily: 'NunitoSans_700Bold',
-    fontSize: 18,
-    color: '#c9d1d9',
+    fontFamily: theme.typography.fonts.bold,
+    fontSize: theme.typography.fontSizes.lg,
+    color: theme.colors.text,
     flex: 1,
+  },
+  durationText: {
+    fontFamily: theme.typography.fonts.regular,
+    color: theme.colors.gray,
+    fontSize: theme.typography.fontSizes.md,
   },
   rightContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  durationText: {
-    fontFamily: 'NunitoSans_400Regular',
-    color: '#8b949e',
-    fontSize: 16,
-    marginRight: 15,
-  },
-  iconContainer: {
-    flexDirection: 'row',
-  },
   iconButton: {
-    marginLeft: 15,
+    marginLeft: theme.layout.spacing.md,
+    padding: theme.layout.spacing.xs,
+  },
+  deleteButton: {
+    paddingLeft: theme.layout.spacing.md,
   },
 });
