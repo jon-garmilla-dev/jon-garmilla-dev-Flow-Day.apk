@@ -145,7 +145,13 @@ export default function RoutineRunnerScreen() {
     .numberOfTaps(2)
     .maxDuration(250)
     .onStart(() => {
+      // Si estamos en focus mode y el candado está activado, no permitir salir
+      if (focusProgress.value > 0.5 && isFocusLocked) {
+        return;
+      }
+      
       const targetValue = focusProgress.value > 0.5 ? 0 : 1;
+      
       focusProgress.value = withTiming(targetValue, {
         duration: 350,
         easing: Easing.inOut(Easing.ease),
@@ -179,16 +185,13 @@ export default function RoutineRunnerScreen() {
   if (!currentTask) {
     return (
       <View style={styles.container}>
-        <Header title="Block Complete!" />
-        <View style={styles.content}>
-          <View style={[styles.card, { justifyContent: 'center', alignItems: 'center' }]}>
-            <Ionicons name="trophy" size={64} color={theme.colors.success} />
-            <Text style={styles.actionTitle}>{block?.name || 'Block'} Complete</Text>
+        <View style={styles.blockCompleteOverlay}>
+          <View style={styles.blockCompleteContent}>
+            <Ionicons name="trophy" size={80} color={theme.colors.success} />
+            <Text style={styles.blockCompleteTitle}>{block?.name || 'Block'} Complete</Text>
           </View>
-        </View>
-        <View style={styles.bottomContainer}>
           <TouchableOpacity style={styles.completeButton} onPress={() => router.back()}>
-            <Ionicons name="checkmark-done" size={32} color={theme.colors.background} />
+            <Ionicons name="checkmark-done" size={40} color={theme.colors.background} />
           </TouchableOpacity>
         </View>
       </View>
@@ -241,9 +244,9 @@ export default function RoutineRunnerScreen() {
           </View>
         </Animated.View>
 
-        <Animated.View 
-          style={[styles.focusOverlay, animatedFocusOpacity]}
-        >
+      <Animated.View 
+        style={[styles.focusOverlay, animatedFocusOpacity]}
+      >
           <TouchableOpacity style={styles.focusLock} onPress={() => setIsFocusLocked(!isFocusLocked)}>
             <Ionicons name={isFocusLocked ? "lock-closed" : "lock-open"} size={28} color="white" />
           </TouchableOpacity>
@@ -399,5 +402,23 @@ const styles = StyleSheet.create({
     height: '100%', 
     backgroundColor: theme.colors.primary, 
     borderRadius: 4 
+  },
+  blockCompleteOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  blockCompleteContent: {
+    alignItems: 'center',
+    marginBottom: 80,
+  },
+  blockCompleteTitle: {
+    fontFamily: theme.typography.fonts.bold,
+    fontSize: 28,
+    color: 'white',
+    textAlign: 'center',
+    marginTop: 20,
   },
 });
