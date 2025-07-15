@@ -68,6 +68,9 @@ jobs:
     - name: Create adaptive icon
       run: cp src/assets/icon.png src/assets/adaptive-icon.png
 
+    - name: Create splash screen
+      run: cp src/assets/icon.png src/assets/splash.png
+
     - name: Expo prebuild
       run: npx expo prebuild --platform android
 
