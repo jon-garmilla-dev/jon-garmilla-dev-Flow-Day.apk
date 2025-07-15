@@ -69,7 +69,7 @@ export default function RoutineRunnerScreen() {
 
   // Memos
   const { block, currentTask, nextTask, currentIndex, totalTasks } = useMemo(
-    () => findCurrentTaskInfo(routine, blockId, actions), 
+    () => findCurrentTaskInfo(routine, blockId, actions) || {}, 
     [routine, blockId, actions]
   );
 
