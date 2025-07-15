@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
 import useRoutineStore from '../../store/useRoutineStore';
 import { useRouter } from 'expo-router';
+import { theme } from '../../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 
 const CustomDrawerContent = (props) => {
   const router = useRouter();
@@ -25,8 +27,9 @@ const CustomDrawerContent = (props) => {
         ))}
       </ScrollView>
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.addItem} onPress={() => handleNavigation('/create')}>
-          <Text style={styles.addItemText}>+ Add Workflow</Text>
+        <TouchableOpacity style={styles.footerButton} onPress={() => handleNavigation('/create')}>
+          <Ionicons name="add-circle-outline" size={22} color={theme.colors.primary} />
+          <Text style={styles.footerButtonText}>Add Workflow</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -36,42 +39,47 @@ const CustomDrawerContent = (props) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0d1117',
+    backgroundColor: theme.colors.background,
   },
   header: {
-    padding: 20,
+    padding: theme.layout.spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#30363d',
+    borderBottomColor: theme.colors.border,
   },
   headerText: {
-    fontFamily: 'NunitoSans_700Bold',
-    fontSize: 22,
-    color: '#f0f6fc',
+    fontFamily: theme.typography.fonts.bold,
+    fontSize: theme.typography.fontSizes.lg,
+    color: theme.colors.text,
   },
   content: {
     flex: 1,
-    paddingTop: 10,
+    paddingTop: theme.layout.spacing.sm,
   },
   item: {
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    paddingVertical: theme.layout.spacing.md,
+    paddingHorizontal: theme.layout.spacing.lg,
   },
   itemText: {
-    color: '#c9d1d9',
-    fontSize: 16,
+    color: theme.colors.text,
+    fontSize: theme.typography.fontSizes.md,
+    fontFamily: theme.typography.fonts.regular,
   },
   footer: {
-    padding: 20,
+    padding: theme.layout.spacing.md,
     borderTopWidth: 1,
-    borderTopColor: '#30363d',
+    borderTopColor: theme.colors.border,
+    alignItems: 'center',
   },
-  addItem: {
-    // Estilos para el botón de añadir
+  footerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: theme.layout.spacing.sm,
   },
-  addItemText: {
-    color: '#58a6ff',
-    fontSize: 16,
-    fontWeight: 'bold',
+  footerButtonText: {
+    color: theme.colors.primary,
+    fontSize: theme.typography.fontSizes.md,
+    fontFamily: theme.typography.fonts.bold,
+    marginLeft: theme.layout.spacing.sm,
   },
 });
 

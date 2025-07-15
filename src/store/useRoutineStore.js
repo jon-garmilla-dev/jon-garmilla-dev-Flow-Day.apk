@@ -63,17 +63,16 @@ const useRoutineStore = create((set, get) => ({
   },
 
   updateRoutine: (routineId, title) => {
-    let updatedRoutine = null;
     const updatedRoutines = produce(get().routines, draft => {
       const routine = draft.find(r => r.id === routineId);
       if (routine) {
         routine.title = title;
-        updatedRoutine = { ...routine };
       }
     });
     set({ routines: updatedRoutines });
-    if (updatedRoutine) {
-      saveRoutine(updatedRoutine);
+    const routineToSave = updatedRoutines.find(r => r.id === routineId);
+    if (routineToSave) {
+      saveRoutine(routineToSave);
     }
   },
 
@@ -95,17 +94,16 @@ const useRoutineStore = create((set, get) => ({
 
   // --- Generic update function for Blocks and Actions ---
   _updateAndSave: (routineId, producer) => {
-    let updatedRoutine = null;
     const updatedRoutines = produce(get().routines, draft => {
       const routine = draft.find(r => r.id === routineId);
       if (routine) {
         producer(routine);
-        updatedRoutine = { ...routine };
       }
     });
     set({ routines: updatedRoutines });
-    if (updatedRoutine) {
-      saveRoutine(updatedRoutine);
+    const routineToSave = updatedRoutines.find(r => r.id === routineId);
+    if (routineToSave) {
+      saveRoutine(routineToSave);
     }
   },
 

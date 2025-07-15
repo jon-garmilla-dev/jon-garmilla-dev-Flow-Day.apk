@@ -79,6 +79,19 @@ const useProgressStore = create((set, get) => ({
       console.error("Failed to save progress.", e);
     }
   },
+
+  resetProgress: async (routine) => {
+    if (!routine) return;
+    const date = new Date().toISOString().split('T')[0];
+    const key = getProgressKey(routine.id, date);
+    try {
+      await AsyncStorage.removeItem(key);
+      // Reload to re-initialize the state
+      get().loadProgress(routine);
+    } catch (e) {
+      console.error("Failed to reset progress.", e);
+    }
+  },
 }));
 
 export default useProgressStore;

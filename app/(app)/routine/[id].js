@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
+import { theme } from '../../../src/constants/theme';
 import useRoutineStore from '../../../src/store/useRoutineStore';
 import useProgressStore from '../../../src/store/useProgressStore';
 import { useLocalSearchParams, Link, useRouter } from 'expo-router';
@@ -8,42 +9,86 @@ import { Ionicons } from '@expo/vector-icons';
 import Header from '../../../src/components/Header';
 
 const ActionBubbles = ({ actions, actionStatuses }) => (
-  <View style={styles.actionBubblesContainer}>
-    {actions.map(action => {
-      const status = actionStatuses[action.id];
-      let icon = <Ionicons name="ellipse-outline" size={18} color="#8b949e" />;
-      if (status === 'completed') {
-        icon = <Ionicons name="checkmark-circle" size={18} color="#2da44e" />;
-      } else if (status === 'active') {
-        icon = <Ionicons name="ellipse" size={18} color="#007bff" />;
-      }
-      return <View key={action.id} style={styles.actionBubble}>{icon}</View>;
-    })}
-  </View>
+  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.actionBubblesScrollView}>
+    <View style={styles.actionBubblesContainer}>
+      {actions.map(action => {
+        const status = actionStatuses[action.id];
+        let iconName = "ellipse-outline";
+        let iconColor = theme.colors.gray;
+
+        if (status === 'completed') {
+          iconName = "checkmark-circle";
+          iconColor = theme.colors.success;
+        } else if (status === 'active') {
+          iconName = "ellipse";
+          iconColor = theme.colors.primary;
+        }
+        
+        return (
+          <View key={action.id} style={styles.actionBubble}>
+            <Ionicons name={iconName} size={16} color={iconColor} />
+            <Text style={styles.actionBubbleText}>{action.name}</Text>
+          </View>
+        );
+      })}
+    </View>
+  </ScrollView>
 );
 
-const BlockRow = ({ routine, block, status, actionStatuses }) => {
+const BlockRow = ({ routine, block, status, actionStatuses, isEditMode }) => {
+  const router = useRouter();
+  
   const getStatusIcon = () => {
     switch (status) {
       case 'completed':
-        return <Ionicons name="checkmark-circle" size={32} color="#2da44e" />;
+        return <Ionicons name="checkmark-circle" size={28} color={theme.colors.success} />;
       case 'active':
-        return <Ionicons name="ellipse" size={32} color="#007bff" />;
+        return <Ionicons name="ellipse" size={28} color={theme.colors.primary} />;
       default:
-        return <Ionicons name="ellipse-outline" size={32} color="#8b949e" />;
+        return <Ionicons name="ellipse-outline" size={28} color={theme.colors.gray} />;
+    }
+  };
+
+  const calculateBlockDuration = () => {
+    const totalSeconds = block.actions.reduce((sum, action) => {
+      return action.type === 'timer' && action.duration ? sum + action.duration : sum;
+    }, 0);
+
+    if (totalSeconds === 0) return null;
+
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    if (seconds === 0) return `${minutes}m`;
+    if (minutes === 0) return `${seconds}s`;
+    return `${minutes}m ${seconds}s`;
+  };
+
+  const duration = calculateBlockDuration();
+
+  const handlePress = () => {
+    if (isEditMode) {
+      router.push({ pathname: `/block/${block.id}`, params: { routineId: routine.id, routineTitle: routine.title } });
+    } else {
+      router.push({ pathname: `/routine/${routine.id}/run`, params: { blockId: block.id } });
     }
   };
 
   return (
-    <Link href={{ pathname: `/block/${block.id}`, params: { routineId: routine.id, routineTitle: routine.title } }} asChild>
-      <TouchableOpacity style={styles.blockRow}>
-        <View style={styles.blockInfo}>
+    <TouchableOpacity style={styles.blockRow} onPress={handlePress}>
+      <View style={styles.blockInfo}>
+        <View style={styles.blockTitleContainer}>
           {getStatusIcon()}
           <Text style={styles.blockTitle}>{block.name}</Text>
         </View>
-        <ActionBubbles actions={block.actions} actionStatuses={actionStatuses} />
-      </TouchableOpacity>
-    </Link>
+        {duration && (
+          <View style={styles.durationContainer}>
+            <Ionicons name="time-outline" size={16} color={theme.colors.gray} />
+            <Text style={styles.durationText}>{duration}</Text>
+          </View>
+        )}
+      </View>
+      <ActionBubbles actions={block.actions} actionStatuses={actionStatuses} />
+    </TouchableOpacity>
   );
 };
 
@@ -51,7 +96,8 @@ export default function RoutineScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { routines, loadRoutines } = useRoutineStore();
-  const { progress, actions, loadProgress } = useProgressStore();
+  const { progress, actions, loadProgress, resetProgress } = useProgressStore();
+  const [isEditMode, setEditMode] = useState(false);
 
   const routine = routines.find(r => r.id === id);
 
@@ -71,10 +117,21 @@ export default function RoutineScreen() {
         title={routine?.title || 'Routine'} 
         leftElement={
           <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={28} color="#c9d1d9" />
+            <Ionicons name="arrow-back" size={28} color={theme.colors.text} />
           </TouchableOpacity>
         }
-        rightElement={<Text style={styles.headerRightText}>Blocks</Text>}
+        rightElement={
+          <View style={styles.headerRightContainer}>
+            {!isEditMode && (
+              <TouchableOpacity onPress={() => resetProgress(routine)} style={styles.headerButton}>
+                <Ionicons name="refresh" size={24} color={theme.colors.text} />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity onPress={() => setEditMode(!isEditMode)} style={styles.headerButton}>
+              <Ionicons name={isEditMode ? "checkmark-done" : "pencil"} size={24} color={theme.colors.primary} />
+            </TouchableOpacity>
+          </View>
+        }
       />
       <FlatList
         data={routine?.blocks || []}
@@ -84,10 +141,17 @@ export default function RoutineScreen() {
             block={item}
             status={progress[item.id]}
             actionStatuses={actions}
+            isEditMode={isEditMode}
           />
         )}
         keyExtractor={item => item.id}
+        contentContainerStyle={{ paddingBottom: isEditMode ? 100 : 0 }}
       />
+      {isEditMode && (
+        <TouchableOpacity style={styles.addBlockFab}>
+          <Ionicons name="add" size={32} color={theme.colors.text} />
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -95,37 +159,87 @@ export default function RoutineScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0d1117',
+    backgroundColor: theme.colors.background,
   },
-  headerRightText: {
-    fontFamily: 'NunitoSans_400Regular',
-    color: '#8b949e',
-    fontSize: 14,
+  headerRightContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerButton: {
+    marginLeft: theme.layout.spacing.md,
+  },
+  headerEditText: {
+    fontFamily: theme.typography.fonts.bold,
+    color: theme.colors.primary,
+    fontSize: theme.typography.fontSizes.md,
   },
   blockRow: {
+    padding: theme.layout.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+  },
+  blockInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#30363d',
-    backgroundColor: '#1f1e25',
+    marginBottom: theme.layout.spacing.md,
   },
-  blockInfo: {
+  blockTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   blockTitle: {
-    fontFamily: 'NunitoSans_700Bold',
-    fontSize: 18,
-    marginLeft: 15,
-    color: '#c9d1d9',
+    fontFamily: theme.typography.fonts.bold,
+    fontSize: theme.typography.fontSizes.lg,
+    marginLeft: theme.layout.spacing.md,
+    color: theme.colors.text,
+  },
+  actionBubblesScrollView: {
+    flexGrow: 0,
   },
   actionBubblesContainer: {
     flexDirection: 'row',
   },
   actionBubble: {
-    marginLeft: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background,
+    paddingVertical: theme.layout.spacing.xs,
+    paddingHorizontal: theme.layout.spacing.sm,
+    borderRadius: 15,
+    marginRight: theme.layout.spacing.sm,
+  },
+  actionBubbleText: {
+    color: theme.colors.gray,
+    fontFamily: theme.typography.fonts.regular,
+    fontSize: theme.typography.fontSizes.sm,
+    marginLeft: theme.layout.spacing.xs,
+  },
+  durationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+  },
+  durationText: {
+    color: theme.colors.gray,
+    fontFamily: theme.typography.fonts.bold,
+    fontSize: 12,
+    marginLeft: 4,
+  },
+  addBlockFab: {
+    position: 'absolute',
+    right: 30,
+    bottom: 30,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    backgroundColor: theme.colors.primary,
   },
 });

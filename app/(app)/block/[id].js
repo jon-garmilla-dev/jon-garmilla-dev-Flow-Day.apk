@@ -1,28 +1,40 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
 import useRoutineStore from '../../../src/store/useRoutineStore';
 import useProgressStore from '../../../src/store/useProgressStore';
-import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../../../src/components/Header';
+import AddActionModal from '../../../src/components/modals/AddActionModal';
+import { theme } from '../../../src/constants/theme';
 
 const ActionRow = ({ action, status }) => {
-  const getStatusIcon = () => {
-    switch (status) {
-      case 'completed':
-        return <Ionicons name="checkmark-circle" size={32} color="#2da44e" />;
-      case 'active':
-        return <Ionicons name="ellipse" size={32} color="#007bff" />;
-      default:
-        return <Ionicons name="ellipse-outline" size={32} color="#8b949e" />;
-    }
-  };
+  const isCompleted = status === 'completed';
+  const isActive = status === 'active';
 
   return (
-    <View style={styles.actionRow}>
-      {getStatusIcon()}
-      <Text style={styles.actionTitle}>{action.name}</Text>
+    <View style={[styles.actionRow, isActive && styles.actionRowActive]}>
+      <View style={styles.actionIconContainer}>
+        <Ionicons 
+          name={action.icon || 'barbell-outline'} 
+          size={28} 
+          color={isCompleted ? theme.colors.gray : theme.colors.primary} 
+        />
+      </View>
+      <View style={styles.actionTextContainer}>
+        <Text style={[styles.actionTitle, isCompleted && styles.actionTitleCompleted]}>
+          {action.name}
+        </Text>
+        {action.type === 'timer' && action.duration > 0 && (
+          <Text style={[styles.actionSubtitle, isCompleted && styles.actionTitleCompleted]}>
+            {Math.floor(action.duration / 60)}m {action.duration % 60}s
+          </Text>
+        )}
+      </View>
+      {isCompleted && (
+        <Ionicons name="checkmark-circle" size={24} color={theme.colors.success} />
+      )}
     </View>
   );
 };
@@ -30,50 +42,33 @@ const ActionRow = ({ action, status }) => {
 export default function BlockScreen() {
   const { id: blockId, routineId, routineTitle } = useLocalSearchParams();
   const router = useRouter();
-  const { routines, loadRoutines } = useRoutineStore();
-  const { actions, currentActionId, completeAction, startAction } = useProgressStore();
+  const { routines, loadRoutines, addAction: addActionToStore } = useRoutineStore();
+  const { actions } = useProgressStore(); // Only need actions for status
+  const [isModalVisible, setModalVisible] = useState(false);
 
   const routine = routines.find(r => r.id === routineId);
   const block = routine?.blocks.find(b => b.id === blockId);
-  const currentAction = block?.actions.find(a => a.id === currentActionId);
-  const isBlockComplete = block?.actions.every(a => actions[a.id] === 'completed');
 
   useEffect(() => {
     loadRoutines();
   }, [loadRoutines]);
 
-  const handleFabPress = () => {
-    if (isBlockComplete) {
-      router.back();
-      return;
-    }
-
-    if (currentAction) {
-      completeAction(routine, currentAction.id);
-    } else {
-      startAction(routine, blockId);
-    }
-  };
-
-  const getFabIcon = () => {
-    if (isBlockComplete) return "arrow-back";
-    if (currentAction) return "checkmark-done";
-    return "play";
-  };
-
-  const getFabColor = () => {
-    if (isBlockComplete) return "#8b949e"; // Grey for back
-    if (currentAction) return "#007bff"; // Blue for active
-    return "#238636"; // Green for play
+  const handleAddAction = (actionData) => {
+    addActionToStore(routineId, blockId, actionData);
   };
 
   return (
     <View style={styles.container}>
+      <AddActionModal 
+        visible={isModalVisible}
+        onClose={() => setModalVisible(false)}
+        onSave={handleAddAction}
+      />
       <Header 
         title={`${routineTitle} / ${block?.name || 'Block'}`}
         leftElement={
           <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={28} color="#c9d1d9" />
+            <Ionicons name="arrow-back" size={28} color={theme.colors.text} />
           </TouchableOpacity>
         }
         rightElement={<Text style={styles.headerRightText}>Actions</Text>}
@@ -87,13 +82,14 @@ export default function BlockScreen() {
           />
         )}
         keyExtractor={item => item.id}
+        contentContainerStyle={{ paddingBottom: 100 }}
       />
       {block && (
         <TouchableOpacity
-          style={[styles.fab, { backgroundColor: getFabColor() }]}
-          onPress={handleFabPress}
+          style={styles.fab}
+          onPress={() => setModalVisible(true)}
         >
-          <Ionicons name={getFabIcon()} size={32} color="white" />
+          <Ionicons name="add" size={32} color={theme.colors.text} />
         </TouchableOpacity>
       )}
     </View>
@@ -103,27 +99,46 @@ export default function BlockScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0d1117',
+    backgroundColor: theme.colors.background,
   },
   headerRightText: {
-    fontFamily: 'NunitoSans_400Regular',
-    color: '#8b949e',
-    fontSize: 14,
+    fontFamily: theme.typography.fonts.regular,
+    color: theme.colors.gray,
+    fontSize: theme.typography.fontSizes.sm,
   },
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 20,
+    padding: theme.layout.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#30363d',
-    backgroundColor: '#1f1e25',
+    borderBottomColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+  },
+  actionRowActive: {
+    backgroundColor: theme.colors.background,
+    borderLeftWidth: 4,
+    borderLeftColor: theme.colors.primary,
+  },
+  actionIconContainer: {
+    marginRight: theme.layout.spacing.md,
+  },
+  actionTextContainer: {
+    flex: 1,
   },
   actionTitle: {
-    fontFamily: 'NunitoSans_700Bold',
-    fontSize: 18,
-    marginLeft: 15,
-    color: '#c9d1d9',
+    fontFamily: theme.typography.fonts.bold,
+    fontSize: theme.typography.fontSizes.lg,
+    color: theme.colors.text,
+  },
+  actionTitleCompleted: {
+    color: theme.colors.gray,
+    textDecorationLine: 'line-through',
+  },
+  actionSubtitle: {
+    fontFamily: theme.typography.fonts.regular,
+    fontSize: theme.typography.fontSizes.sm,
+    color: theme.colors.gray,
+    marginTop: 2,
   },
   fab: {
     position: 'absolute',
@@ -135,5 +150,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 8,
+    backgroundColor: theme.colors.primary,
   },
 });
