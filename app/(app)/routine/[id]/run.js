@@ -85,7 +85,6 @@ const AnimatedProgressBar = ({ current, total, progress }) => {
 export default function RoutineRunnerScreen() {
   const { id: routineId, blockId } = useLocalSearchParams();
   const router = useRouter();
-  useWindowDimensions();
 
   // State
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -103,10 +102,18 @@ export default function RoutineRunnerScreen() {
     useProgressStore();
 
   // Memos
-  const { block, currentTask, nextTask, currentIndex, totalTasks } = useMemo(
-    () => findCurrentTaskInfo(routine, blockId, actions) || {},
-    [routine, blockId, actions],
-  );
+  const taskInfo = useMemo(() => {
+    const info = findCurrentTaskInfo(routine, blockId, actions);
+    return info || {
+      block: null,
+      currentTask: null,
+      nextTask: null,
+      currentIndex: -1,
+      totalTasks: 0
+    };
+  }, [routine, blockId, actions]);
+
+  const { block, currentTask, nextTask, currentIndex, totalTasks } = taskInfo;
 
   // Effects
   useEffect(() => {
@@ -126,26 +133,33 @@ export default function RoutineRunnerScreen() {
         onBackPress,
       );
       return () => subscription.remove();
-    }, [isFocusLocked]),
+    }, [isFocusLocked, focusProgress]),
   );
 
   useEffect(() => {
-    let totalTimer;
-    if (currentTask) {
-      totalTimer = setInterval(() => setElapsedTime((prev) => prev + 1), 1000);
+    let totalTimer = null;
+    let countdownTimer = null;
+    let isMounted = true;
+
+    if (currentTask && isMounted) {
+      totalTimer = setInterval(() => {
+        if (isMounted) {
+          setElapsedTime((prev) => prev + 1);
+        }
+      }, 1000);
     }
 
-    let countdownTimer;
     const isTimerAction =
       currentTask?.action.type === "timer" && currentTask.action.duration > 0;
     setIsActionLocked(isTimerAction);
 
-    if (isTimerAction) {
+    if (isTimerAction && isMounted) {
       setCountdown(currentTask.action.duration);
       countdownTimer = setInterval(() => {
         setCountdown((prev) => {
+          if (!isMounted) return prev;
           if (prev <= 1) {
-            clearInterval(countdownTimer);
+            if (countdownTimer) clearInterval(countdownTimer);
             setIsActionLocked(false);
             handleComplete();
             return 0;
@@ -156,22 +170,25 @@ export default function RoutineRunnerScreen() {
     }
 
     return () => {
+      isMounted = false;
       if (totalTimer) clearInterval(totalTimer);
       if (countdownTimer) clearInterval(countdownTimer);
     };
-  }, [currentTask]);
+  }, [currentTask, handleComplete]);
 
   // Handlers
-  const handleComplete = () => {
+  const handleComplete = useCallback(() => {
     if (!currentTask || (focusProgress.value > 0.5 && isActionLocked)) return;
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     completeAction(routine, currentTask.action.id);
-  };
+  }, [currentTask, isActionLocked, routine, completeAction]);
 
-  const handleStart = () => {
-    if (currentTask) startAction(routine, currentTask.block.id);
-  };
+  const handleStart = useCallback(() => {
+    if (currentTask) {
+      startAction(routine, currentTask.block.id);
+    }
+  }, [currentTask, routine, startAction]);
 
   useEffect(() => {
     const isActive = Object.values(actions).includes("active");
@@ -180,9 +197,13 @@ export default function RoutineRunnerScreen() {
       actions[currentTask.action.id] !== "active" &&
       !isActive
     ) {
-      handleStart();
+      // Use timeout to prevent infinite loops
+      const timer = setTimeout(() => {
+        handleStart();
+      }, 0);
+      return () => clearTimeout(timer);
     }
-  }, [currentTask, actions]);
+  }, [currentTask, actions, handleStart]);
 
   const doubleTap = Gesture.Tap()
     .numberOfTaps(2)
