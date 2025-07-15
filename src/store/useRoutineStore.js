@@ -108,8 +108,8 @@ const useRoutineStore = create((set, get) => ({
   },
 
   // --- Blocks ---
-  addBlock: (routineId, name) => {
-    const newBlock = { id: uuidv4(), name, actions: [] };
+  addBlock: (routineId, blockData) => {
+    const newBlock = { ...blockData, id: uuidv4() };
     get()._updateAndSave(routineId, routine => {
       routine.blocks.push(newBlock);
     });

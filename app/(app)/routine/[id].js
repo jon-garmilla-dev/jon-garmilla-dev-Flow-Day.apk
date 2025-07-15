@@ -9,30 +9,23 @@ import { Ionicons } from '@expo/vector-icons';
 import Header from '../../../src/components/Header';
 
 const ActionBubbles = ({ actions, actionStatuses }) => (
-  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.actionBubblesScrollView}>
-    <View style={styles.actionBubblesContainer}>
-      {actions.map(action => {
-        const status = actionStatuses[action.id];
-        let iconName = "ellipse-outline";
-        let iconColor = theme.colors.gray;
-
-        if (status === 'completed') {
-          iconName = "checkmark-circle";
-          iconColor = theme.colors.success;
-        } else if (status === 'active') {
-          iconName = "ellipse";
-          iconColor = theme.colors.primary;
-        }
-        
-        return (
-          <View key={action.id} style={styles.actionBubble}>
-            <Ionicons name={iconName} size={16} color={iconColor} />
-            <Text style={styles.actionBubbleText}>{action.name}</Text>
-          </View>
-        );
-      })}
-    </View>
-  </ScrollView>
+  <View style={styles.actionBubblesContainer}>
+    {actions.slice(0, 7).map(action => { // Show up to 7 icons
+      const status = actionStatuses[action.id];
+      const isCompleted = status === 'completed';
+      
+      return (
+        <View key={action.id} style={styles.actionBubble}>
+          <Ionicons 
+            name={action.icon || 'ellipse-outline'} 
+            size={18} 
+            color={isCompleted ? theme.colors.gray : theme.colors.text} 
+          />
+        </View>
+      );
+    })}
+    {actions.length > 7 && <Text style={styles.actionBubbleText}>...</Text>}
+  </View>
 );
 
 const BlockRow = ({ routine, block, status, actionStatuses, isEditMode }) => {
@@ -195,26 +188,16 @@ const styles = StyleSheet.create({
     marginLeft: theme.layout.spacing.md,
     color: theme.colors.text,
   },
-  actionBubblesScrollView: {
-    flexGrow: 0,
-  },
   actionBubblesContainer: {
     flexDirection: 'row',
+    alignItems: 'center',
   },
   actionBubble: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.background,
-    paddingVertical: theme.layout.spacing.xs,
-    paddingHorizontal: theme.layout.spacing.sm,
-    borderRadius: 15,
     marginRight: theme.layout.spacing.sm,
   },
   actionBubbleText: {
     color: theme.colors.gray,
-    fontFamily: theme.typography.fonts.regular,
-    fontSize: theme.typography.fontSizes.sm,
-    marginLeft: theme.layout.spacing.xs,
+    fontFamily: theme.typography.fonts.bold,
   },
   durationContainer: {
     flexDirection: 'row',

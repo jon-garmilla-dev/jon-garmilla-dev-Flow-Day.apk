@@ -5,8 +5,10 @@ import useRoutineStore from '../../src/store/useRoutineStore';
 import useActionLibraryStore from '../../src/store/useActionLibraryStore';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { theme } from '../../src/constants/theme';
 import Header from '../../src/components/Header';
 import ActionSheet from '../../src/components/ui/ActionSheet';
+import IconPickerModal from '../../src/components/modals/IconPickerModal';
 import { v4 as uuidv4 } from 'uuid';
 
 const formatDuration = (totalMinutes) => {
@@ -39,6 +41,7 @@ export default function CreateEditRoutineScreen() {
   const [isEditing, setIsEditing] = useState(false);
   const [isActionSheetVisible, setIsActionSheetVisible] = useState(false);
   const [targetBlockIndex, setTargetBlockIndex] = useState(null);
+  const [isBlockIconPickerVisible, setBlockIconPickerVisible] = useState(false);
 
   useEffect(() => {
     if (routineId) {
@@ -58,6 +61,18 @@ export default function CreateEditRoutineScreen() {
   const handleUpdateValue = (blockIndex, actionIndex, field, value) => {
     const newBlocks = [...blocks];
     newBlocks[blockIndex].actions[actionIndex][field] = value;
+    setBlocks(newBlocks);
+  };
+
+  const handleBlockIconPress = (blockIndex) => {
+    setTargetBlockIndex(blockIndex);
+    setBlockIconPickerVisible(true);
+  };
+
+  const handleSelectBlockIcon = (icon) => {
+    if (targetBlockIndex === null) return;
+    const newBlocks = [...blocks];
+    newBlocks[targetBlockIndex].icon = icon;
     setBlocks(newBlocks);
   };
 
@@ -102,7 +117,7 @@ export default function CreateEditRoutineScreen() {
   };
 
   const handleAddNewBlock = () => {
-    setBlocks([...blocks, { id: uuidv4(), name: '', actions: [] }]);
+    setBlocks([...blocks, { id: uuidv4(), name: '', icon: 'cube-outline', actions: [] }]);
   };
 
   const handleSave = () => {
@@ -122,7 +137,14 @@ export default function CreateEditRoutineScreen() {
       const newRoutineId = addRoutine(title);
       blocks.forEach(block => {
         if (block.name.trim() !== '') {
-          const newBlockId = addBlock(newRoutineId, block.name);
+          // Explicitly pass the block data to ensure icon is included
+          const blockData = {
+            name: block.name,
+            icon: block.icon || 'cube-outline', // Ensure a default icon
+            actions: [] // Actions will be added separately
+          };
+          const newBlockId = addBlock(newRoutineId, blockData);
+          
           (block.actions || []).forEach(action => {
             // Quitamos el id temporal del frontend antes de guardar
             const { id, ...actionData } = action;
@@ -225,12 +247,20 @@ export default function CreateEditRoutineScreen() {
 
   return (
     <View style={styles.container}>
+      <IconPickerModal 
+        visible={isBlockIconPickerVisible}
+        onClose={() => setBlockIconPickerVisible(false)}
+        onSelectIcon={handleSelectBlockIcon}
+      />
       <Header title={isEditing ? "Edit Routine" : "Create Routine"} leftElement={<TouchableOpacity onPress={() => router.back()}><Ionicons name="arrow-back" size={28} color="#c9d1d9" /></TouchableOpacity>} rightElement={<Text style={styles.headerRightText}>{formatDuration(totalRoutineDuration)}</Text>} />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <TextInput style={styles.titleInput} value={title} onChangeText={setTitle} placeholder="Title" placeholderTextColor="#8b949e" />
         {blocks.map((block, blockIndex) => (
           <View key={block.id} style={styles.blockContainer}>
             <View style={styles.blockHeader}>
+              <TouchableOpacity onPress={() => handleBlockIconPress(blockIndex)}>
+                <Ionicons name={block.icon || 'cube-outline'} size={24} color={theme.colors.primary} style={styles.blockIcon} />
+              </TouchableOpacity>
               <TextInput style={styles.blockTitleInput} value={block.name} onChangeText={(name) => setBlocks(prev => prev.map((b, i) => i === blockIndex ? {...b, name} : b))} placeholder={`Block #${blockIndex + 1} Title`} placeholderTextColor="#8b949e" />
               <Text style={styles.blockDurationText}>{formatDuration(calculateBlockDuration(block))}</Text>
             </View>
@@ -264,6 +294,9 @@ const styles = StyleSheet.create({
   titleInput: { fontFamily: 'NunitoSans_700Bold', fontSize: 28, color: '#c9d1d9', borderBottomWidth: 1, borderColor: '#30363d', paddingBottom: 10, marginBottom: 30 },
   blockContainer: { backgroundColor: '#161b22', borderRadius: 5, padding: 15, marginBottom: 20 },
   blockHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
+  blockIcon: {
+    marginRight: theme.layout.spacing.sm,
+  },
   blockTitleInput: { fontFamily: 'NunitoSans_700Bold', fontSize: 20, color: '#c9d1d9', flex: 1 },
   blockDurationText: { fontFamily: 'NunitoSans_400Regular', color: '#8b949e', fontSize: 16, marginLeft: 10 },
   actionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, marginLeft: 10 },
