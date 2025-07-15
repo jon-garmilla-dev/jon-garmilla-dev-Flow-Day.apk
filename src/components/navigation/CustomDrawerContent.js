@@ -22,6 +22,7 @@ const CustomDrawerContent = (props) => {
       <ScrollView style={styles.content}>
         {routines.map((routine) => (
           <TouchableOpacity key={routine.id} style={styles.item} onPress={() => handleNavigation(`/routine/${routine.id}`)}>
+            <Ionicons name={routine.icon || 'apps-outline'} size={22} color={routine.color || theme.colors.primary} style={styles.icon} />
             <Text style={styles.itemText}>{routine.title}</Text>
           </TouchableOpacity>
         ))}
@@ -56,8 +57,13 @@ const styles = StyleSheet.create({
     paddingTop: theme.layout.spacing.sm,
   },
   item: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: theme.layout.spacing.md,
     paddingHorizontal: theme.layout.spacing.lg,
+  },
+  icon: {
+    marginRight: theme.layout.spacing.md,
   },
   itemText: {
     color: theme.colors.text,

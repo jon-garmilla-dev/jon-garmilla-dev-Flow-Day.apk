@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, FlatList } from 'react-native';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import useRoutineStore from '../../src/store/useRoutineStore';
 import { Link } from 'expo-router';
@@ -139,16 +139,23 @@ export default function RoutineListScreen() {
           <Text style={styles.emptyText}>Create your first workflow</Text>
         </View>
       ) : (
-        <DraggableFlatList
-          data={localRoutines}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          dragEnabled={isEditMode}
-          onDragEnd={({ data }) => {
-            setLocalRoutines(data);
-            reorderRoutines(data);
-          }}
-        />
+        isEditMode ? (
+          <DraggableFlatList
+            data={localRoutines}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id}
+            onDragEnd={({ data }) => {
+              setLocalRoutines(data);
+              reorderRoutines(data);
+            }}
+          />
+        ) : (
+          <FlatList
+            data={localRoutines}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id}
+          />
+        )
       )}
     </View>
   );
