@@ -94,6 +94,16 @@ const useRoutineStore = create((set, get) => ({
     }
   },
 
+  reorderRoutines: async (reorderedRoutines) => {
+    set({ routines: reorderedRoutines });
+    const newIndex = reorderedRoutines.map(r => r.id);
+    try {
+      await AsyncStorage.setItem(ROUTINE_INDEX_KEY, JSON.stringify(newIndex));
+    } catch (e) {
+      console.error("Failed to save reordered routine index.", e);
+    }
+  },
+
   // --- Generic update function for Blocks and Actions ---
   _updateAndSave: (routineId, producer) => {
     const updatedRoutines = produce(get().routines, draft => {

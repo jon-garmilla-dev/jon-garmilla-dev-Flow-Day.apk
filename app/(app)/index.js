@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { FlatList } from 'react-native-gesture-handler';
+import DraggableFlatList from 'react-native-draggable-flatlist';
 import useRoutineStore from '../../src/store/useRoutineStore';
 import { Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,18 +28,44 @@ const calculateRoutineDuration = (routine) => {
   }, 0);
 };
 
-const RoutineRow = ({ item, isEditMode, onDelete }) => {
+const RoutineRow = ({ item, drag, isActive, isEditMode, onDelete }) => {
   const totalSeconds = calculateRoutineDuration(item);
   const totalMinutes = Math.floor(totalSeconds / 60);
 
+  const content = (
+    <>
+      {isEditMode && (
+        <TouchableOpacity onLongPress={drag} disabled={isActive}>
+          <Ionicons name="reorder-three-outline" size={32} color={theme.colors.gray} style={styles.dragHandle} />
+        </TouchableOpacity>
+      )}
+      <Ionicons name={item.icon || 'apps-outline'} size={28} color={item.color || theme.colors.primary} style={styles.icon} />
+      <Text style={styles.itemTitle}>{item.title}</Text>
+      <View style={styles.rightContainer}>
+        {isEditMode ? (
+          <TouchableOpacity onPress={onDelete} style={styles.deleteButton}>
+            <Ionicons name="remove-circle-outline" size={28} color={theme.colors.danger} />
+          </TouchableOpacity>
+        ) : (
+          <>
+            {totalMinutes > 0 && (
+              <Text style={styles.durationText}>{formatDuration(totalMinutes)}</Text>
+            )}
+            <Link href={`/create?routineId=${item.id}`} asChild>
+              <TouchableOpacity style={styles.iconButton}>
+                <Ionicons name="ellipsis-horizontal" size={24} color={theme.colors.gray} />
+              </TouchableOpacity>
+            </Link>
+          </>
+        )}
+      </View>
+    </>
+  );
+
   if (isEditMode) {
     return (
-      <View style={styles.itemContainer}>
-        <Ionicons name={item.icon || 'apps-outline'} size={28} color={item.color || theme.colors.primary} style={styles.icon} />
-        <Text style={styles.itemTitle}>{item.title}</Text>
-        <TouchableOpacity onPress={onDelete} style={styles.deleteButton}>
-          <Ionicons name="close-circle" size={28} color={theme.colors.danger} />
-        </TouchableOpacity>
+      <View style={[styles.itemContainer, { backgroundColor: isActive ? theme.colors.surface : 'transparent' }]}>
+        {content}
       </View>
     );
   }
@@ -47,31 +73,25 @@ const RoutineRow = ({ item, isEditMode, onDelete }) => {
   return (
     <Link href={`/routine/${item.id}`} asChild>
       <TouchableOpacity style={styles.itemContainer}>
-        <Ionicons name={item.icon || 'apps-outline'} size={28} color={item.color || theme.colors.primary} style={styles.icon} />
-        <Text style={styles.itemTitle}>{item.title}</Text>
-        <View style={styles.rightContainer}>
-          {totalMinutes > 0 && (
-            <Text style={styles.durationText}>{formatDuration(totalMinutes)}</Text>
-          )}
-          <Link href={`/create?routineId=${item.id}`} asChild>
-            <TouchableOpacity style={styles.iconButton}>
-              <Ionicons name="ellipsis-horizontal" size={24} color={theme.colors.gray} />
-            </TouchableOpacity>
-          </Link>
-        </View>
+        {content}
       </TouchableOpacity>
     </Link>
   );
 };
 
 export default function RoutineListScreen() {
-  const { routines, loadRoutines, deleteRoutine } = useRoutineStore();
+  const { routines, loadRoutines, deleteRoutine, reorderRoutines } = useRoutineStore();
   const { openMenu } = usePageLayout();
   const [isEditMode, setEditMode] = useState(false);
+  const [localRoutines, setLocalRoutines] = useState(routines);
 
   useEffect(() => {
     loadRoutines();
   }, [loadRoutines]);
+
+  useEffect(() => {
+    setLocalRoutines(routines);
+  }, [routines]);
 
   const handleDeletePress = (routine) => {
     Alert.alert(
@@ -84,9 +104,19 @@ export default function RoutineListScreen() {
     );
   };
 
+  const renderItem = ({ item, drag, isActive }) => (
+    <RoutineRow
+      item={item}
+      drag={drag}
+      isActive={isActive}
+      isEditMode={isEditMode}
+      onDelete={() => handleDeletePress(item)}
+    />
+  );
+
   return (
     <View style={styles.container}>
-      <Header 
+      <Header
         title="Flow Day"
         leftElement={
           <TouchableOpacity onPress={openMenu}>
@@ -99,7 +129,7 @@ export default function RoutineListScreen() {
           </TouchableOpacity>
         }
       />
-      {routines.length === 0 ? (
+      {localRoutines.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Link href="/create" asChild>
             <TouchableOpacity>
@@ -109,16 +139,15 @@ export default function RoutineListScreen() {
           <Text style={styles.emptyText}>Create your first workflow</Text>
         </View>
       ) : (
-        <FlatList
-          data={routines}
-          renderItem={({ item }) => (
-            <RoutineRow 
-              item={item} 
-              isEditMode={isEditMode}
-              onDelete={() => handleDeletePress(item)}
-            />
-          )}
-          keyExtractor={item => item.id}
+        <DraggableFlatList
+          data={localRoutines}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          dragEnabled={isEditMode}
+          onDragEnd={({ data }) => {
+            setLocalRoutines(data);
+            reorderRoutines(data);
+          }}
         />
       )}
     </View>
@@ -156,6 +185,9 @@ const styles = StyleSheet.create({
   },
   icon: {
     marginRight: theme.layout.spacing.md,
+  },
+  dragHandle: {
+    marginRight: theme.layout.spacing.sm,
   },
   durationText: {
     fontFamily: theme.typography.fonts.regular,
