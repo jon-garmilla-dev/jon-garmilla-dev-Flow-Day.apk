@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withRepeat, withTiming, Easing } from 'react-native-reanimated';
 import { theme } from '../../../src/constants/theme';
 import useRoutineStore from '../../../src/store/useRoutineStore';
 import useProgressStore from '../../../src/store/useProgressStore';
@@ -39,15 +40,56 @@ const ActionBubbles = ({ actions, actionStatuses }) => (
 
 const BlockRow = ({ routine, block, status, actionStatuses, isEditMode }) => {
   const router = useRouter();
-  
+  const scaleCheck = useSharedValue(0);
+  const pulseOpacity = useSharedValue(0);
+  const pulseScale = useSharedValue(1);
+
+  useEffect(() => {
+    if (status === 'completed') {
+      scaleCheck.value = withSpring(1, { damping: 15, stiffness: 120 });
+    } else {
+      scaleCheck.value = 0;
+    }
+
+    if (status === 'active') {
+      pulseOpacity.value = withRepeat(withTiming(0.5, { duration: 2000 }), -1, true);
+      pulseScale.value = withRepeat(withTiming(1.1, { duration: 2000 }), -1, true);
+    } else {
+      pulseOpacity.value = withTiming(0);
+      pulseScale.value = withTiming(1);
+    }
+  }, [status]);
+
+  const animatedCheckStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scaleCheck.value }],
+  }));
+
+  const animatedPulseStyle = useAnimatedStyle(() => ({
+    opacity: pulseOpacity.value,
+    transform: [{ scale: pulseScale.value }],
+  }));
+
   const getStatusIcon = () => {
     switch (status) {
       case 'completed':
-        return <Ionicons name="checkmark-circle" size={28} color={theme.colors.success} />;
+        return (
+          <Animated.View style={animatedCheckStyle}>
+            <Ionicons name="checkmark-circle" size={28} color={theme.colors.success} />
+          </Animated.View>
+        );
       case 'active':
-        return <Ionicons name="play-circle" size={28} color={theme.colors.primary} />;
+        return (
+          <View style={styles.iconContainer}>
+            <Animated.View style={[styles.pulseCircle, animatedPulseStyle]} />
+            <Ionicons name="play-circle" size={28} color={theme.colors.primary} />
+          </View>
+        );
       default:
-        return <Ionicons name="ellipse-outline" size={28} color={theme.colors.gray} />;
+        return (
+          <View style={styles.iconContainer}>
+            <Ionicons name="ellipse-outline" size={28} color={theme.colors.gray} />
+          </View>
+        );
     }
   };
 
@@ -190,6 +232,19 @@ const styles = StyleSheet.create({
   blockTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  iconContainer: {
+    width: 28,
+    height: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pulseCircle: {
+    position: 'absolute',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: theme.colors.primary,
   },
   blockTitle: {
     fontFamily: theme.typography.fonts.bold,

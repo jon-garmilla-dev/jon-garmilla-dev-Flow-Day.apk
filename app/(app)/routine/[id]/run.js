@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, BackHandler, UIManager, LayoutAnimation, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, BackHandler, LayoutAnimation } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { TapGestureHandler, State } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,7 +9,6 @@ import { theme } from '../../../../src/constants/theme';
 import Header from '../../../../src/components/Header';
 import useRoutineStore from '../../../../src/store/useRoutineStore';
 import useProgressStore from '../../../../src/store/useProgressStore';
-import { startForegroundNotification, stopForegroundNotification, updateNotificationContent } from '../../../../src/services/notificationService';
 
 const findCurrentTaskInfo = (routine, blockId, actions) => {
   if (!routine || !routine.blocks) return null;
@@ -94,19 +93,10 @@ export default function RoutineRunnerScreen() {
   }, [currentTask, actions]);
 
   useEffect(() => {
-    if (currentTask) startForegroundNotification(routine, currentTask.block);
-    else stopForegroundNotification();
-
     let totalTimer;
     if (currentTask) {
       totalTimer = setInterval(() => {
-        setElapsedTime(prevTime => {
-          const newTime = prevTime + 1;
-          const title = `Workflow: ${routine.title} (${currentIndex + 1}/${totalTasks})`;
-          const body = `Current: ${currentTask.action.name} | Total Time: ${formatTime(newTime)}`;
-          updateNotificationContent(title, body);
-          return newTime;
-        });
+        setElapsedTime(prevTime => prevTime + 1);
       }, 1000);
     }
 
@@ -132,7 +122,6 @@ export default function RoutineRunnerScreen() {
     return () => {
       if (totalTimer) clearInterval(totalTimer);
       if (countdownTimer) clearInterval(countdownTimer);
-      stopForegroundNotification();
     };
   }, [currentTask]);
 
@@ -204,10 +193,6 @@ export default function RoutineRunnerScreen() {
 
   if (isFocusMode) {
     return renderFocusMode();
-  }
-
-  if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-    UIManager.setLayoutAnimationEnabledExperimental(true);
   }
 
   return (
