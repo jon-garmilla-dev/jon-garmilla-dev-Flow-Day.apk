@@ -11,7 +11,7 @@ const palette = {
   
   // Colores de Acento
   blue: '#58a6ff',
-  green: '#56d364',
+  green: '#34a853',
   red: '#f85149',
   yellow: '#e3b341',
 };

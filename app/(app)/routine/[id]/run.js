@@ -170,7 +170,7 @@ export default function RoutineRunnerScreen() {
       </View>
 
       <View style={styles.focusFooter}>
-        <TouchableOpacity style={[styles.completeButton, isActionLocked && styles.completeButtonLocked]} onPress={handleComplete} disabled={isActionLocked}>
+        <TouchableOpacity style={[styles.completeButton, styles.focusCompleteButton, isActionLocked && styles.completeButtonLocked]} onPress={handleComplete} disabled={isActionLocked}>
           <Ionicons name="checkmark-done" size={40} color={theme.colors.background} />
         </TouchableOpacity>
         {isActionLocked && (
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
   },
   progressBar: { height: '100%', backgroundColor: theme.colors.primary, borderRadius: 2 },
   progressText: { fontFamily: theme.typography.fonts.bold, fontSize: theme.typography.fontSizes.sm, color: 'rgba(88, 166, 255, 0.7)', letterSpacing: 1 },
-  blockHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: theme.layout.spacing.sm },
+  blockHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: theme.layout.spacing.sm, marginTop: theme.layout.spacing.md },
   blockTitle: { fontFamily: theme.typography.fonts.regular, fontSize: theme.typography.fontSizes.md, color: theme.colors.gray, flex: 1, textAlign: 'center' },
   actionContent: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   timerTitle: { fontFamily: theme.typography.fonts.bold, fontSize: 42, color: theme.colors.text },
@@ -280,6 +280,7 @@ const styles = StyleSheet.create({
   footer: { alignItems: 'flex-end' },
   nextUpText: { fontFamily: theme.typography.fonts.regular, fontSize: theme.typography.fontSizes.sm, color: theme.colors.gray },
   completeButton: { backgroundColor: theme.colors.success, marginHorizontal: theme.layout.spacing.md, marginBottom: theme.layout.spacing.md, paddingVertical: 20, borderRadius: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  focusCompleteButton: { opacity: 0.8 },
   completeButtonLocked: { backgroundColor: theme.colors.gray },
   unlockButton: { position: 'absolute', bottom: 30, right: 30, padding: 10 },
   completeButtonText: { color: theme.colors.background, fontSize: theme.typography.fontSizes.lg, fontFamily: theme.typography.fonts.bold, marginLeft: theme.layout.spacing.md },
