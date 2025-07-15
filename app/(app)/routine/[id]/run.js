@@ -195,7 +195,7 @@ export default function RoutineRunnerScreen() {
           </View>
         </View>
         <TouchableOpacity style={styles.completeButton} onPress={() => router.back()}>
-          <Text style={styles.completeButtonText}>Back to Workflow</Text>
+          <Ionicons name="checkmark-done" size={32} color={theme.colors.background} />
         </TouchableOpacity>
       </View>
     );
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.layout.spacing.md,
   },
   content: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: theme.layout.spacing.md },
-  card: { backgroundColor: theme.colors.surface, borderRadius: 20, padding: theme.layout.spacing.lg, width: '100%', flex: 0.9, justifyContent: 'space-between' },
+  card: { backgroundColor: theme.colors.surface, borderRadius: 20, padding: theme.layout.spacing.lg, width: '100%', flex: 0.9, justifyContent: 'center', alignItems: 'center' },
   progressBarContainer: {
     position: 'absolute',
     top: 0,
