@@ -20,6 +20,7 @@ import Animated, {
   Extrapolate,
   withRepeat,
   withSequence,
+  interpolateColor,
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -98,10 +99,12 @@ export default function RoutineRunnerScreen() {
   const [countdown, setCountdown] = useState(0);
   const [isActionLocked, setIsActionLocked] = useState(false);
   const [isFocusLocked, setIsFocusLocked] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
   // Animation
   const focusProgress = useSharedValue(0);
   const progress = useSharedValue(0);
   const breathingValue = useSharedValue(1);
+  const blinkValue = useSharedValue(1);
 
   // Stores
   const routine = useRoutineStore((state) =>
@@ -165,11 +168,17 @@ export default function RoutineRunnerScreen() {
   );
 
   useEffect(() => {
+    if (currentTask?.action.type === "timer" && currentTask.action.duration > 0) {
+      setCountdown(currentTask.action.duration);
+    }
+  }, [currentTask]);
+
+  useEffect(() => {
     let totalTimer = null;
     let countdownTimer = null;
     let isMounted = true;
 
-    if (currentTask && isMounted) {
+    if (currentTask && isMounted && !isPaused) {
       totalTimer = setInterval(() => {
         if (isMounted) {
           setElapsedTime((prev) => prev + 1);
@@ -181,8 +190,7 @@ export default function RoutineRunnerScreen() {
       currentTask?.action.type === "timer" && currentTask.action.duration > 0;
     setIsActionLocked(isTimerAction);
 
-    if (isTimerAction && isMounted) {
-      setCountdown(currentTask.action.duration);
+    if (isTimerAction && isMounted && !isPaused) {
       const twentyFivePercent = currentTask.action.duration * 0.25;
       countdownTimer = setInterval(() => {
         setCountdown((prev) => {
@@ -206,7 +214,7 @@ export default function RoutineRunnerScreen() {
       if (totalTimer) clearInterval(totalTimer);
       if (countdownTimer) clearInterval(countdownTimer);
     };
-  }, [currentTask, handleComplete]);
+  }, [currentTask, handleComplete, isPaused]);
 
   useEffect(() => {
     if (currentTask?.action.name === 'Break') {
@@ -303,6 +311,12 @@ export default function RoutineRunnerScreen() {
       },
     ],
   }));
+
+  const animatedBlinkStyle = useAnimatedStyle(() => {
+    return {
+      opacity: isPaused ? 0.5 : 1,
+    };
+  });
 
   const animatedBreathingStyle = useAnimatedStyle(() => {
     return {
@@ -415,10 +429,13 @@ export default function RoutineRunnerScreen() {
                       inActiveStrokeOpacity={0.5}
                       inActiveStrokeWidth={20}
                       activeStrokeWidth={20}
-                      title={formatTime(countdown)}
-                      titleStyle={styles.timerTitle}
                       showProgressValue={false}
                     />
+                    <View style={styles.timerTextContainer}>
+                      <Animated.Text style={[styles.timerTitle, animatedBlinkStyle]}>
+                        {formatTime(countdown)}
+                      </Animated.Text>
+                    </View>
                   </Animated.View>
                 ) : (
                   <Animated.View
@@ -452,6 +469,21 @@ export default function RoutineRunnerScreen() {
           </View>
           {/* Bottom Buttons */}
           <View style={styles.bottomContainer}>
+            {currentTask.action.type === "timer" &&
+            currentTask.action.duration > 0 ? (
+              <TouchableOpacity
+                style={styles.controlButton}
+                onPress={() => setIsPaused(!isPaused)}
+              >
+                <Ionicons
+                  name={isPaused ? "play" : "pause"}
+                  size={32}
+                  color={theme.colors.text}
+                />
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.controlButton} />
+            )}
             <TouchableOpacity
               style={[
                 styles.completeButton,
@@ -466,9 +498,9 @@ export default function RoutineRunnerScreen() {
                 color={theme.colors.background}
               />
             </TouchableOpacity>
-            {isActionLocked && (
+            {isActionLocked ? (
               <TouchableOpacity
-                style={styles.unlockButton}
+                style={styles.controlButton}
                 onPress={() => setIsActionLocked(false)}
               >
                 <Ionicons
@@ -477,6 +509,8 @@ export default function RoutineRunnerScreen() {
                   color={theme.colors.text}
                 />
               </TouchableOpacity>
+            ) : (
+              <View style={styles.controlButton} />
             )}
           </View>
         </Animated.View>
@@ -518,21 +552,34 @@ export default function RoutineRunnerScreen() {
           <View style={styles.actionContent}>
             {currentTask.action.type === "timer" &&
             currentTask.action.duration > 0 ? (
-              <CircularProgress
-                value={countdown}
-                maxValue={currentTask.action.duration}
-                radius={120}
-                duration={0}
-                progressValueColor="white"
-                activeStrokeColor={currentTask.action.color || theme.colors.primary}
-                inActiveStrokeColor="rgba(255,255,255,0.2)"
-                inActiveStrokeOpacity={0.5}
-                inActiveStrokeWidth={20}
-                activeStrokeWidth={20}
-                title={formatTime(countdown)}
-                titleStyle={[styles.timerTitle, { color: "white" }]}
-                showProgressValue={false}
-              />
+              <>
+                <CircularProgress
+                  value={countdown}
+                  maxValue={currentTask.action.duration}
+                  radius={120}
+                  duration={0}
+                  progressValueColor="white"
+                  activeStrokeColor={
+                    currentTask.action.color || theme.colors.primary
+                  }
+                  inActiveStrokeColor="rgba(255,255,255,0.2)"
+                  inActiveStrokeOpacity={0.5}
+                  inActiveStrokeWidth={20}
+                  activeStrokeWidth={20}
+                  showProgressValue={false}
+                />
+                <View style={styles.timerTextContainer}>
+                  <Animated.Text
+                    style={[
+                      styles.timerTitle,
+                      { color: "white" },
+                      animatedBlinkStyle,
+                    ]}
+                  >
+                    {formatTime(countdown)}
+                  </Animated.Text>
+                </View>
+              </>
             ) : (
               <Animated.View
                 style={[{ alignItems: "center" }, animatedMainIconSize]}
@@ -555,6 +602,21 @@ export default function RoutineRunnerScreen() {
             )}
           </View>
           <View style={styles.bottomContainer}>
+            {currentTask.action.type === "timer" &&
+            currentTask.action.duration > 0 ? (
+              <TouchableOpacity
+                style={styles.controlButton}
+                onPress={() => setIsPaused(!isPaused)}
+              >
+                <Ionicons
+                  name={isPaused ? "play" : "pause"}
+                  size={32}
+                  color="white"
+                />
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.controlButton} />
+            )}
             <TouchableOpacity
               style={[
                 styles.completeButton,
@@ -569,13 +631,15 @@ export default function RoutineRunnerScreen() {
                 color={theme.colors.background}
               />
             </TouchableOpacity>
-            {isActionLocked && (
+            {isActionLocked ? (
               <TouchableOpacity
-                style={styles.unlockButton}
+                style={styles.controlButton}
                 onPress={() => setIsActionLocked(false)}
               >
                 <Ionicons name="lock-open-outline" size={24} color="white" />
               </TouchableOpacity>
+            ) : (
+              <View style={styles.controlButton} />
             )}
           </View>
         </Animated.View>
@@ -628,6 +692,11 @@ const styles = StyleSheet.create({
     marginHorizontal: theme.layout.spacing.sm,
   },
   actionContent: { flex: 1, justifyContent: "center", alignItems: "center" },
+  timerTextContainer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   timerTitle: {
     fontFamily: theme.typography.fonts.bold,
     fontSize: 42,
@@ -649,6 +718,8 @@ const styles = StyleSheet.create({
     bottom: 40,
     left: 20,
     right: 20,
+    flexDirection: "row",
+    justifyContent: "space-around",
     alignItems: "center",
   },
   completeButton: {
@@ -665,7 +736,13 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   completeButtonLocked: { backgroundColor: theme.colors.gray },
-  unlockButton: { position: "absolute", bottom: 0, right: 0, padding: 20 },
+  controlButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   timerContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -751,5 +828,12 @@ const styles = StyleSheet.create({
     color: "white",
     textAlign: "center",
     marginTop: 20,
+  },
+  pauseContainer: {
+    alignItems: "center",
+    marginVertical: theme.layout.spacing.md,
+  },
+  pauseButton: {
+    padding: theme.layout.spacing.sm,
   },
 });
