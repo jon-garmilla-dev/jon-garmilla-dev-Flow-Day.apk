@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.4.0](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.3.2...v1.4.0) (2025-07-16)
+
+
+### Features
+
+* Add confirmation modal for routine deletion and new action screens ([b73cfcb](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/b73cfcbf9ed0878b9d7f4339c3a5f229b114f0fe))
+* Add linear gradient to progress bars in RoutineRunnerScreen for enhanced visual appeal ([854b12e](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/854b12ef38787be91737dc1ff154e19dc002a2c0))
+* Disable interaction with completed routine blocks ([0eb2ba6](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/0eb2ba6ca922426f25f1c675b7fe92d7f8c5948c))
+* Enhance AlertModal and ConfirmModal with icon buttons and layout adjustments ([a8e60d0](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/a8e60d035445ce0f98f64953a3f07c0e25bdd08a))
+* Enhance CreateEditRoutineScreen and RoutineRunnerScreen with Pomodoro actions and breathing animation ([1179c05](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/1179c050dd40fd1ee576132d1c131776042f4df2))
+* Implement AlertModal for routine title validation feedback ([7877b3f](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/7877b3f07e5bb4644c8c80a65e0b5b2477368b86))
+* Refactor addRoutine to accept blocks and streamline routine creation ([fa3cef9](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/fa3cef997cdfd2edb44e1ae068437d19e268424d))
+* Replace custom progress bar implementation with AnimatedProgressBar for improved code maintainability ([ae7e283](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/ae7e283116ff0962bb5938aa0eef55fce02e2e60))
+* Replace Haptics with Vibration for timer notifications and update package versions ([3f4365a](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/3f4365a3b33e827bd27532404d2be2dd74f17367))
+* Simplify AnimatedProgressBar by removing elapsedTime and totalDuration props, and update progress calculation ([80b7e01](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/80b7e0131f27f33a60ce33c061b8253814a7d789))
+* Update AnimatedProgressBar to use elapsed time and total duration for improved accuracy ([1a0bd8f](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/1a0bd8fe16fbdd2dc61d8feac62772eada3869e5))
+
+
+### Bug Fixes
+
+*  vibration ([c6ee072](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/c6ee072d9d2714a10f7933be2f4ff068d28c3ab8))
+* Adjust pointer events based on focus progress in RoutineRunnerScreen ([74ec45a](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/74ec45aef4b12de12a3134454f18917b8dc85314))
+* Prevent vibration crash on devices without a vibrator ([c9fc1d3](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/c9fc1d34345e3ba68f4675b6760961c3fc06ac4b))
+* Update timer color in CreateEditRoutineScreen to a new hex value ([de60591](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/de6059168660ddb43cb8c8706b0fda42a91bb929))
+
 ### [1.3.2](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.3.1...v1.3.2) (2025-07-16)
 
 ### [1.3.1](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.3.0...v1.3.1) (2025-07-15)
