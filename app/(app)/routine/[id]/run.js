@@ -19,6 +19,8 @@ import Animated, {
   Easing,
   interpolate,
   Extrapolate,
+  withRepeat,
+  withSequence,
 } from "react-native-reanimated";
 
 import Header from "../../../../src/components/Header";
@@ -93,6 +95,7 @@ export default function RoutineRunnerScreen() {
   const [isFocusLocked, setIsFocusLocked] = useState(true);
   // Animation
   const focusProgress = useSharedValue(0);
+  const breathingValue = useSharedValue(1);
 
   // Stores
   const routine = useRoutineStore((state) =>
@@ -176,6 +179,21 @@ export default function RoutineRunnerScreen() {
     };
   }, [currentTask, handleComplete]);
 
+  useEffect(() => {
+    if (currentTask?.action.name === 'Break') {
+      breathingValue.value = withRepeat(
+        withSequence(
+          withTiming(1.05, { duration: 2500, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1, { duration: 2500, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        true
+      );
+    } else {
+      breathingValue.value = withTiming(1, { duration: 500 });
+    }
+  }, [currentTask, breathingValue]);
+
   // Handlers
   const handleComplete = useCallback(() => {
     if (!currentTask || (focusProgress.value > 0.5 && isActionLocked)) return;
@@ -255,6 +273,12 @@ export default function RoutineRunnerScreen() {
       },
     ],
   }));
+
+  const animatedBreathingStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: breathingValue.value }],
+    };
+  });
 
   // --- Render Logic ---
   if (!routine)
@@ -346,21 +370,23 @@ export default function RoutineRunnerScreen() {
               <View style={styles.actionContent}>
                 {currentTask.action.type === "timer" &&
                 currentTask.action.duration > 0 ? (
-                  <CircularProgress
-                    value={countdown}
-                    maxValue={currentTask.action.duration}
-                    radius={100}
-                    duration={0}
-                    progressValueColor={theme.colors.text}
-                    activeStrokeColor={theme.colors.primary}
-                    inActiveStrokeColor={theme.colors.border}
-                    inActiveStrokeOpacity={0.5}
-                    inActiveStrokeWidth={20}
-                    activeStrokeWidth={20}
-                    title={formatTime(countdown)}
-                    titleStyle={styles.timerTitle}
-                    showProgressValue={false}
-                  />
+                  <Animated.View style={animatedBreathingStyle}>
+                    <CircularProgress
+                      value={countdown}
+                      maxValue={currentTask.action.duration}
+                      radius={100}
+                      duration={0}
+                      progressValueColor={theme.colors.text}
+                      activeStrokeColor={currentTask.action.color || theme.colors.primary}
+                      inActiveStrokeColor={theme.colors.border}
+                      inActiveStrokeOpacity={0.5}
+                      inActiveStrokeWidth={20}
+                      activeStrokeWidth={20}
+                      title={formatTime(countdown)}
+                      titleStyle={styles.timerTitle}
+                      showProgressValue={false}
+                    />
+                  </Animated.View>
                 ) : (
                   <Animated.View
                     style={[{ alignItems: "center" }, animatedMainIconSize]}
@@ -470,7 +496,7 @@ export default function RoutineRunnerScreen() {
                 radius={120}
                 duration={0}
                 progressValueColor="white"
-                activeStrokeColor={theme.colors.primary}
+                activeStrokeColor={currentTask.action.color || theme.colors.primary}
                 inActiveStrokeColor="rgba(255,255,255,0.2)"
                 inActiveStrokeOpacity={0.5}
                 inActiveStrokeWidth={20}

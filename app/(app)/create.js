@@ -148,6 +148,7 @@ export default function CreateEditRoutineScreen() {
           type: "task",
           icon: "document-text-outline",
           duration: 0,
+          color: theme.colors.primary,
         };
         break;
       case "focus":
@@ -157,17 +158,33 @@ export default function CreateEditRoutineScreen() {
           type: "timer",
           icon: "time-outline",
           duration: 300,
+          color: theme.colors.primary,
         };
         break;
-      case "pomodoro":
-        newAction = {
+      case "pomodoro": {
+        const workAction = {
           id: uuidv4(),
-          name: "Pomodoro",
+          name: "Work",
           type: "timer",
-          icon: "hourglass-outline",
-          duration: 1500,
+          icon: "briefcase-outline",
+          duration: 1500, // 25 minutes
+          color: theme.colors.primary,
         };
-        break;
+        const breakAction = {
+          id: uuidv4(),
+          name: "Break",
+          type: "timer",
+          icon: "cafe-outline",
+          duration: 300, // 5 minutes
+          color: theme.colors.success,
+        };
+        if (!newBlocks[targetBlockIndex].actions) {
+          newBlocks[targetBlockIndex].actions = [];
+        }
+        newBlocks[targetBlockIndex].actions.push(workAction, breakAction);
+        setBlocks(newBlocks);
+        return; // Exit after adding pomodoro actions
+      }
       default:
         return;
     }
