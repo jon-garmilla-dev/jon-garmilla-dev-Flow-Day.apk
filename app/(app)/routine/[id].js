@@ -16,6 +16,14 @@ import { theme } from "../../../src/constants/theme";
 import useProgressStore from "../../../src/store/useProgressStore";
 import useRoutineStore from "../../../src/store/useRoutineStore";
 
+const formatTime = (seconds) => {
+  const mins = Math.floor(seconds / 60)
+    .toString()
+    .padStart(2, "0");
+  const secs = (seconds % 60).toString().padStart(2, "0");
+  return `${mins}:${secs}`;
+};
+
 const ActionBubbles = ({ actions, actionStatuses, pausedTimers }) => (
   <View style={styles.actionBubblesContainer}>
     {actions.slice(0, 7).map((action) => {
@@ -140,6 +148,10 @@ const BlockRow = ({ routine, block, status, actionStatuses, pausedTimers }) => {
 
   const duration = calculateBlockDuration();
 
+  const pausedAction = block.actions.find(
+    (action) => pausedTimers[action.id] !== undefined,
+  );
+
   const handlePress = () => {
     if (status === "completed") return;
     router.push({
@@ -161,7 +173,11 @@ const BlockRow = ({ routine, block, status, actionStatuses, pausedTimers }) => {
         </View>
         {duration && (
           <View style={styles.durationContainer}>
-            <Ionicons name="time-outline" size={16} color={theme.colors.gray} />
+            <Ionicons
+              name="time-outline"
+              size={16}
+              color={theme.colors.gray}
+            />
             <Text style={styles.durationText}>{duration}</Text>
           </View>
         )}
@@ -171,6 +187,13 @@ const BlockRow = ({ routine, block, status, actionStatuses, pausedTimers }) => {
         actionStatuses={actionStatuses}
         pausedTimers={pausedTimers}
       />
+      {pausedAction && (
+        <View style={styles.pausedTimeContainer}>
+          <Text style={styles.pausedTimeText}>
+            {formatTime(pausedTimers[pausedAction.id])}
+          </Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 };
@@ -307,6 +330,18 @@ const styles = StyleSheet.create({
   },
   durationText: {
     color: theme.colors.gray,
+    fontFamily: theme.typography.fonts.bold,
+    fontSize: 12,
+    marginLeft: 4,
+  },
+  pausedTimeContainer: {
+    position: "absolute",
+    bottom: 12,
+    right: 12,
+    paddingHorizontal: 10,
+  },
+  pausedTimeText: {
+    color: theme.colors.primary,
     fontFamily: theme.typography.fonts.bold,
     fontSize: 12,
     marginLeft: 4,
