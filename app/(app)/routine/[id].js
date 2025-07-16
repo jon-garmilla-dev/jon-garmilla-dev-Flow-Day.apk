@@ -145,6 +145,7 @@ const BlockRow = ({ routine, block, status, actionStatuses }) => {
   const duration = calculateBlockDuration();
 
   const handlePress = () => {
+    if (status === "completed") return;
     router.push({
       pathname: `/routine/${routine.id}/run`,
       params: { blockId: block.id },
@@ -152,7 +153,11 @@ const BlockRow = ({ routine, block, status, actionStatuses }) => {
   };
 
   return (
-    <TouchableOpacity style={styles.blockRow} onPress={handlePress}>
+    <TouchableOpacity
+      style={[styles.blockRow, status === "completed" && styles.disabledBlock]}
+      onPress={handlePress}
+      disabled={status === "completed"}
+    >
       <View style={styles.blockInfo}>
         <View style={styles.blockTitleContainer}>
           {getStatusIcon()}
@@ -311,5 +316,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     elevation: 8,
     backgroundColor: theme.colors.primary,
+  },
+  disabledBlock: {
+    opacity: 0.5,
   },
 });
