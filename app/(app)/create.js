@@ -13,6 +13,7 @@ import DraggableFlatList from "react-native-draggable-flatlist";
 import { v4 as uuidv4 } from "uuid";
 
 import Header from "../../src/components/Header";
+import AlertModal from "../../src/components/modals/AlertModal";
 import IconPickerModal from "../../src/components/modals/IconPickerModal";
 import ActionSheet from "../../src/components/ui/ActionSheet";
 import ColorPicker from "../../src/components/ui/ColorPicker";
@@ -66,6 +67,8 @@ export default function CreateEditRoutineScreen() {
   const [isRoutineIconPickerVisible, setRoutineIconPickerVisible] =
     useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isAlertVisible, setAlertVisible] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
 
   const routine = useMemo(
     () => routines.find((r) => r.id === routineId),
@@ -184,7 +187,8 @@ export default function CreateEditRoutineScreen() {
 
   const handleSave = () => {
     if (title.trim() === "") {
-      alert("Please enter a routine title.");
+      setAlertMessage("Please enter a routine title.");
+      setAlertVisible(true);
       return;
     }
 
@@ -490,6 +494,12 @@ export default function CreateEditRoutineScreen() {
         onClose={() => setIsActionSheetVisible(false)}
         onSelect={addActionToBlock}
         options={actionOptions}
+      />
+      <AlertModal
+        visible={isAlertVisible}
+        onClose={() => setAlertVisible(false)}
+        title="Incomplete Routine"
+        message={alertMessage}
       />
     </View>
   );
