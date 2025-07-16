@@ -7,8 +7,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   BackHandler,
-  Vibration,
 } from "react-native";
+import * as Haptics from "expo-haptics";
 import CircularProgress from "react-native-circular-progress-indicator";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import Animated, {
@@ -188,7 +188,7 @@ export default function RoutineRunnerScreen() {
         setCountdown((prev) => {
           if (!isMounted) return prev;
           if (prev <= twentyFivePercent && prev > twentyFivePercent - 1) {
-            Vibration.vibrate(1000);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           }
           if (prev <= 1) {
             if (countdownTimer) clearInterval(countdownTimer);
@@ -227,13 +227,13 @@ export default function RoutineRunnerScreen() {
   const handleComplete = useCallback(() => {
     if (!currentTask || (focusProgress.value > 0.5 && isActionLocked)) return;
 
-    Vibration.vibrate(1000);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     completeAction(routine, currentTask.action.id);
   }, [currentTask, isActionLocked, routine, completeAction]);
 
   const handleStart = useCallback(() => {
     if (currentTask) {
-      Vibration.vibrate(100);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       startAction(routine, currentTask.block.id);
     }
   }, [currentTask, routine, startAction]);
