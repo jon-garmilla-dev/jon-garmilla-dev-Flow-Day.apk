@@ -5,9 +5,9 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Modal,
   ScrollView,
   Animated,
+  TouchableWithoutFeedback,
 } from "react-native";
 
 import { theme } from "../../constants/theme";
@@ -119,61 +119,62 @@ const IconPickerModal = ({ visible, onClose, onSelectIcon }) => {
     }
   }, [visible]);
 
+  // If not visible, don't render anything to avoid capturing touches
+  if (!visible) {
+    return null;
+  }
+
   return (
-    <Modal
-      animationType="fade"
-      transparent
-      visible={visible}
-      onRequestClose={onClose}
-    >
+    <View style={styles.centeredView}>
       <TouchableOpacity
-        style={styles.centeredView}
+        style={StyleSheet.absoluteFill}
         activeOpacity={1}
         onPress={onClose}
+      />
+      <Animated.View
+        style={[styles.modalView, { transform: [{ translateY: slideAnim }] }]}
       >
-        <Animated.View
-          style={[styles.modalView, { transform: [{ translateY: slideAnim }] }]}
-          // To prevent the TouchableOpacity from triggering onClose when tapping inside the modal
-          onStartShouldSetResponder={() => true}
-        >
-          <Text style={styles.modalTitle}>Choose an Icon</Text>
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Ionicons name="close" size={32} color={theme.colors.gray} />
-          </TouchableOpacity>
-          <ScrollView>
-            {iconCategories.map((category) => (
-              <View key={category.title} style={styles.categoryContainer}>
-                <Text style={styles.categoryTitle}>{category.title}</Text>
-                <View style={styles.iconGrid}>
-                  {category.icons.map((iconName) => (
-                    <TouchableOpacity
-                      key={iconName}
-                      style={styles.iconContainer}
-                      onPress={() => {
-                        onSelectIcon(iconName);
-                        onClose();
-                      }}
-                    >
-                      <Ionicons
-                        name={iconName}
-                        size={32}
-                        color={category.color}
-                      />
-                    </TouchableOpacity>
-                  ))}
+        <TouchableWithoutFeedback>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.modalTitle}>Choose an Icon</Text>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+              <Ionicons name="close" size={32} color={theme.colors.gray} />
+            </TouchableOpacity>
+            <ScrollView>
+              {iconCategories.map((category) => (
+                <View key={category.title} style={styles.categoryContainer}>
+                  <Text style={styles.categoryTitle}>{category.title}</Text>
+                  <View style={styles.iconGrid}>
+                    {category.icons.map((iconName) => (
+                      <TouchableOpacity
+                        key={iconName}
+                        style={styles.iconContainer}
+                        onPress={() => {
+                          onSelectIcon(iconName);
+                          onClose();
+                        }}
+                      >
+                        <Ionicons
+                          name={iconName}
+                          size={32}
+                          color={category.color}
+                        />
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 </View>
-              </View>
-            ))}
-          </ScrollView>
-        </Animated.View>
-      </TouchableOpacity>
-    </Modal>
+              ))}
+            </ScrollView>
+          </View>
+        </TouchableWithoutFeedback>
+      </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   centeredView: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     justifyContent: "flex-end",
     backgroundColor: "rgba(0,0,0,0.7)",
   },

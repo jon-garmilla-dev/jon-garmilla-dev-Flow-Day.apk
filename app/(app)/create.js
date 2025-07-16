@@ -430,16 +430,6 @@ export default function CreateEditRoutineScreen() {
 
   return (
     <View style={styles.container}>
-      <IconPickerModal
-        visible={isRoutineIconPickerVisible}
-        onClose={() => setRoutineIconPickerVisible(false)}
-        onSelectIcon={handleSelectRoutineIcon}
-      />
-      <IconPickerModal
-        visible={isBlockIconPickerVisible}
-        onClose={() => setBlockIconPickerVisible(false)}
-        onSelectIcon={handleSelectBlockIcon}
-      />
       <Header
         title={isEditing ? "Edit Routine" : "Create Routine"}
         leftElement={
@@ -530,6 +520,16 @@ export default function CreateEditRoutineScreen() {
         onClose={() => setAlertVisible(false)}
         title="Incomplete Routine"
         message={alertMessage}
+      />
+      <IconPickerModal
+        visible={isRoutineIconPickerVisible}
+        onClose={() => setRoutineIconPickerVisible(false)}
+        onSelectIcon={handleSelectRoutineIcon}
+      />
+      <IconPickerModal
+        visible={isBlockIconPickerVisible}
+        onClose={() => setBlockIconPickerVisible(false)}
+        onSelectIcon={handleSelectBlockIcon}
       />
     </View>
   );
