@@ -213,17 +213,21 @@ export default function CreateEditRoutineScreen() {
       updateRoutine(routineId, title, color, icon);
       reorderBlocks(routineId, blocks);
     } else {
-      const newRoutineId = addRoutine(title, color, icon);
-      blocks.forEach((block) => {
-        if (block.name.trim() !== "") {
-          const { id: tempBlockId, ...blockData } = block;
-          const newBlockId = addBlock(newRoutineId, blockData);
-          (block.actions || []).forEach((action) => {
-            const { id, ...actionData } = action;
-            addAction(newRoutineId, newBlockId, actionData);
-          });
-        }
-      });
+      const newRoutine = {
+        id: uuidv4(),
+        title,
+        color,
+        icon,
+        blocks: blocks.map(block => ({
+          ...block,
+          id: uuidv4(),
+          actions: (block.actions || []).map(action => ({
+            ...action,
+            id: uuidv4(),
+          })),
+        })),
+      };
+      addRoutine(newRoutine.title, newRoutine.color, newRoutine.icon, newRoutine.blocks);
     }
     router.back();
   };

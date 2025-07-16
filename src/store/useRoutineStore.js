@@ -58,8 +58,8 @@ const useRoutineStore = create((set, get) => ({
   },
 
   // --- Routines ---
-  addRoutine: (title, color = "#6366F1", icon = "apps-outline") => {
-    const newRoutine = { id: uuidv4(), title, color, icon, blocks: [] };
+  addRoutine: (title, color = "#6366F1", icon = "apps-outline", blocks = []) => {
+    const newRoutine = { id: uuidv4(), title, color, icon, blocks };
     set((state) => ({ routines: [...state.routines, newRoutine] }));
     saveRoutine(newRoutine, true); // true to update index
     return newRoutine.id;
