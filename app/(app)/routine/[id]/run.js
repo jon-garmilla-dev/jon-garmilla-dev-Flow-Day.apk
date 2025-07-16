@@ -69,12 +69,10 @@ const formatTime = (seconds) => {
 };
 
 // --- Animated Components ---
-const AnimatedProgressBar = ({ elapsedTime, totalDuration, progress, primaryColor, secondaryColor }) => {
+const AnimatedProgressBar = ({ progress, primaryColor, secondaryColor }) => {
   const animatedStyle = useAnimatedStyle(() => {
-    const width = totalDuration > 0 ? (elapsedTime / totalDuration) * 100 : 0;
     return {
-      width: `${width}%`,
-      opacity: interpolate(progress.value, [0, 0.5], [1, 0], Extrapolate.CLAMP),
+      width: `${progress.value}%`,
     };
   });
   return (
@@ -104,6 +102,7 @@ export default function RoutineRunnerScreen() {
   const [blockElapsedTime, setBlockElapsedTime] = useState(0);
   // Animation
   const focusProgress = useSharedValue(0);
+  const progress = useSharedValue(0);
   const breathingValue = useSharedValue(1);
 
   // Stores
@@ -131,6 +130,14 @@ export default function RoutineRunnerScreen() {
     if (!block) return 0;
     return (block.actions || []).reduce((sum, action) => sum + (action.duration || 0), 0);
   }, [block]);
+
+  useEffect(() => {
+    const completedDuration = (block?.actions || [])
+      .slice(0, currentIndex)
+      .reduce((sum, action) => sum + (action.duration || 0), 0);
+    const newProgress = totalBlockDuration > 0 ? (completedDuration / totalBlockDuration) * 100 : 0;
+    progress.value = withTiming(newProgress, { duration: 500 });
+  }, [currentIndex, totalBlockDuration, block, progress]);
 
   // Effects
   useEffect(() => {
@@ -162,7 +169,6 @@ export default function RoutineRunnerScreen() {
       totalTimer = setInterval(() => {
         if (isMounted) {
           setElapsedTime((prev) => prev + 1);
-          setBlockElapsedTime((prev) => prev + 1);
         }
       }, 1000);
     }
@@ -213,13 +219,9 @@ export default function RoutineRunnerScreen() {
   const handleComplete = useCallback(() => {
     if (!currentTask || (focusProgress.value > 0.5 && isActionLocked)) return;
 
-    if (currentTask.action.type === "timer" && countdown > 0) {
-      setBlockElapsedTime((prev) => prev + countdown);
-    }
-
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     completeAction(routine, currentTask.action.id);
-  }, [currentTask, isActionLocked, routine, completeAction, countdown]);
+  }, [currentTask, isActionLocked, routine, completeAction]);
 
   const handleStart = useCallback(() => {
     if (currentTask) {
@@ -379,9 +381,7 @@ export default function RoutineRunnerScreen() {
                   >{`${currentIndex + 1}/${totalTasks}`}</Text>
                 </View>
                 <AnimatedProgressBar
-                  elapsedTime={blockElapsedTime}
-                  totalDuration={totalBlockDuration}
-                  progress={focusProgress}
+                  progress={progress}
                   primaryColor={theme.colors.primary}
                   secondaryColor={currentTask.action.color || theme.colors.primary}
                 />
