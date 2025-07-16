@@ -40,18 +40,19 @@ const RoutineRow = ({ item, drag, isActive, isEditMode, onDelete }) => {
   const totalSeconds = calculateRoutineDuration(item);
   const totalMinutes = Math.floor(totalSeconds / 60);
 
-  return (
-    <View
-      style={[
-        styles.itemContainer,
-        { backgroundColor: isActive ? theme.colors.surface : "transparent" },
-      ]}
-    >
-      {isEditMode && (
+  if (isEditMode) {
+    return (
+      <View
+        style={[
+          styles.itemContainer,
+          styles.editModeItemContainer,
+          { backgroundColor: isActive ? theme.colors.surface : "transparent" },
+        ]}
+      >
         <TouchableOpacity
           onLongPress={drag}
           disabled={isActive}
-          style={styles.dragHandle}
+          style={styles.editDragHandle}
         >
           <Ionicons
             name="reorder-three-outline"
@@ -59,10 +60,33 @@ const RoutineRow = ({ item, drag, isActive, isEditMode, onDelete }) => {
             color={theme.colors.gray}
           />
         </TouchableOpacity>
-      )}
+        <View style={styles.editMainContent}>
+          <Ionicons
+            name={item.icon || "apps-outline"}
+            size={28}
+            color={item.color || theme.colors.primary}
+            style={styles.icon}
+          />
+          <Text style={styles.itemTitle}>{item.title}</Text>
+        </View>
+        <TouchableOpacity onPress={onDelete} style={styles.editDeleteButton}>
+          <Ionicons
+            name="remove-circle-outline"
+            size={28}
+            color={theme.colors.danger}
+          />
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
+  return (
+    <View style={styles.itemContainer}>
       <Link href={`/routine/${item.id}`} asChild>
-        <TouchableOpacity style={styles.mainContent}>
+        <TouchableOpacity
+          style={styles.mainContent}
+          hitSlop={{ top: 20, bottom: 20, left: 5, right: 5 }}
+        >
           <Ionicons
             name={item.icon || "apps-outline"}
             size={28}
@@ -74,32 +98,23 @@ const RoutineRow = ({ item, drag, isActive, isEditMode, onDelete }) => {
       </Link>
 
       <View style={styles.rightContainer}>
-        {isEditMode ? (
-          <TouchableOpacity onPress={onDelete} style={styles.deleteButton}>
+        {totalMinutes > 0 && (
+          <Text style={styles.durationText}>
+            {formatDuration(totalMinutes)}
+          </Text>
+        )}
+        <Link href={`/create?routineId=${item.id}`} asChild>
+          <TouchableOpacity
+            style={styles.iconButton}
+            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+          >
             <Ionicons
-              name="remove-circle-outline"
-              size={28}
-              color={theme.colors.danger}
+              name="ellipsis-horizontal"
+              size={24}
+              color={theme.colors.gray}
             />
           </TouchableOpacity>
-        ) : (
-          <>
-            {totalMinutes > 0 && (
-              <Text style={styles.durationText}>
-                {formatDuration(totalMinutes)}
-              </Text>
-            )}
-            <Link href={`/create?routineId=${item.id}`} asChild>
-              <TouchableOpacity style={styles.iconButton}>
-                <Ionicons
-                  name="ellipsis-horizontal"
-                  size={24}
-                  color={theme.colors.gray}
-                />
-              </TouchableOpacity>
-            </Link>
-          </>
-        )}
+        </Link>
       </View>
     </View>
   );
@@ -155,12 +170,18 @@ export default function RoutineListScreen() {
       <Header
         title="Flow Day"
         leftElement={
-          <TouchableOpacity onPress={openMenu}>
+          <TouchableOpacity
+            onPress={openMenu}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
             <Ionicons name="menu" size={28} color={theme.colors.text} />
           </TouchableOpacity>
         }
         rightElement={
-          <TouchableOpacity onPress={() => setEditMode(!isEditMode)}>
+          <TouchableOpacity
+            onPress={() => setEditMode(!isEditMode)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
             <Ionicons
               name={isEditMode ? "checkmark-done" : "pencil"}
               size={24}
@@ -265,5 +286,29 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     paddingLeft: theme.layout.spacing.md,
+  },
+  editModeItemContainer: {
+    padding: 0,
+  },
+  editDragHandle: {
+    flex: 0.15,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: theme.layout.spacing.lg,
+    paddingLeft: theme.layout.spacing.lg,
+  },
+  editMainContent: {
+    flex: 0.7,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: theme.layout.spacing.lg,
+    paddingHorizontal: theme.layout.spacing.md,
+  },
+  editDeleteButton: {
+    flex: 0.15,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: theme.layout.spacing.lg,
+    paddingRight: theme.layout.spacing.lg,
   },
 });
