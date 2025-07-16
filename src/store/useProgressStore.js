@@ -6,6 +6,7 @@ const getProgressKey = (routineId, date) =>
   `@FlowDay:Progress:${date}:${routineId}`;
 
 const useProgressStore = create((set, get) => ({
+  routineId: null,
   progress: {}, // { [blockId]: 'pending' | 'active' | 'completed', ... }
   actions: {}, // { [actionId]: 'pending' | 'active' | 'completed', ... }
   currentBlockId: null,
@@ -13,6 +14,9 @@ const useProgressStore = create((set, get) => ({
 
   loadProgress: async (routine) => {
     if (!routine) return;
+    if (get().routineId === routine.id) {
+      return; // Already loaded for this routine
+    }
     const date = new Date().toISOString().split("T")[0];
     const key = getProgressKey(routine.id, date);
     try {
@@ -20,7 +24,13 @@ const useProgressStore = create((set, get) => ({
       if (storedProgress) {
         const { progress, actions, currentBlockId, currentActionId } =
           JSON.parse(storedProgress);
-        set({ progress, actions, currentBlockId, currentActionId });
+        set({
+          routineId: routine.id,
+          progress,
+          actions,
+          currentBlockId,
+          currentActionId,
+        });
       } else {
         // Initialize progress for a new day
         const initialProgress = {};
@@ -32,6 +42,7 @@ const useProgressStore = create((set, get) => ({
           });
         });
         set({
+          routineId: routine.id,
           progress: initialProgress,
           actions: initialActions,
           currentBlockId: null,
@@ -79,6 +90,7 @@ const useProgressStore = create((set, get) => ({
         );
         if (isBlockComplete) {
           draft.progress[draft.currentBlockId] = "completed";
+          draft.currentBlockId = null;
         }
       }),
       false,
@@ -109,7 +121,8 @@ const useProgressStore = create((set, get) => ({
     const key = getProgressKey(routine.id, date);
     try {
       await AsyncStorage.removeItem(key);
-      // Reload to re-initialize the state
+      // Force reload by resetting the routineId
+      set({ routineId: null });
       get().loadProgress(routine);
     } catch (e) {
       console.error("Failed to reset progress.", e);
