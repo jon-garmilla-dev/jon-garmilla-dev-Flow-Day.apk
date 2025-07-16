@@ -158,7 +158,7 @@ export default function CreateEditRoutineScreen() {
           type: "timer",
           icon: "time-outline",
           duration: 300,
-          color: theme.colors.primary,
+          color: "#8B5CF6",
         };
         break;
       case "pomodoro": {
