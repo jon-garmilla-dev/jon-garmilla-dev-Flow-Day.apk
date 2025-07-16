@@ -127,24 +127,44 @@ export default function RoutineRunnerScreen() {
 
   const { block, currentTask, nextTask, currentIndex, totalTasks } = taskInfo;
 
-  const totalBlockDuration = useMemo(() => {
-    if (!block) return 0;
-    return (block.actions || []).reduce(
-      (sum, action) => sum + (action.duration || 0),
-      0,
+  const effectiveDurations = useMemo(() => {
+    if (!block) return { durations: [], total: 0 };
+
+    const timedActions = block.actions.filter(
+      (a) => a.duration && a.duration > 0,
     );
+    let averageDuration = 0;
+    if (timedActions.length > 0) {
+      const totalTimedDuration = timedActions.reduce(
+        (sum, a) => sum + a.duration,
+        0,
+      );
+      averageDuration = totalTimedDuration / timedActions.length;
+    } else {
+      // If no timed actions, treat each action as 1 unit
+      averageDuration = 1;
+    }
+
+    const durations = block.actions.map(
+      (a) => (a.duration && a.duration > 0 ? a.duration : averageDuration) || 1,
+    );
+    const total = durations.reduce((sum, d) => sum + d, 0);
+
+    return { durations, total };
   }, [block]);
 
   useEffect(() => {
-    const completedDuration = (block?.actions || [])
-      .slice(0, currentIndex)
-      .reduce((sum, action) => sum + (action.duration || 0), 0);
-    const newProgress =
-      totalBlockDuration > 0
-        ? (completedDuration / totalBlockDuration) * 100
-        : 0;
-    progress.value = withTiming(newProgress, { duration: 500 });
-  }, [currentIndex, totalBlockDuration, block, progress]);
+    if (effectiveDurations.total > 0) {
+      const completedEffectiveDuration = effectiveDurations.durations
+        .slice(0, currentIndex)
+        .reduce((sum, d) => sum + d, 0);
+      const newProgress =
+        (completedEffectiveDuration / effectiveDurations.total) * 100;
+      progress.value = withTiming(newProgress, { duration: 500 });
+    } else {
+      progress.value = withTiming(0);
+    }
+  }, [currentIndex, effectiveDurations, progress]);
 
   // Effects
   useEffect(() => {
