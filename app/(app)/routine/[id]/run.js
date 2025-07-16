@@ -22,6 +22,7 @@ import Animated, {
   withRepeat,
   withSequence,
 } from "react-native-reanimated";
+import { LinearGradient } from 'expo-linear-gradient';
 
 import Header from "../../../../src/components/Header";
 import { theme } from "../../../../src/constants/theme";
@@ -68,7 +69,7 @@ const formatTime = (seconds) => {
 };
 
 // --- Animated Components ---
-const AnimatedProgressBar = ({ current, total, progress }) => {
+const AnimatedProgressBar = ({ current, total, progress, primaryColor, secondaryColor }) => {
   const animatedStyle = useAnimatedStyle(() => {
     const width = total > 0 ? (current / total) * 100 : 0;
     return {
@@ -78,7 +79,14 @@ const AnimatedProgressBar = ({ current, total, progress }) => {
   });
   return (
     <View style={styles.progressBarContainer}>
-      <Animated.View style={[styles.progressBar, animatedStyle]} />
+      <Animated.View style={[styles.progressBar, animatedStyle]}>
+        <LinearGradient
+          colors={[primaryColor, secondaryColor]}
+          style={{ flex: 1 }}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+        />
+      </Animated.View>
     </View>
   );
 };
@@ -363,6 +371,8 @@ export default function RoutineRunnerScreen() {
                   current={currentIndex + 1}
                   total={totalTasks}
                   progress={focusProgress}
+                  primaryColor={theme.colors.primary}
+                  secondaryColor={currentTask.action.color || theme.colors.primary}
                 />
               </View>
 
@@ -477,14 +487,21 @@ export default function RoutineRunnerScreen() {
               >{`${currentIndex + 1}/${totalTasks}`}</Text>
             </View>
             <View style={styles.focusProgressContainer}>
-              <View
+              <Animated.View
                 style={[
                   styles.focusProgressBar,
                   {
                     width: `${totalTasks > 0 ? ((currentIndex + 1) / totalTasks) * 100 : 0}%`,
                   },
                 ]}
-              />
+              >
+                <LinearGradient
+                  colors={[theme.colors.primary, currentTask.action.color || theme.colors.primary]}
+                  style={{ flex: 1 }}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                />
+              </Animated.View>
             </View>
           </View>
           <View style={styles.actionContent}>
