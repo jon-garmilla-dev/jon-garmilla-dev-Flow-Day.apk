@@ -6,13 +6,13 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   FlatList,
 } from "react-native";
 import DraggableFlatList from "react-native-draggable-flatlist";
 
 import Header from "../../src/components/Header";
 import { usePageLayout } from "../../src/components/layout/PageLayout";
+import ConfirmModal from "../../src/components/modals/ConfirmModal";
 import { theme } from "../../src/constants/theme";
 import useRoutineStore from "../../src/store/useRoutineStore";
 
@@ -111,6 +111,8 @@ export default function RoutineListScreen() {
   const { openMenu } = usePageLayout();
   const [isEditMode, setEditMode] = useState(false);
   const [localRoutines, setLocalRoutines] = useState(routines);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [selectedRoutine, setSelectedRoutine] = useState(null);
 
   useEffect(() => {
     loadRoutines();
@@ -121,18 +123,21 @@ export default function RoutineListScreen() {
   }, [routines]);
 
   const handleDeletePress = (routine) => {
-    Alert.alert(
-      "Delete Workflow",
-      `Are you sure you want to delete "${routine.title}"? This cannot be undone.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => deleteRoutine(routine.id),
-        },
-      ],
-    );
+    setSelectedRoutine(routine);
+    setModalVisible(true);
+  };
+
+  const confirmDelete = () => {
+    if (selectedRoutine) {
+      deleteRoutine(selectedRoutine.id);
+      setModalVisible(false);
+      setSelectedRoutine(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setModalVisible(false);
+    setSelectedRoutine(null);
   };
 
   const renderItem = ({ item, drag, isActive }) => (
@@ -194,6 +199,13 @@ export default function RoutineListScreen() {
           keyExtractor={(item) => item.id}
         />
       )}
+      <ConfirmModal
+        visible={isModalVisible}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+        title="Delete Workflow"
+        message={`Are you sure you want to delete "${selectedRoutine?.title}"? This cannot be undone.`}
+      />
     </View>
   );
 }

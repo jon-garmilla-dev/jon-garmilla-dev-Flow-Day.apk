@@ -22,6 +22,9 @@ function StackNavigator() {
       <Stack.Screen name="routine/[id]" />
       <Stack.Screen name="create" options={{ title: "Create/Edit Routine" }} />
       <Stack.Screen name="block/[id]" />
+      <Stack.Screen name="actions/index" />
+      <Stack.Screen name="actions/create" />
+      <Stack.Screen name="actions/picker" />
       <Stack.Screen
         name="routine/[id]/run"
         options={{
