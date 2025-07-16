@@ -5,7 +5,6 @@ import React, {
   useImperativeHandle,
 } from "react";
 import {
-  Modal,
   View,
   StyleSheet,
   Animated,
@@ -53,51 +52,53 @@ const SideMenu = forwardRef(({ isOpen, isPreviewing, onClose }, ref) => {
     }
   }, [isOpen, isPreviewing, slideAnim]);
 
-  return (
-    <Modal
-      transparent
-      visible={isOpen || isPreviewing}
-      onRequestClose={onClose}
-    >
-      <View style={styles.container}>
-        {/* Overlay clickable que cierra el menú */}
-        <TouchableOpacity
-          style={styles.overlay}
-          activeOpacity={1}
-          onPress={onClose}
-        />
+  // If not visible, don't render anything to avoid capturing touches
+  if (!isOpen && !isPreviewing) {
+    return null;
+  }
 
-        {/* Contenedor del menú animado */}
-        <Animated.View
-          style={[
-            styles.menuContainer,
-            { transform: [{ translateX: slideAnim }] },
-          ]}
-        >
-          {/* Wrapper para que los toques dentro del menú no lo cierren */}
-          <TouchableWithoutFeedback>
-            <View style={{ flex: 1 }}>
-              <CustomDrawerContent navigation={{ closeDrawer: onClose }} />
-            </View>
-          </TouchableWithoutFeedback>
-        </Animated.View>
-      </View>
-    </Modal>
+  return (
+    <View style={styles.container}>
+      {/* Overlay clickable que cierra el menú */}
+      <TouchableOpacity
+        style={styles.overlay}
+        activeOpacity={1}
+        onPress={onClose}
+      />
+
+      {/* Contenedor del menú animado */}
+      <Animated.View
+        style={[
+          styles.menuContainer,
+          { transform: [{ translateX: slideAnim }] },
+        ]}
+      >
+        {/* Wrapper para que los toques dentro del menú no lo cierren */}
+        <TouchableWithoutFeedback>
+          <View style={{ flex: 1 }}>
+            <CustomDrawerContent navigation={{ closeDrawer: onClose }} />
+          </View>
+        </TouchableWithoutFeedback>
+      </Animated.View>
+    </View>
   );
 });
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   menuContainer: {
+    position: "absolute",
     width: menuWidth,
     height: "100%",
     backgroundColor: "#0d1117",
+    left: 0,
+    top: 0,
   },
 });
 
