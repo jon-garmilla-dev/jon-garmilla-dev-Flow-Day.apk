@@ -16,14 +16,15 @@ import { theme } from "../../../src/constants/theme";
 import useProgressStore from "../../../src/store/useProgressStore";
 import useRoutineStore from "../../../src/store/useRoutineStore";
 
-const ActionBubbles = ({ actions, actionStatuses }) => (
+const ActionBubbles = ({ actions, actionStatuses, pausedTimers }) => (
   <View style={styles.actionBubblesContainer}>
     {actions.slice(0, 7).map((action) => {
       // Show up to 7 icons
       const status = actionStatuses[action.id];
 
       const isCompleted = status === "completed";
-      const isActive = status === "active";
+      const isPaused = pausedTimers[action.id] !== undefined;
+      const isActive = status === "active" || isPaused;
 
       let iconName = action.icon || "ellipse-outline";
       if (isCompleted && iconName.endsWith("-outline")) {
@@ -46,7 +47,7 @@ const ActionBubbles = ({ actions, actionStatuses }) => (
   </View>
 );
 
-const BlockRow = ({ routine, block, status, actionStatuses }) => {
+const BlockRow = ({ routine, block, status, actionStatuses, pausedTimers }) => {
   const router = useRouter();
   const scaleCheck = useSharedValue(0);
   const pulseOpacity = useSharedValue(0);
@@ -165,7 +166,11 @@ const BlockRow = ({ routine, block, status, actionStatuses }) => {
           </View>
         )}
       </View>
-      <ActionBubbles actions={block.actions} actionStatuses={actionStatuses} />
+      <ActionBubbles
+        actions={block.actions}
+        actionStatuses={actionStatuses}
+        pausedTimers={pausedTimers}
+      />
     </TouchableOpacity>
   );
 };
@@ -174,7 +179,8 @@ export default function RoutineScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { routines, loadRoutines } = useRoutineStore();
-  const { progress, actions, loadProgress, resetProgress } = useProgressStore();
+  const { progress, actions, pausedTimers, loadProgress, resetProgress } =
+    useProgressStore();
 
   const routine = routines.find((r) => r.id === id);
 
@@ -218,6 +224,7 @@ export default function RoutineScreen() {
             block={item}
             status={progress[item.id]}
             actionStatuses={actions}
+            pausedTimers={pausedTimers}
           />
         )}
         keyExtractor={(item) => item.id}

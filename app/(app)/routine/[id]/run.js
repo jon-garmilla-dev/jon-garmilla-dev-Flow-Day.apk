@@ -111,8 +111,14 @@ export default function RoutineRunnerScreen() {
   const routine = useRoutineStore((state) =>
     state.routines.find((r) => r.id === routineId),
   );
-  const { actions, loadProgress, startAction, completeAction } =
-    useProgressStore();
+  const {
+    actions,
+    loadProgress,
+    startAction,
+    completeAction,
+    pauseAction,
+    pausedTimers,
+  } = useProgressStore();
 
   // Memos
   const taskInfo = useMemo(() => {
@@ -201,9 +207,15 @@ export default function RoutineRunnerScreen() {
 
   useEffect(() => {
     if (currentTask?.action.type === "timer" && currentTask.action.duration > 0) {
-      setCountdown(currentTask.action.duration);
+      const pausedTime = pausedTimers[currentTask.action.id];
+      if (pausedTime !== undefined) {
+        setCountdown(pausedTime);
+        setIsPaused(true);
+      } else {
+        setCountdown(currentTask.action.duration);
+      }
     }
-  }, [currentTask]);
+  }, [currentTask, pausedTimers]);
 
   useEffect(() => {
     let totalTimer = null;
@@ -518,7 +530,15 @@ export default function RoutineRunnerScreen() {
             currentTask.action.duration > 0 ? (
               <TouchableOpacity
                 style={styles.controlButton}
-                onPress={() => setIsPaused(!isPaused)}
+                onPress={() => {
+                  const newPausedState = !isPaused;
+                  setIsPaused(newPausedState);
+                  if (newPausedState) {
+                    pauseAction(routine.id, currentTask.action.id, countdown);
+                  } else {
+                    pauseAction(routine.id, null, null);
+                  }
+                }}
               >
                 <Ionicons
                   name={isPaused ? "play" : "pause"}

@@ -11,6 +11,7 @@ const useProgressStore = create((set, get) => ({
   actions: {}, // { [actionId]: 'pending' | 'active' | 'completed', ... }
   currentBlockId: null,
   currentActionId: null,
+  pausedTimers: {}, // { [actionId]: remainingTime }
 
   loadProgress: async (routine) => {
     if (!routine) return;
@@ -22,14 +23,20 @@ const useProgressStore = create((set, get) => ({
     try {
       const storedProgress = await AsyncStorage.getItem(key);
       if (storedProgress) {
-        const { progress, actions, currentBlockId, currentActionId } =
-          JSON.parse(storedProgress);
+        const {
+          progress,
+          actions,
+          currentBlockId,
+          currentActionId,
+          pausedTimers,
+        } = JSON.parse(storedProgress);
         set({
           routineId: routine.id,
           progress,
           actions,
           currentBlockId,
           currentActionId,
+          pausedTimers: pausedTimers || {},
         });
       } else {
         // Initialize progress for a new day
@@ -47,6 +54,7 @@ const useProgressStore = create((set, get) => ({
           actions: initialActions,
           currentBlockId: null,
           currentActionId: null,
+          pausedTimers: {},
         });
       }
     } catch (e) {
@@ -98,8 +106,27 @@ const useProgressStore = create((set, get) => ({
     );
   },
 
+  pauseAction: (routineId, actionId, remainingTime) => {
+    set(
+      produce((draft) => {
+        if (remainingTime !== null) {
+          draft.pausedTimers[actionId] = remainingTime;
+        } else {
+          delete draft.pausedTimers[actionId];
+        }
+      }),
+    );
+    get().saveProgress(routineId);
+  },
+
   saveProgress: async (routineId) => {
-    const { progress, actions, currentBlockId, currentActionId } = get();
+    const {
+      progress,
+      actions,
+      currentBlockId,
+      currentActionId,
+      pausedTimers,
+    } = get();
     const date = new Date().toISOString().split("T")[0];
     const key = getProgressKey(routineId, date);
     const dataToStore = JSON.stringify({
@@ -107,6 +134,7 @@ const useProgressStore = create((set, get) => ({
       actions,
       currentBlockId,
       currentActionId,
+      pausedTimers,
     });
     try {
       await AsyncStorage.setItem(key, dataToStore);
