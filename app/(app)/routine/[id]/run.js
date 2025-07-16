@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+import { Vibration } from "react-native";
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
@@ -179,9 +179,13 @@ export default function RoutineRunnerScreen() {
 
     if (isTimerAction && isMounted) {
       setCountdown(currentTask.action.duration);
+      const twentyFivePercent = currentTask.action.duration * 0.25;
       countdownTimer = setInterval(() => {
         setCountdown((prev) => {
           if (!isMounted) return prev;
+          if (prev <= twentyFivePercent && prev > twentyFivePercent - 1) {
+            Vibration.vibrate(1000);
+          }
           if (prev <= 1) {
             if (countdownTimer) clearInterval(countdownTimer);
             setIsActionLocked(false);
@@ -219,12 +223,13 @@ export default function RoutineRunnerScreen() {
   const handleComplete = useCallback(() => {
     if (!currentTask || (focusProgress.value > 0.5 && isActionLocked)) return;
 
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Vibration.vibrate(1000);
     completeAction(routine, currentTask.action.id);
   }, [currentTask, isActionLocked, routine, completeAction]);
 
   const handleStart = useCallback(() => {
     if (currentTask) {
+      Vibration.vibrate(100);
       startAction(routine, currentTask.block.id);
     }
   }, [currentTask, routine, startAction]);
