@@ -497,23 +497,11 @@ export default function RoutineRunnerScreen() {
                 ]}
               >{`${currentIndex + 1}/${totalTasks}`}</Text>
             </View>
-            <View style={styles.focusProgressContainer}>
-              <Animated.View
-                style={[
-                  styles.focusProgressBar,
-                  {
-                    width: `${totalTasks > 0 ? ((currentIndex + 1) / totalTasks) * 100 : 0}%`,
-                  },
-                ]}
-              >
-                <LinearGradient
-                  colors={[theme.colors.primary, currentTask.action.color || theme.colors.primary]}
-                  style={{ flex: 1 }}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                />
-              </Animated.View>
-            </View>
+            <AnimatedProgressBar
+              progress={progress}
+              primaryColor={theme.colors.primary}
+              secondaryColor={currentTask.action.color || theme.colors.primary}
+            />
           </View>
           <View style={styles.actionContent}>
             {currentTask.action.type === "timer" &&
