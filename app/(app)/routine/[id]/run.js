@@ -239,6 +239,8 @@ export default function RoutineRunnerScreen() {
       [0, 1],
       Extrapolate.CLAMP,
     ),
+    // This is the fix:
+    pointerEvents: focusProgress.value > 0.5 ? 'auto' : 'none',
   }));
 
   const animatedActionTitleStyle = useAnimatedStyle(() => ({
