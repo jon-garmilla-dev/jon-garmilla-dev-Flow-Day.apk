@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, TouchableWithoutFeedback } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../constants/theme';
 
 const AlertModal = ({ visible, onClose, title, message }) => {
@@ -46,12 +47,12 @@ const AlertModal = ({ visible, onClose, title, message }) => {
       />
       <Animated.View style={[styles.modalContainer, { transform: [{ scale: scaleAnim }] }]}>
         <TouchableWithoutFeedback>
-          <View>
+          <View style={{width: '100%'}}>
             <Text style={styles.title}>{title}</Text>
             <Text style={styles.message}>{message}</Text>
             <View style={styles.buttonContainer}>
-              <TouchableOpacity style={[styles.button, styles.okButton]} onPress={onClose}>
-                <Text style={styles.buttonText}>OK</Text>
+              <TouchableOpacity style={[styles.iconButton, styles.okButton]} onPress={onClose}>
+                <Ionicons name="checkmark" size={32} color={theme.colors.text} />
               </TouchableOpacity>
             </View>
           </View>
@@ -88,34 +89,30 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.bold,
     color: theme.colors.text,
     marginBottom: theme.layout.spacing.md,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   message: {
-    fontSize: theme.typography.fontSizes.md,
+    fontSize: theme.typography.fontSizes.sm,
     fontFamily: theme.typography.fonts.regular,
     color: theme.colors.text,
     marginBottom: theme.layout.spacing.xl,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     width: '100%',
+    marginTop: theme.layout.spacing.md,
   },
-  button: {
-    flex: 1,
-    paddingVertical: theme.layout.spacing.md,
-    borderRadius: theme.layout.spacing.sm,
+  iconButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: theme.layout.spacing.sm,
   },
   okButton: {
     backgroundColor: theme.colors.primary,
-  },
-  buttonText: {
-    color: theme.colors.text,
-    fontFamily: theme.typography.fonts.bold,
-    fontSize: theme.typography.fontSizes.md,
   },
 });
 
