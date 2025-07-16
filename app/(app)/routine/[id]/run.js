@@ -97,6 +97,7 @@ export default function RoutineRunnerScreen() {
   // State
   const [elapsedTime, setElapsedTime] = useState(0);
   const [countdown, setCountdown] = useState(0);
+  const [totalRemainingTime, setTotalRemainingTime] = useState(0);
   const [isActionLocked, setIsActionLocked] = useState(false);
   const [isFocusLocked, setIsFocusLocked] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
@@ -126,6 +127,17 @@ export default function RoutineRunnerScreen() {
   }, [routine, blockId, actions]);
 
   const { block, currentTask, nextTask, currentIndex, totalTasks } = taskInfo;
+
+  const totalBlockDuration = useMemo(() => {
+    if (!block) return 0;
+    return block.actions
+      .filter((a) => a.type === "timer")
+      .reduce((sum, a) => sum + a.duration, 0);
+  }, [block]);
+
+  useEffect(() => {
+    setTotalRemainingTime(totalBlockDuration);
+  }, [totalBlockDuration]);
 
   const effectiveDurations = useMemo(() => {
     if (!block) return { durations: [], total: 0 };
@@ -215,6 +227,9 @@ export default function RoutineRunnerScreen() {
       countdownTimer = setInterval(() => {
         setCountdown((prev) => {
           if (!isMounted) return prev;
+          if (prev > 0) {
+            setTotalRemainingTime((t) => t - 1);
+          }
           if (prev <= twentyFivePercent && prev > twentyFivePercent - 1) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           }
@@ -255,9 +270,22 @@ export default function RoutineRunnerScreen() {
   const handleComplete = useCallback(() => {
     if (!currentTask || (focusProgress.value > 0.5 && isActionLocked)) return;
 
+    if (
+      currentTask.action.type === "timer" &&
+      currentTask.action.duration > 0
+    ) {
+      setTotalRemainingTime((t) => t - countdown);
+    }
+
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     completeAction(routine, currentTask.action.id);
-  }, [currentTask, isActionLocked, routine, completeAction]);
+  }, [
+    currentTask,
+    isActionLocked,
+    routine,
+    completeAction,
+    countdown,
+  ]);
 
   const handleStart = useCallback(() => {
     if (currentTask) {
@@ -401,10 +429,7 @@ export default function RoutineRunnerScreen() {
                   color={theme.colors.primary}
                 />
                 <Text style={styles.timerText}>
-                  {currentTask.action.type === "timer" &&
-                  currentTask.action.duration > 0
-                    ? formatTime(countdown)
-                    : formatTime(elapsedTime)}
+                  {formatTime(totalRemainingTime)}
                 </Text>
               </View>
             }
