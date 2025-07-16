@@ -48,8 +48,6 @@ export default function CreateEditRoutineScreen() {
     addRoutine,
     updateRoutine,
     routines,
-    addBlock,
-    addAction,
     reorderBlocks,
     reorderActions,
   } = useRoutineStore();
@@ -218,16 +216,21 @@ export default function CreateEditRoutineScreen() {
         title,
         color,
         icon,
-        blocks: blocks.map(block => ({
+        blocks: blocks.map((block) => ({
           ...block,
           id: uuidv4(),
-          actions: (block.actions || []).map(action => ({
+          actions: (block.actions || []).map((action) => ({
             ...action,
             id: uuidv4(),
           })),
         })),
       };
-      addRoutine(newRoutine.title, newRoutine.color, newRoutine.icon, newRoutine.blocks);
+      addRoutine(
+        newRoutine.title,
+        newRoutine.color,
+        newRoutine.icon,
+        newRoutine.blocks,
+      );
     }
     router.back();
   };

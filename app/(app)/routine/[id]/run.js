@@ -1,5 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Vibration } from "react-native";
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
@@ -8,7 +7,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   BackHandler,
-  useWindowDimensions,
+  Vibration,
 } from "react-native";
 import CircularProgress from "react-native-circular-progress-indicator";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
@@ -22,7 +21,7 @@ import Animated, {
   withRepeat,
   withSequence,
 } from "react-native-reanimated";
-import { LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient } from "expo-linear-gradient";
 
 import Header from "../../../../src/components/Header";
 import { theme } from "../../../../src/constants/theme";
@@ -99,7 +98,6 @@ export default function RoutineRunnerScreen() {
   const [countdown, setCountdown] = useState(0);
   const [isActionLocked, setIsActionLocked] = useState(false);
   const [isFocusLocked, setIsFocusLocked] = useState(true);
-  const [blockElapsedTime, setBlockElapsedTime] = useState(0);
   // Animation
   const focusProgress = useSharedValue(0);
   const progress = useSharedValue(0);
@@ -128,14 +126,20 @@ export default function RoutineRunnerScreen() {
 
   const totalBlockDuration = useMemo(() => {
     if (!block) return 0;
-    return (block.actions || []).reduce((sum, action) => sum + (action.duration || 0), 0);
+    return (block.actions || []).reduce(
+      (sum, action) => sum + (action.duration || 0),
+      0,
+    );
   }, [block]);
 
   useEffect(() => {
     const completedDuration = (block?.actions || [])
       .slice(0, currentIndex)
       .reduce((sum, action) => sum + (action.duration || 0), 0);
-    const newProgress = totalBlockDuration > 0 ? (completedDuration / totalBlockDuration) * 100 : 0;
+    const newProgress =
+      totalBlockDuration > 0
+        ? (completedDuration / totalBlockDuration) * 100
+        : 0;
     progress.value = withTiming(newProgress, { duration: 500 });
   }, [currentIndex, totalBlockDuration, block, progress]);
 
