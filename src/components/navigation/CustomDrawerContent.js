@@ -95,15 +95,14 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fonts.regular,
   },
   footer: {
-    padding: theme.layout.spacing.md,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
-    alignItems: "center",
   },
   footerButton: {
     flexDirection: "row",
     alignItems: "center",
-    padding: theme.layout.spacing.sm,
+    justifyContent: "center",
+    padding: theme.layout.spacing.md,
   },
   footerButtonText: {
     color: theme.colors.primary,

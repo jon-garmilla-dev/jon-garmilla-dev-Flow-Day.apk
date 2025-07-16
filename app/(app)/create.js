@@ -443,12 +443,18 @@ export default function CreateEditRoutineScreen() {
       <Header
         title={isEditing ? "Edit Routine" : "Create Routine"}
         leftElement={
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
             <Ionicons name="arrow-back" size={28} color="#c9d1d9" />
           </TouchableOpacity>
         }
         rightElement={
-          <TouchableOpacity onPress={() => setIsEditMode(!isEditMode)}>
+          <TouchableOpacity
+            onPress={() => setIsEditMode(!isEditMode)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
             <Ionicons
               name={isEditMode ? "checkmark-done" : "pencil"}
               size={24}
