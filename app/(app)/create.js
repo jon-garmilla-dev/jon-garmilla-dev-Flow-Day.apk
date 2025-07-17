@@ -9,6 +9,11 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from "react-native";
+import {
+  GestureDetector,
+  Gesture,
+  PanGestureHandler,
+} from "react-native-gesture-handler";
 import DraggableFlatList from "react-native-draggable-flatlist";
 import { v4 as uuidv4 } from "uuid";
 
@@ -44,6 +49,7 @@ const calculateBlockDuration = (block) => {
 export default function CreateEditRoutineScreen() {
   const { routineId } = useLocalSearchParams();
   const router = useRouter();
+  const flatListRef = React.useRef(null);
   const {
     addRoutine,
     updateRoutine,
@@ -136,60 +142,60 @@ export default function CreateEditRoutineScreen() {
       return;
     }
 
-    const newBlocks = [...blocks];
-    let newAction;
-    switch (type) {
-      case "text":
-        newAction = {
-          id: uuidv4(),
-          name: "New Task",
-          type: "task",
-          icon: "document-text-outline",
-          duration: 0,
-          color: theme.colors.primary,
-        };
-        break;
-      case "focus":
-        newAction = {
-          id: uuidv4(),
-          name: "Focus Block",
-          type: "timer",
-          icon: "time-outline",
-          duration: 300,
-          color: "#8B5CF6",
-        };
-        break;
-      case "pomodoro": {
-        const workAction = {
-          id: uuidv4(),
-          name: "Work",
-          type: "timer",
-          icon: "briefcase-outline",
-          duration: 1500, // 25 minutes
-          color: theme.colors.primary,
-        };
-        const breakAction = {
-          id: uuidv4(),
-          name: "Break",
-          type: "timer",
-          icon: "cafe-outline",
-          duration: 300, // 5 minutes
-          color: theme.colors.success,
-        };
-        if (!newBlocks[targetBlockIndex].actions) {
-          newBlocks[targetBlockIndex].actions = [];
-        }
-        newBlocks[targetBlockIndex].actions.push(workAction, breakAction);
-        setBlocks(newBlocks);
-        return; // Exit after adding pomodoro actions
+    const newBlocks = blocks.map((block, index) => {
+      if (index !== targetBlockIndex) {
+        return block;
       }
-      default:
-        return;
-    }
-    if (!newBlocks[targetBlockIndex].actions) {
-      newBlocks[targetBlockIndex].actions = [];
-    }
-    newBlocks[targetBlockIndex].actions.push(newAction);
+      const newActions = block.actions ? [...block.actions] : [];
+      let newAction;
+      switch (type) {
+        case "text":
+          newAction = {
+            id: uuidv4(),
+            name: "New Task",
+            type: "task",
+            icon: "document-text-outline",
+            duration: 0,
+            color: theme.colors.primary,
+          };
+          newActions.push(newAction);
+          break;
+        case "focus":
+          newAction = {
+            id: uuidv4(),
+            name: "Focus Block",
+            type: "timer",
+            icon: "time-outline",
+            duration: 300,
+            color: "#8B5CF6",
+          };
+          newActions.push(newAction);
+          break;
+        case "pomodoro": {
+          const workAction = {
+            id: uuidv4(),
+            name: "Work",
+            type: "timer",
+            icon: "briefcase-outline",
+            duration: 1500, // 25 minutes
+            color: theme.colors.primary,
+          };
+          const breakAction = {
+            id: uuidv4(),
+            name: "Break",
+            type: "timer",
+            icon: "cafe-outline",
+            duration: 300, // 5 minutes
+            color: theme.colors.success,
+          };
+          newActions.push(workAction, breakAction);
+          break;
+        }
+        default:
+          return block;
+      }
+      return { ...block, actions: newActions };
+    });
     setBlocks(newBlocks);
   };
 
@@ -275,22 +281,26 @@ export default function CreateEditRoutineScreen() {
             placeholder="Action name..."
             placeholderTextColor="#8b949e"
           />
-          {action.duration > 0 && (
+          {action.type === "timer" && (
             <>
               <TextInput
                 style={[
                   styles.actionInput,
                   { minWidth: 50, flex: 0, marginLeft: 10 },
                 ]}
-                value={String(Math.floor(action.duration / 60))}
-                onChangeText={(val) =>
+                value={
+                  action.duration ? String(Math.floor(action.duration / 60)) : ""
+                }
+                onChangeText={(val) => {
+                  const newDuration =
+                    val === "" ? null : (parseInt(val, 10) || 0) * 60;
                   handleUpdateValue(
                     blockIndex,
                     actionIndex,
                     "duration",
-                    (parseInt(val, 10) || 0) * 60,
-                  )
-                }
+                    newDuration,
+                  );
+                }}
                 keyboardType="numeric"
               />
               <Text style={styles.actionUnit}>min</Text>
@@ -377,8 +387,12 @@ export default function CreateEditRoutineScreen() {
           keyExtractor={(item) => `action-${item.id}`}
           dragEnabled={isEditMode}
           onDragEnd={({ data }) => {
-            const newBlocks = [...blocks];
-            newBlocks[blockIndex].actions = data;
+            const newBlocks = blocks.map((b, i) => {
+              if (i === blockIndex) {
+                return { ...b, actions: data };
+              }
+              return b;
+            });
             setBlocks(newBlocks);
             if (isEditing) {
               reorderActions(routineId, block.id, data);
@@ -455,6 +469,7 @@ export default function CreateEditRoutineScreen() {
       />
 
       <DraggableFlatList
+        ref={flatListRef}
         data={blocks}
         renderItem={renderBlockItem}
         keyExtractor={(item) => `block-${item.id}`}
@@ -465,6 +480,7 @@ export default function CreateEditRoutineScreen() {
             reorderBlocks(routineId, data);
           }
         }}
+        simultaneousHandlers={flatListRef}
         ListHeaderComponent={
           <>
             <View style={styles.titleContainer}>
