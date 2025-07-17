@@ -109,14 +109,25 @@ const useProgressStore = create((set, get) => ({
   pauseAction: (routineId, actionId, remainingTime) => {
     set(
       produce((draft) => {
-        if (remainingTime !== null) {
-          draft.pausedTimers[actionId] = remainingTime;
-        } else {
+        // Clear a specific timer (on resume)
+        if (actionId && remainingTime === null) {
           delete draft.pausedTimers[actionId];
+        }
+        // Set a specific timer (on pause)
+        else if (actionId && remainingTime !== null) {
+          draft.pausedTimers[actionId] = remainingTime;
+        }
+        // Clear all timers (e.g., on routine completion/exit)
+        else {
+          draft.pausedTimers = {};
         }
       }),
     );
     get().saveProgress(routineId);
+  },
+
+  forceReloadNextLoad: () => {
+    set({ routineId: null });
   },
 
   saveProgress: async (routineId) => {

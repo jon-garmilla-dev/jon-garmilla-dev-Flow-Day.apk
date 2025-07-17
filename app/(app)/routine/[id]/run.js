@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -20,7 +20,6 @@ import Animated, {
   Extrapolate,
   withRepeat,
   withSequence,
-  interpolateColor,
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -62,10 +61,11 @@ const findCurrentTaskInfo = (routine, blockId, actions) => {
 };
 
 const formatTime = (seconds) => {
-  const mins = Math.floor(seconds / 60)
+  const totalSeconds = Math.floor(seconds);
+  const mins = Math.floor(totalSeconds / 60)
     .toString()
     .padStart(2, "0");
-  const secs = (seconds % 60).toString().padStart(2, "0");
+  const secs = (totalSeconds % 60).toString().padStart(2, "0");
   return `${mins}:${secs}`;
 };
 
@@ -102,11 +102,11 @@ export default function RoutineRunnerScreen() {
   const [isActionLocked, setIsActionLocked] = useState(false);
   const [isFocusLocked, setIsFocusLocked] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
+  const prevActionIdRef = useRef();
   // Animation
   const focusProgress = useSharedValue(0);
   const progress = useSharedValue(0);
   const breathingValue = useSharedValue(1);
-  const blinkValue = useSharedValue(1);
 
   // Stores
   const routine = useRoutineStore((state) =>
@@ -135,16 +135,29 @@ export default function RoutineRunnerScreen() {
 
   const { block, currentTask, nextTask, currentIndex, totalTasks } = taskInfo;
 
-  const totalBlockDuration = useMemo(() => {
-    if (!block) return 0;
+  const remainingBlockDuration = useMemo(() => {
+    if (!block || currentIndex === -1) return 0;
     return block.actions
-      .filter((a) => a.type === "timer")
+      .slice(currentIndex)
+      .filter((a) => a.type === "timer" && a.duration)
       .reduce((sum, a) => sum + a.duration, 0);
-  }, [block]);
+  }, [block, currentIndex]);
 
   useEffect(() => {
-    setTotalRemainingTime(totalBlockDuration);
-  }, [totalBlockDuration]);
+    let initialTotal = remainingBlockDuration;
+    const pausedTime =
+      currentTask?.action?.id && pausedTimers[currentTask.action.id];
+
+    if (
+      currentTask?.action?.type === "timer" &&
+      typeof pausedTime === "number"
+    ) {
+      const fullDuration = currentTask.action.duration;
+      const elapsed = fullDuration - pausedTime;
+      initialTotal -= elapsed;
+    }
+    setTotalRemainingTime(Math.max(0, initialTotal));
+  }, [remainingBlockDuration, currentTask, pausedTimers]);
 
   const effectiveDurations = useMemo(() => {
     if (!block) return { durations: [], total: 0 };
@@ -160,7 +173,6 @@ export default function RoutineRunnerScreen() {
       );
       averageDuration = totalTimedDuration / timedActions.length;
     } else {
-      // If no timed actions, treat each action as 1 unit
       averageDuration = 1;
     }
 
@@ -194,7 +206,7 @@ export default function RoutineRunnerScreen() {
     useCallback(() => {
       const onBackPress = () => {
         if (focusProgress.value > 0.5 && isFocusLocked) {
-          return true; // Block back press in focus mode
+          return true;
         }
         return false;
       };
@@ -207,38 +219,31 @@ export default function RoutineRunnerScreen() {
   );
 
   useEffect(() => {
-    if (
-      currentTask?.action.type === "timer" &&
-      currentTask.action.duration > 0
-    ) {
-      const pausedTime = pausedTimers[currentTask.action.id];
-      if (pausedTime !== undefined) {
-        setCountdown(pausedTime);
-        setIsPaused(true);
-      } else {
-        // FIX: Reset countdown before setting the new value to avoid visual glitch
-        setCountdown(0);
-        setTimeout(() => {
-          if (currentTask.action) {
-            setCountdown(currentTask.action.duration);
-          }
-        }, 50);
-      }
+    const isTimer =
+      currentTask?.action.type === "timer" && currentTask.action.duration > 0;
+    if (!isTimer) return;
+
+    const pausedTime = pausedTimers[currentTask.action.id];
+    const isNewTask = prevActionIdRef.current !== currentTask.action.id;
+
+    if (pausedTime !== undefined) {
+      setCountdown(pausedTime);
+      setIsPaused(true);
+    } else if (isNewTask) {
+      setCountdown(0);
+      setTimeout(() => {
+        if (currentTask.action) {
+          setCountdown(currentTask.action.duration);
+          setIsPaused(false);
+        }
+      }, 50);
     }
+    prevActionIdRef.current = currentTask.action.id;
   }, [currentTask, pausedTimers]);
 
   useEffect(() => {
-    let totalTimer = null;
     let countdownTimer = null;
     let isMounted = true;
-
-    if (currentTask && isMounted && !isPaused) {
-      totalTimer = setInterval(() => {
-        if (isMounted) {
-          setElapsedTime((prev) => prev + 1);
-        }
-      }, 1000);
-    }
 
     const isTimerAction =
       currentTask?.action.type === "timer" && currentTask.action.duration > 0;
@@ -268,7 +273,6 @@ export default function RoutineRunnerScreen() {
 
     return () => {
       isMounted = false;
-      if (totalTimer) clearInterval(totalTimer);
       if (countdownTimer) clearInterval(countdownTimer);
     };
   }, [currentTask, handleComplete, isPaused]);
@@ -288,7 +292,6 @@ export default function RoutineRunnerScreen() {
     }
   }, [currentTask, breathingValue]);
 
-  // Handlers
   const handleComplete = useCallback(() => {
     if (!currentTask || (focusProgress.value > 0.5 && isActionLocked)) return;
 
@@ -323,7 +326,6 @@ export default function RoutineRunnerScreen() {
       actions[currentTask.action.id] !== "active" &&
       !isActive
     ) {
-      // Use timeout to prevent infinite loops
       const timer = setTimeout(() => {
         handleStart();
       }, 0);
@@ -335,20 +337,16 @@ export default function RoutineRunnerScreen() {
     .numberOfTaps(2)
     .maxDuration(250)
     .onStart(() => {
-      // Si estamos en focus mode y el candado está activado, no permitir salir
       if (focusProgress.value > 0.5 && isFocusLocked) {
         return;
       }
-
       const targetValue = focusProgress.value > 0.5 ? 0 : 1;
-
       focusProgress.value = withTiming(targetValue, {
         duration: 350,
         easing: Easing.inOut(Easing.ease),
       });
     });
 
-  // --- Animated Styles ---
   const animatedMainContentStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
       focusProgress.value,
@@ -365,7 +363,6 @@ export default function RoutineRunnerScreen() {
       [0, 1],
       Extrapolate.CLAMP,
     ),
-    // This is the fix:
     pointerEvents: focusProgress.value > 0.5 ? 'auto' : 'none',
   }));
 
@@ -394,7 +391,6 @@ export default function RoutineRunnerScreen() {
     };
   });
 
-  // --- Render Logic ---
   if (!routine)
     return (
       <View style={styles.container}>
@@ -437,7 +433,6 @@ export default function RoutineRunnerScreen() {
           />
           <View style={styles.content}>
             <View style={styles.card}>
-              {/* Card Header */}
               <View>
                 <View style={styles.blockHeader}>
                   <Ionicons
@@ -459,7 +454,6 @@ export default function RoutineRunnerScreen() {
                 />
               </View>
 
-              {/* Main Content */}
               <View style={styles.actionContent}>
                 {currentTask.action.type === "timer" &&
                 currentTask.action.duration > 0 ? (
@@ -502,7 +496,6 @@ export default function RoutineRunnerScreen() {
                 )}
               </View>
 
-              {/* Footer */}
               <View style={styles.footer}>
                 {nextTask ? (
                   <Text style={styles.nextUpText}>
@@ -514,7 +507,6 @@ export default function RoutineRunnerScreen() {
               </View>
             </View>
           </View>
-          {/* Bottom Buttons */}
           <View style={styles.bottomContainer}>
             {currentTask.action.type === "timer" &&
             currentTask.action.duration > 0 ? (
@@ -526,7 +518,7 @@ export default function RoutineRunnerScreen() {
                   if (newPausedState) {
                     pauseAction(routine.id, currentTask.action.id, countdown);
                   } else {
-                    pauseAction(routine.id, null, null);
+                    pauseAction(routine.id, currentTask.action.id, null);
                   }
                 }}
               >
