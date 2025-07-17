@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.6.1](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.6.0...v1.6.1) (2025-07-17)
+
+
+### Bug Fixes
+
+* Prevent infinite loop in routine runner auto-start ([1e60d54](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/1e60d542d3032f907c4f3032b83252af8ade436f))
+
 ## [1.6.0](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.5.0...v1.6.0) (2025-07-17)
 
 
