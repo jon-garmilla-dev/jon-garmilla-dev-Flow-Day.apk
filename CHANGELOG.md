@@ -1,6 +1,14 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+## [1.6.0](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.5.0...v1.6.0) (2025-07-17)
+
+
+### Features
+
+* Add completion animation and switch to DM Sans font ([2a283fb](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/2a283fbecd940b5c67bf8e67f4fee401d343b1ca))
+* Animate countdown timer on routine run screen ([d6c7bd7](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/d6c7bd78d217b5808b594a045992440de8514203))
 
 ## [1.5.0](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.4.0...v1.5.0) (2025-07-16)
 
