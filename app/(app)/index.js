@@ -238,22 +238,7 @@ export default function RoutineListScreen() {
         title="Delete Workflow"
         message={`Are you sure you want to delete "${selectedRoutine?.title}"? This cannot be undone.`}
       />
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={isAnimationVisible}
-        onRequestClose={() => {
-          setAnimationVisible(!isAnimationVisible);
-        }}
-      >
-        <CompletionAnimation onAnimationEnd={() => setAnimationVisible(false)} />
-      </Modal>
-      <View style={styles.testButtonContainer}>
-        <Button
-          title="Test Animation"
-          onPress={() => setAnimationVisible(true)}
-        />
-      </View>
+      
     </View>
   );
 }
