@@ -257,6 +257,8 @@ export default function CreateEditRoutineScreen() {
             onLongPress={drag}
             disabled={isActive}
             style={styles.dragHandle}
+            onPressIn={() => console.log("drag handle press in")}
+            onPressOut={() => console.log("drag handle press out")}
           >
             <Ionicons
               name="reorder-two-outline"
@@ -266,12 +268,17 @@ export default function CreateEditRoutineScreen() {
           </TouchableOpacity>
         )}
         <View style={styles.actionRow}>
-          <Ionicons
-            name={action.icon || "document-text-outline"}
-            size={20}
-            color="#8b949e"
-            style={styles.actionIcon}
-          />
+          <TouchableOpacity
+            onPressIn={() => console.log("icon press in")}
+            onPressOut={() => console.log("icon press out")}
+          >
+            <Ionicons
+              name={action.icon || "document-text-outline"}
+              size={20}
+              color="#8b949e"
+              style={styles.actionIcon}
+            />
+          </TouchableOpacity>
           <TextInput
             style={[styles.actionInput, { flex: 1 }]}
             value={action.name}
@@ -303,7 +310,12 @@ export default function CreateEditRoutineScreen() {
                 }}
                 keyboardType="numeric"
               />
-              <Text style={styles.actionUnit}>min</Text>
+              <TouchableOpacity
+                onPressIn={() => console.log("min press in")}
+                onPressOut={() => console.log("min press out")}
+              >
+                <Text style={styles.actionUnit}>min</Text>
+              </TouchableOpacity>
             </>
           )}
         </View>
@@ -311,6 +323,8 @@ export default function CreateEditRoutineScreen() {
           <TouchableOpacity
             onPress={() => handleDeleteAction(blockIndex, actionIndex)}
             style={styles.deleteButton}
+            onPressIn={() => console.log("delete press in")}
+            onPressOut={() => console.log("delete press out")}
           >
             <Ionicons
               name="remove-circle-outline"
