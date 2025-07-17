@@ -25,6 +25,7 @@ import Animated, {
 import { LinearGradient } from "expo-linear-gradient";
 
 import Header from "../../../../src/components/Header";
+import CompletionAnimation from "../../../../src/components/animations/CompletionAnimation";
 import { theme } from "../../../../src/constants/theme";
 import useProgressStore from "../../../../src/store/useProgressStore";
 import useRoutineStore from "../../../../src/store/useRoutineStore";
@@ -402,28 +403,7 @@ export default function RoutineRunnerScreen() {
     );
 
   if (!currentTask) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.blockCompleteOverlay}>
-          <View style={styles.blockCompleteContent}>
-            <Ionicons name="trophy" size={80} color={theme.colors.success} />
-            <Text style={styles.blockCompleteTitle}>
-              {block?.name || "Block"} Complete
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={styles.completeButton}
-            onPress={() => router.back()}
-          >
-            <Ionicons
-              name="checkmark-done"
-              size={40}
-              color={theme.colors.background}
-            />
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
+    return <CompletionAnimation onAnimationEnd={() => router.back()} />;
   }
 
   return (

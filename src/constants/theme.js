@@ -54,8 +54,8 @@ export const theme = {
   typography: {
     fonts: {
       // Definimos alias para las fuentes cargadas
-      regular: "NunitoSans_400Regular",
-      bold: "NunitoSans_700Bold",
+      regular: "DMSans-Regular",
+      bold: "DMSans-Bold",
     },
     fontSizes: {
       xs: 12,

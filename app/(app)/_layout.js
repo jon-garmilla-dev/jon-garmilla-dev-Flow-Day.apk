@@ -1,8 +1,4 @@
-import {
-  useFonts,
-  NunitoSans_400Regular,
-  NunitoSans_700Bold,
-} from "@expo-google-fonts/nunito-sans";
+import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 
 import PageLayout from "../../src/components/layout/PageLayout";
@@ -38,8 +34,8 @@ function StackNavigator() {
 
 export default function AppStackLayout() {
   const [fontsLoaded] = useFonts({
-    NunitoSans_400Regular,
-    NunitoSans_700Bold,
+    "DMSans-Regular": require("../../src/assets/fonts/DMSans-Regular.ttf"),
+    "DMSans-Bold": require("../../src/assets/fonts/DMSans-Bold.ttf"),
   });
 
   if (!fontsLoaded) {

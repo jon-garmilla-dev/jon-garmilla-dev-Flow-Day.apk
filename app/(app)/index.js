@@ -7,10 +7,20 @@ import {
   StyleSheet,
   TouchableOpacity,
   FlatList,
+  Button,
+  Modal,
 } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+  interpolate,
+} from "react-native-reanimated";
 import DraggableFlatList from "react-native-draggable-flatlist";
 
 import Header from "../../src/components/Header";
+import CompletionAnimation from "../../src/components/animations/CompletionAnimation";
 import { usePageLayout } from "../../src/components/layout/PageLayout";
 import ConfirmModal from "../../src/components/modals/ConfirmModal";
 import { theme } from "../../src/constants/theme";
@@ -128,6 +138,7 @@ export default function RoutineListScreen() {
   const [localRoutines, setLocalRoutines] = useState(routines);
   const [isModalVisible, setModalVisible] = useState(false);
   const [selectedRoutine, setSelectedRoutine] = useState(null);
+  const [isAnimationVisible, setAnimationVisible] = useState(false);
 
   useEffect(() => {
     loadRoutines();
@@ -227,6 +238,22 @@ export default function RoutineListScreen() {
         title="Delete Workflow"
         message={`Are you sure you want to delete "${selectedRoutine?.title}"? This cannot be undone.`}
       />
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={isAnimationVisible}
+        onRequestClose={() => {
+          setAnimationVisible(!isAnimationVisible);
+        }}
+      >
+        <CompletionAnimation onAnimationEnd={() => setAnimationVisible(false)} />
+      </Modal>
+      <View style={styles.testButtonContainer}>
+        <Button
+          title="Test Animation"
+          onPress={() => setAnimationVisible(true)}
+        />
+      </View>
     </View>
   );
 }
@@ -310,5 +337,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: theme.layout.spacing.lg,
     paddingRight: theme.layout.spacing.lg,
+  },
+  testButtonContainer: {
+    position: "absolute",
+    bottom: 20,
+    left: 20,
+    right: 20,
+  },
+  animationContainer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  animationText: {
+    fontSize: 32,
+    color: "white",
+    fontWeight: "bold",
+    marginTop: 20,
   },
 });
