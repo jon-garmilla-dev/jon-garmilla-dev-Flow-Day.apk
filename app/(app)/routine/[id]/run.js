@@ -216,14 +216,14 @@ export default function RoutineRunnerScreen() {
         setCountdown(pausedTime);
         setIsPaused(true);
       } else {
-        // FIX: Reset countdown before setting the new value to avoid visual glitch
-        setCountdown(0);
-        setTimeout(() => {
-          if (currentTask.action) {
-            setCountdown(currentTask.action.duration);
-          }
-        }, 50);
+        // Set the countdown directly. The visual glitch should be handled by the component.
+        setCountdown(currentTask.action.duration);
+        setIsPaused(false);
       }
+    } else {
+      // Reset countdown if the current task is not a timer
+      setCountdown(0);
+      setIsPaused(true);
     }
   }, [currentTask, pausedTimers]);
 
@@ -292,22 +292,9 @@ export default function RoutineRunnerScreen() {
   const handleComplete = useCallback(() => {
     if (!currentTask || (focusProgress.value > 0.5 && isActionLocked)) return;
 
-    if (
-      currentTask.action.type === "timer" &&
-      currentTask.action.duration > 0
-    ) {
-      setTotalRemainingTime((t) => t - countdown);
-    }
-
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     completeAction(routine, currentTask.action.id);
-  }, [
-    currentTask,
-    isActionLocked,
-    routine,
-    completeAction,
-    countdown,
-  ]);
+  }, [currentTask, isActionLocked, routine, completeAction, focusProgress]);
 
   const handleStart = useCallback(() => {
     if (currentTask) {
