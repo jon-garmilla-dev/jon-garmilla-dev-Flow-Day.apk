@@ -100,7 +100,7 @@ export default function RoutineRunnerScreen() {
   const [totalRemainingTime, setTotalRemainingTime] = useState(0);
   const [isActionLocked, setIsActionLocked] = useState(false);
   const [isFocusLocked, setIsFocusLocked] = useState(true);
-  const [isPaused, setIsPaused] = useState(true); // Start paused by default
+  const [isPaused, setIsPaused] = useState(false); // Start active
   // Animation
   const focusProgress = useSharedValue(0);
   const progress = useSharedValue(0);
@@ -180,7 +180,9 @@ export default function RoutineRunnerScreen() {
 
     setCountdown(initialCountdown);
     setTotalRemainingTime(Math.max(0, initialTotal));
-    setIsPaused(true); // Always start a new task in a paused state
+    
+    // Only set to paused if we are loading a specifically paused state
+    setIsPaused(pausedTime !== undefined);
 
   }, [currentTask]);
 
