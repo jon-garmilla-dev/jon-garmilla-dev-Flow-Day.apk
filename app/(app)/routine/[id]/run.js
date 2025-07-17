@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
-import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -96,13 +96,11 @@ export default function RoutineRunnerScreen() {
   const router = useRouter();
 
   // State
-  const [elapsedTime, setElapsedTime] = useState(0);
   const [countdown, setCountdown] = useState(0);
   const [totalRemainingTime, setTotalRemainingTime] = useState(0);
   const [isActionLocked, setIsActionLocked] = useState(false);
   const [isFocusLocked, setIsFocusLocked] = useState(true);
-  const [isPaused, setIsPaused] = useState(false);
-  const prevActionIdRef = useRef();
+  const [isPaused, setIsPaused] = useState(true); // Start paused by default
   // Animation
   const focusProgress = useSharedValue(0);
   const progress = useSharedValue(0);
@@ -135,33 +133,8 @@ export default function RoutineRunnerScreen() {
 
   const { block, currentTask, nextTask, currentIndex, totalTasks } = taskInfo;
 
-  const remainingBlockDuration = useMemo(() => {
-    if (!block || currentIndex === -1) return 0;
-    return block.actions
-      .slice(currentIndex)
-      .filter((a) => a.type === "timer" && a.duration)
-      .reduce((sum, a) => sum + a.duration, 0);
-  }, [block, currentIndex]);
-
-  useEffect(() => {
-    let initialTotal = remainingBlockDuration;
-    const pausedTime =
-      currentTask?.action?.id && pausedTimers[currentTask.action.id];
-
-    if (
-      currentTask?.action?.type === "timer" &&
-      typeof pausedTime === "number"
-    ) {
-      const fullDuration = currentTask.action.duration;
-      const elapsed = fullDuration - pausedTime;
-      initialTotal -= elapsed;
-    }
-    setTotalRemainingTime(Math.max(0, initialTotal));
-  }, [remainingBlockDuration, currentTask, pausedTimers]);
-
   const effectiveDurations = useMemo(() => {
     if (!block) return { durations: [], total: 0 };
-
     const timedActions = block.actions.filter(
       (a) => a.duration && a.duration > 0,
     );
@@ -175,14 +148,66 @@ export default function RoutineRunnerScreen() {
     } else {
       averageDuration = 1;
     }
-
     const durations = block.actions.map(
       (a) => (a.duration && a.duration > 0 ? a.duration : averageDuration) || 1,
     );
     const total = durations.reduce((sum, d) => sum + d, 0);
-
     return { durations, total };
   }, [block]);
+
+  // Effects
+  useEffect(() => {
+    if (routine) loadProgress(routine);
+  }, [routine, loadProgress]);
+
+  // Effect to initialize timers only when the task changes
+  useEffect(() => {
+    if (!currentTask) return;
+
+    const remainingBlockDuration = block.actions
+      .slice(currentIndex)
+      .filter((a) => a.type === "timer" && a.duration)
+      .reduce((sum, a) => sum + a.duration, 0);
+
+    const pausedTime = pausedTimers[currentTask.action.id];
+    const initialCountdown = pausedTime !== undefined ? pausedTime : currentTask.action.duration || 0;
+    
+    let initialTotal = remainingBlockDuration;
+    if (pausedTime !== undefined) {
+      const elapsed = currentTask.action.duration - pausedTime;
+      initialTotal -= elapsed;
+    }
+
+    setCountdown(initialCountdown);
+    setTotalRemainingTime(Math.max(0, initialTotal));
+    setIsPaused(true); // Always start a new task in a paused state
+
+  }, [currentTask]);
+
+  // Effect to run the timer when not paused
+  useEffect(() => {
+    const isTimerAction = currentTask?.action.type === "timer" && currentTask.action.duration > 0;
+    setIsActionLocked(isTimerAction);
+
+    if (isPaused || !isTimerAction) {
+      return;
+    }
+
+    const timerId = setInterval(() => {
+      setCountdown((prev) => prev - 1);
+      setTotalRemainingTime((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timerId);
+  }, [isPaused, currentTask]);
+
+  // Effect to handle timer completion
+  useEffect(() => {
+    if (countdown <= 0 && !isPaused && currentTask?.action.type === 'timer') {
+      handleComplete();
+    }
+  }, [countdown, isPaused, currentTask]);
+
 
   useEffect(() => {
     if (effectiveDurations.total > 0) {
@@ -196,11 +221,6 @@ export default function RoutineRunnerScreen() {
       progress.value = withTiming(0);
     }
   }, [currentIndex, effectiveDurations, progress]);
-
-  // Effects
-  useEffect(() => {
-    if (routine) loadProgress(routine);
-  }, [routine, loadProgress]);
 
   useFocusEffect(
     useCallback(() => {
@@ -219,65 +239,6 @@ export default function RoutineRunnerScreen() {
   );
 
   useEffect(() => {
-    const isTimer =
-      currentTask?.action.type === "timer" && currentTask.action.duration > 0;
-    if (!isTimer) return;
-
-    const pausedTime = pausedTimers[currentTask.action.id];
-    const isNewTask = prevActionIdRef.current !== currentTask.action.id;
-
-    if (pausedTime !== undefined) {
-      setCountdown(pausedTime);
-      setIsPaused(true);
-    } else if (isNewTask) {
-      setCountdown(0);
-      setTimeout(() => {
-        if (currentTask.action) {
-          setCountdown(currentTask.action.duration);
-          setIsPaused(false);
-        }
-      }, 50);
-    }
-    prevActionIdRef.current = currentTask.action.id;
-  }, [currentTask, pausedTimers]);
-
-  useEffect(() => {
-    let countdownTimer = null;
-    let isMounted = true;
-
-    const isTimerAction =
-      currentTask?.action.type === "timer" && currentTask.action.duration > 0;
-    setIsActionLocked(isTimerAction);
-
-    if (isTimerAction && isMounted && !isPaused) {
-      const twentyFivePercent = currentTask.action.duration * 0.25;
-      countdownTimer = setInterval(() => {
-        setCountdown((prev) => {
-          if (!isMounted) return prev;
-          if (prev > 0) {
-            setTotalRemainingTime((t) => t - 1);
-          }
-          if (prev <= twentyFivePercent && prev > twentyFivePercent - 1) {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          }
-          if (prev <= 1) {
-            if (countdownTimer) clearInterval(countdownTimer);
-            setIsActionLocked(false);
-            handleComplete();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-
-    return () => {
-      isMounted = false;
-      if (countdownTimer) clearInterval(countdownTimer);
-    };
-  }, [currentTask, handleComplete, isPaused]);
-
-  useEffect(() => {
     if (currentTask?.action.name === 'Break') {
       breathingValue.value = withRepeat(
         withSequence(
@@ -294,14 +255,6 @@ export default function RoutineRunnerScreen() {
 
   const handleComplete = useCallback(() => {
     if (!currentTask || (focusProgress.value > 0.5 && isActionLocked)) return;
-
-    if (
-      currentTask.action.type === "timer" &&
-      currentTask.action.duration > 0
-    ) {
-      setTotalRemainingTime((t) => t - countdown);
-    }
-
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     completeAction(routine, currentTask.action.id);
   }, [
@@ -309,7 +262,6 @@ export default function RoutineRunnerScreen() {
     isActionLocked,
     routine,
     completeAction,
-    countdown,
   ]);
 
   const handleStart = useCallback(() => {
@@ -318,6 +270,16 @@ export default function RoutineRunnerScreen() {
       startAction(routine, currentTask.block.id);
     }
   }, [currentTask, routine, startAction]);
+
+  const handleTogglePause = () => {
+    const newPausedState = !isPaused;
+    setIsPaused(newPausedState);
+    if (newPausedState) {
+      pauseAction(routine.id, currentTask.action.id, countdown);
+    } else {
+      pauseAction(routine.id, currentTask.action.id, null);
+    }
+  };
 
   useEffect(() => {
     const isActive = Object.values(actions).includes("active");
@@ -512,15 +474,7 @@ export default function RoutineRunnerScreen() {
             currentTask.action.duration > 0 ? (
               <TouchableOpacity
                 style={styles.controlButton}
-                onPress={() => {
-                  const newPausedState = !isPaused;
-                  setIsPaused(newPausedState);
-                  if (newPausedState) {
-                    pauseAction(routine.id, currentTask.action.id, countdown);
-                  } else {
-                    pauseAction(routine.id, currentTask.action.id, null);
-                  }
-                }}
+                onPress={handleTogglePause}
               >
                 <Ionicons
                   name={isPaused ? "play" : "pause"}
