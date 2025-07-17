@@ -206,13 +206,22 @@ export default function RoutineRunnerScreen() {
   );
 
   useEffect(() => {
-    if (currentTask?.action.type === "timer" && currentTask.action.duration > 0) {
+    if (
+      currentTask?.action.type === "timer" &&
+      currentTask.action.duration > 0
+    ) {
       const pausedTime = pausedTimers[currentTask.action.id];
       if (pausedTime !== undefined) {
         setCountdown(pausedTime);
         setIsPaused(true);
       } else {
-        setCountdown(currentTask.action.duration);
+        // FIX: Reset countdown before setting the new value to avoid visual glitch
+        setCountdown(0);
+        setTimeout(() => {
+          if (currentTask.action) {
+            setCountdown(currentTask.action.duration);
+          }
+        }, 50);
       }
     }
   }, [currentTask, pausedTimers]);
@@ -476,10 +485,11 @@ export default function RoutineRunnerScreen() {
                 currentTask.action.duration > 0 ? (
                   <Animated.View style={animatedBreathingStyle}>
                     <CircularProgress
+                      key={`main-${currentTask.action.id}`}
                       value={countdown}
                       maxValue={currentTask.action.duration}
                       radius={100}
-                      duration={0}
+                      duration={400}
                       progressValueColor={theme.colors.text}
                       activeStrokeColor={currentTask.action.color || theme.colors.primary}
                       inActiveStrokeColor={theme.colors.border}
@@ -617,12 +627,13 @@ export default function RoutineRunnerScreen() {
           <View style={styles.actionContent}>
             {currentTask.action.type === "timer" &&
             currentTask.action.duration > 0 ? (
-              <>
+              <Animated.View>
                 <CircularProgress
+                  key={`focus-${currentTask.action.id}`}
                   value={countdown}
                   maxValue={currentTask.action.duration}
                   radius={120}
-                  duration={0}
+                  duration={400}
                   progressValueColor="white"
                   activeStrokeColor={
                     currentTask.action.color || theme.colors.primary
@@ -644,7 +655,7 @@ export default function RoutineRunnerScreen() {
                     {formatTime(countdown)}
                   </Animated.Text>
                 </View>
-              </>
+              </Animated.View>
             ) : (
               <Animated.View
                 style={[{ alignItems: "center" }, animatedMainIconSize]}
