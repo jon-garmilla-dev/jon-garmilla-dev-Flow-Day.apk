@@ -187,7 +187,7 @@ const BlockRow = ({ routine, block, status, actionStatuses, pausedTimers }) => {
         actionStatuses={actionStatuses}
         pausedTimers={pausedTimers}
       />
-      {pausedAction && (
+      {pausedAction && status !== "completed" && (
         <View style={styles.pausedTimeContainer}>
           <Text style={styles.pausedTimeText}>
             {formatTime(pausedTimers[pausedAction.id])}
