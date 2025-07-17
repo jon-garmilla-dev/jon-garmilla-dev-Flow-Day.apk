@@ -34,7 +34,7 @@ import useRoutineStore from "../../../../src/store/useRoutineStore";
 const findCurrentTaskInfo = (routine, blockId, actions) => {
   if (!routine || !routine.blocks) return null;
   const block = routine.blocks.find((b) => b.id === blockId);
-  if (!block) return null;
+  if (!block || !block.actions) return null; // Added check for block.actions
   const firstPendingActionIndex = block.actions.findIndex(
     (action) => actions[action.id] !== "completed",
   );
@@ -317,13 +317,12 @@ export default function RoutineRunnerScreen() {
   }, [currentTask, routine, startAction]);
 
   useEffect(() => {
-    const isActive = Object.values(actions).includes("active");
-    if (
-      currentTask &&
-      actions[currentTask.action.id] !== "active" &&
-      !isActive
-    ) {
-      // Use timeout to prevent infinite loops
+    // If there's a current task and its status is not set (i.e., it's new)
+    // and no other task is currently active, then start it.
+    const isAnotherTaskActive = Object.values(actions).includes("active");
+
+    if (currentTask && !actions[currentTask.action.id] && !isAnotherTaskActive) {
+      // Use timeout to ensure it runs after the render cycle
       const timer = setTimeout(() => {
         handleStart();
       }, 0);
