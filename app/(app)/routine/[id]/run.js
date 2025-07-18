@@ -186,7 +186,7 @@ export default function RoutineRunnerScreen() {
 
   }, [currentTask]);
 
-  // Effect to run the timer when not paused
+  // Effect to run the timer and handle completion
   useEffect(() => {
     const isTimerAction = currentTask?.action.type === "timer" && currentTask.action.duration > 0;
     setIsActionLocked(isTimerAction);
@@ -196,19 +196,22 @@ export default function RoutineRunnerScreen() {
     }
 
     const timerId = setInterval(() => {
-      setCountdown((prev) => prev - 1);
-      setTotalRemainingTime((prev) => prev - 1);
+      setCountdown((prevCountdown) => {
+        const newCountdown = prevCountdown - 1;
+
+        if (newCountdown < 1) {
+          handleComplete();
+          clearInterval(timerId);
+          return 0;
+        }
+        
+        setTotalRemainingTime((prevTotal) => prevTotal - 1);
+        return newCountdown;
+      });
     }, 1000);
 
     return () => clearInterval(timerId);
-  }, [isPaused, currentTask]);
-
-  // Effect to handle timer completion
-  useEffect(() => {
-    if (countdown <= 0 && !isPaused && currentTask?.action.type === 'timer') {
-      handleComplete();
-    }
-  }, [countdown, isPaused, currentTask]);
+  }, [isPaused, currentTask, handleComplete]);
 
 
   useEffect(() => {
