@@ -172,14 +172,9 @@ export default function CreateBlockTemplateScreen() {
           </TouchableOpacity>
         }
         rightElement={
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <TouchableOpacity onPress={() => setIsEditMode(!isEditMode)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <Ionicons name={isEditMode ? "checkmark-done" : "pencil"} size={24} color={theme.colors.primary} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleSave} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={{ marginLeft: 16 }}>
-              <Text style={styles.saveText}>Save</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity onPress={() => setIsEditMode(!isEditMode)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Ionicons name={isEditMode ? "checkmark-done" : "pencil"} size={24} color={theme.colors.primary} />
+          </TouchableOpacity>
         }
       />
       <DraggableFlatList
@@ -211,10 +206,15 @@ export default function CreateBlockTemplateScreen() {
           </View>
         }
         ListFooterComponent={
-          <TouchableOpacity style={styles.addButton} onPress={() => setIsActionSheetVisible(true)}>
-            <Ionicons name="add" size={24} color={theme.colors.primary} />
-            <Text style={styles.addButtonText}>Add Action</Text>
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity style={styles.addButton} onPress={() => setIsActionSheetVisible(true)}>
+              <Ionicons name="add" size={24} color={theme.colors.primary} />
+              <Text style={styles.addButtonText}>Add Action</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+              <Text style={styles.saveButtonText}>Save Block Template</Text>
+            </TouchableOpacity>
+          </>
         }
         contentContainerStyle={styles.scrollContainer}
       />
@@ -263,8 +263,15 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     marginLeft: theme.layout.spacing.sm,
   },
-  saveText: {
-    color: theme.colors.primary,
+  saveButton: {
+    backgroundColor: theme.colors.primary,
+    borderRadius: 10,
+    padding: 15,
+    alignItems: "center",
+    marginTop: theme.layout.spacing.lg,
+  },
+  saveButtonText: {
+    color: theme.colors.background,
     fontFamily: theme.typography.fonts.bold,
     fontSize: theme.typography.fontSizes.md,
   },

@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter, usePathname, useFocusEffect } from 'expo-router';
-import React, { useState, useRef, useCallback } from 'react';
+import { useRouter, usePathname } from 'expo-router';
+import React, { useState, useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, Animated, Text, TouchableWithoutFeedback } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../constants/theme';
@@ -21,18 +21,6 @@ const ActionButton: React.FC<ActionButtonProps> = ({ activeTab }) => {
   const insets = useSafeAreaInsets();
   const [isOpen, setIsOpen] = useState(false);
   const animation = useRef(new Animated.Value(0)).current;
-
-  useFocusEffect(
-    useCallback(() => {
-      // When the screen comes into focus, reset the animation and close the menu
-      // This prevents the button from being in a weird state after navigation
-      if (isOpen) {
-        animation.setValue(0);
-        setIsOpen(false);
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
-  );
 
   const isActionsScreen = pathname === '/actions';
 
@@ -103,7 +91,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({ activeTab }) => {
   };
 
   return (
-    <View style={styles.rootContainer}>
+    <View style={styles.rootContainer} pointerEvents={isOpen ? 'auto' : 'box-none'}>
       {isOpen && (
         <TouchableWithoutFeedback onPress={toggleMenu} accessible={false}>
           <Animated.View style={[styles.overlay, overlayOpacity]} />

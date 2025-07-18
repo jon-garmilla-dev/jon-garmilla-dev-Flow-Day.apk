@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Link } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { Link, useFocusEffect } from "expo-router";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -138,6 +138,13 @@ export default function RoutineListScreen() {
   const [localRoutines, setLocalRoutines] = useState<Routine[]>(routines);
   const [isModalVisible, setModalVisible] = useState(false);
   const [selectedRoutine, setSelectedRoutine] = useState<Routine | null>(null);
+  const [actionButtonKey, setActionButtonKey] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      setActionButtonKey(prev => prev + 1);
+    }, [])
+  );
 
   useEffect(() => {
     loadRoutines();
@@ -247,7 +254,7 @@ export default function RoutineListScreen() {
         title="Delete Workflow"
         message={`Are you sure you want to delete "${selectedRoutine?.title}"? This cannot be undone.`}
       />
-      <ActionButton />
+      <ActionButton key={actionButtonKey} />
     </View>
   );
 }

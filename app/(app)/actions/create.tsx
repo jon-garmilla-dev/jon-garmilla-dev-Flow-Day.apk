@@ -78,7 +78,7 @@ export default function CreateActionTemplateScreen() {
       <Header
         title={isEditing ? "Edit Action" : "Create Action"}
         leftElement={
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
             <Ionicons name="arrow-back" size={28} color={theme.colors.text} />
           </TouchableOpacity>
         }

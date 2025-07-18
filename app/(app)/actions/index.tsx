@@ -28,7 +28,7 @@ interface ActionTemplateRowProps {
 }
 
 const ActionTemplateRow: React.FC<ActionTemplateRowProps> = ({ template, isEditMode, onDelete, drag, isActive, onPress }) => (
-  <TouchableOpacity onPress={onPress} disabled={isEditMode}>
+  <TouchableOpacity onPress={onPress} disabled={isEditMode} style={styles.actionTemplateRowContainer}>
     <View style={[styles.actionRow, { backgroundColor: isActive ? theme.colors.border : theme.colors.surface }]}>
       {isEditMode && (
         <TouchableOpacity onLongPress={drag} disabled={isActive} style={styles.dragHandle}>
@@ -217,18 +217,22 @@ export default function ActionLibraryScreen() {
         }
       />
       <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'actions' && styles.activeTab]}
-          onPress={() => setActiveTab('actions')}
-        >
-          <Text style={[styles.tabText, activeTab === 'actions' && styles.activeTabText]}>Actions</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'blocks' && styles.activeTab]}
-          onPress={() => setActiveTab('blocks')}
-        >
-          <Text style={[styles.tabText, activeTab === 'blocks' && styles.activeTabText]}>Blocks</Text>
-        </TouchableOpacity>
+        <View style={{ flex: 1, alignItems: 'center' }}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'actions' && styles.activeTab]}
+            onPress={() => setActiveTab('actions')}
+          >
+            <Text style={[styles.tabText, activeTab === 'actions' && styles.activeTabText]}>Actions</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={{ flex: 1, alignItems: 'center' }}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'blocks' && styles.activeTab]}
+            onPress={() => setActiveTab('blocks')}
+          >
+            <Text style={[styles.tabText, activeTab === 'blocks' && styles.activeTabText]}>Blocks</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       {renderContent()}
       <ConfirmModal
@@ -341,5 +345,9 @@ const styles = StyleSheet.create({
   expandedActionDuration: {
     color: theme.colors.gray,
     fontSize: theme.typography.fontSizes.sm,
+  },
+  actionTemplateRowContainer: {
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
   },
 });
