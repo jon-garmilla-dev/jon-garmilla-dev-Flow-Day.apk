@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.7.0](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.6.2...v1.7.0) (2025-07-18)
+
+
+### Features
+
+* Add global error boundary and improve stability ([b8f4871](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/b8f487126db8fb6fc118e5f1f84f8a8a1148386f))
+* Merge remote changes and apply stability improvements ([27a33b0](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/27a33b08e7d27b4c2b9d87ac12e7fff0d6130f57))
+
+
+### Bug Fixes
+
+* block error ([3280694](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/328069480324592827d6d01eb5c11493fe6d9013))
+* block unic id ([b56b7d0](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/b56b7d0961e001cc59a0c2f2db2067b075985189))
+
 ### [1.6.2](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.6.1...v1.6.2) (2025-07-17)
 
 ### [1.6.1](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.6.0...v1.6.1) (2025-07-17)
