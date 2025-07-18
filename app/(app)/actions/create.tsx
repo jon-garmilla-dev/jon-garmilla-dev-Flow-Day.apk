@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,18 +13,34 @@ import {
 
 import Header from "../../../src/components/Header";
 import IconPickerModal from "../../../src/components/modals/IconPickerModal";
+import { Action } from "../../../src/types";
 import { theme } from "../../../src/constants/theme";
 import useActionLibraryStore from "../../../src/store/useActionLibraryStore";
 
 export default function CreateActionTemplateScreen() {
   const router = useRouter();
-  const { addActionTemplate } = useActionLibraryStore();
+  const { templateId } = useLocalSearchParams<{ templateId?: string }>();
+  const { addActionTemplate, updateActionTemplate, actionTemplates } = useActionLibraryStore();
 
   const [name, setName] = useState("");
   const [icon, setIcon] = useState("barbell");
   const [duration, setDuration] = useState(""); // In minutes
   const [description, setDescription] = useState("");
   const [isPickerVisible, setPickerVisible] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    if (templateId) {
+      const template = actionTemplates.find(t => t.id === templateId);
+      if (template) {
+        setName(template.name);
+        setIcon(template.icon || "barbell");
+        setDuration(template.duration ? String(template.duration / 60) : "");
+        setDescription(template.note || "");
+        setIsEditing(true);
+      }
+    }
+  }, [templateId, actionTemplates]);
 
   const handleSelectIcon = (selectedIcon: string) => {
     setIcon(selectedIcon);
@@ -36,13 +52,19 @@ export default function CreateActionTemplateScreen() {
       Alert.alert("Incomplete Action", "Please provide an action name.");
       return;
     }
-    addActionTemplate({
+    const templateData: Omit<Action, 'id'> = {
       name,
       icon,
       type: "timer", // All custom actions are of type 'timer' for now
       duration: (parseInt(duration, 10) || 0) * 60, // Convert minutes to seconds
-      note: description, // Assuming description maps to note
-    });
+      note: description,
+    };
+
+    if (isEditing && templateId) {
+      updateActionTemplate(templateId, templateData);
+    } else {
+      addActionTemplate(templateData);
+    }
     router.back();
   };
 
@@ -54,7 +76,7 @@ export default function CreateActionTemplateScreen() {
         onSelectIcon={handleSelectIcon}
       />
       <Header
-        title="Create Action"
+        title={isEditing ? "Edit Action" : "Create Action"}
         leftElement={
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={28} color={theme.colors.text} />

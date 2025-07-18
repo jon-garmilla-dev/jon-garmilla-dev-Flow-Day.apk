@@ -25,3 +25,10 @@ export interface Routine {
   color?: string;
   blocks: Block[];
 }
+
+export interface BlockTemplate {
+  id: string;
+  name: string;
+  icon?: string;
+  actions: Action[];
+}

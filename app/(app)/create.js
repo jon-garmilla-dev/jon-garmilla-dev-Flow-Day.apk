@@ -19,6 +19,7 @@ import ActionSheet from "../../src/components/ui/ActionSheet";
 import ColorPicker from "../../src/components/ui/ColorPicker";
 import { theme, routineColors } from "../../src/constants/theme";
 import useActionLibraryStore from "../../src/store/useActionLibraryStore";
+import useBlockLibraryStore from "../../src/store/useBlockLibraryStore";
 import useRoutineStore from "../../src/store/useRoutineStore";
 
 const formatDuration = (totalMinutes) => {
@@ -54,6 +55,8 @@ export default function CreateEditRoutineScreen() {
   } = useRoutineStore();
   const { selectedTemplateForRoutine, setSelectedTemplateForRoutine } =
     useActionLibraryStore();
+  const { selectedBlockTemplate, setSelectedBlockTemplate } =
+    useBlockLibraryStore();
 
   const [title, setTitle] = useState("");
   const [color, setColor] = useState(routineColors[0]);
@@ -130,6 +133,10 @@ export default function CreateEditRoutineScreen() {
 
     if (type === "from_library") {
       router.push("/actions/picker");
+      return;
+    }
+    if (type === "from_block_library") {
+      router.push("/actions/picker-block");
       return;
     }
     if (type === "new_template") {
@@ -420,11 +427,15 @@ export default function CreateEditRoutineScreen() {
   };
 
   const actionOptions = [
-    { label: "From Library", value: "from_library", icon: "library-outline" },
     {
-      label: "New Library Action",
-      value: "new_template",
-      icon: "add-circle-outline",
+      label: "From Action Library",
+      value: "from_library",
+      icon: "library-outline",
+    },
+    {
+      label: "From Block Library",
+      value: "from_block_library",
+      icon: "layers-outline",
     },
     { label: "Simple Text", value: "text", icon: "document-text-outline" },
     { label: "Focus Block", value: "focus", icon: "time-outline" },
@@ -433,6 +444,7 @@ export default function CreateEditRoutineScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      // Handle adding a single action from the action library
       if (selectedTemplateForRoutine && targetBlockIndex !== null) {
         const newBlocks = [...blocks];
         const newAction = { ...selectedTemplateForRoutine, id: uuidv4() };
@@ -441,13 +453,35 @@ export default function CreateEditRoutineScreen() {
         }
         newBlocks[targetBlockIndex].actions.push(newAction);
         setBlocks(newBlocks);
-        setSelectedTemplateForRoutine(null);
+        setSelectedTemplateForRoutine(null); // Reset after adding
+      }
+
+      // Handle adding a block of actions from the block library
+      if (selectedBlockTemplate && targetBlockIndex !== null) {
+        const newBlocks = [...blocks];
+        const targetBlock = newBlocks[targetBlockIndex];
+
+        if (!targetBlock.actions) {
+          targetBlock.actions = [];
+        }
+
+        // Create new instances of actions with unique IDs
+        const actionsToAdd = selectedBlockTemplate.actions.map((action) => ({
+          ...action,
+          id: uuidv4(),
+        }));
+
+        targetBlock.actions.push(...actionsToAdd);
+        setBlocks(newBlocks);
+        setSelectedBlockTemplate(null); // Reset after adding
       }
     }, [
       selectedTemplateForRoutine,
+      selectedBlockTemplate,
       targetBlockIndex,
-      blocks,
       setSelectedTemplateForRoutine,
+      setSelectedBlockTemplate,
+      blocks,
     ]),
   );
 

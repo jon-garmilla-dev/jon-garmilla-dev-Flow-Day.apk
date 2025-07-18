@@ -17,6 +17,7 @@ interface ActionLibraryActions {
   addActionTemplate: (templateData: Omit<Action, 'id'>) => void;
   updateActionTemplate: (templateId: string, templateData: Partial<Omit<Action, 'id'>>) => void;
   deleteActionTemplate: (templateId: string) => void;
+  reorderActionTemplates: (templates: Action[]) => void;
 }
 
 const useActionLibraryStore = create<ActionLibraryState & ActionLibraryActions>((set, get) => ({
@@ -67,6 +68,11 @@ const useActionLibraryStore = create<ActionLibraryState & ActionLibraryActions>(
     );
     set({ actionTemplates: updatedTemplates });
     get().saveActionTemplates(updatedTemplates);
+  },
+
+  reorderActionTemplates: (templates) => {
+    set({ actionTemplates: templates });
+    get().saveActionTemplates(templates);
   },
 }));
 

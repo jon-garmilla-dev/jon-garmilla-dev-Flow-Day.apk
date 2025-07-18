@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter, usePathname } from 'expo-router';
-import React, { useState, useRef } from 'react';
+import { useRouter, usePathname, useFocusEffect } from 'expo-router';
+import React, { useState, useRef, useCallback } from 'react';
 import { View, StyleSheet, TouchableOpacity, Animated, Text, TouchableWithoutFeedback } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../constants/theme';
@@ -11,12 +11,28 @@ interface ActionItem {
   path: string;
 }
 
-const ActionButton: React.FC = () => {
+interface ActionButtonProps {
+  activeTab?: 'actions' | 'blocks';
+}
+
+const ActionButton: React.FC<ActionButtonProps> = ({ activeTab }) => {
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const [isOpen, setIsOpen] = useState(false);
   const animation = useRef(new Animated.Value(0)).current;
+
+  useFocusEffect(
+    useCallback(() => {
+      // When the screen comes into focus, reset the animation and close the menu
+      // This prevents the button from being in a weird state after navigation
+      if (isOpen) {
+        animation.setValue(0);
+        setIsOpen(false);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+  );
 
   const isActionsScreen = pathname === '/actions';
 
@@ -45,9 +61,10 @@ const ActionButton: React.FC = () => {
 
   // --- Render logic for Actions screen ---
   if (isActionsScreen) {
+    const path = activeTab === 'blocks' ? '/actions/create-block' : '/actions/create';
     return (
       <View style={[styles.container, { bottom: insets.bottom + 20 }]}>
-        <TouchableOpacity onPress={() => router.push('/actions/create')}>
+        <TouchableOpacity onPress={() => router.push(path)}>
           <View style={[styles.button, styles.menu]}>
             <Ionicons name="add" size={24} color={theme.colors.background} />
           </View>
