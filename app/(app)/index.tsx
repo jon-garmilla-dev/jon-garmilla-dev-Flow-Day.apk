@@ -7,26 +7,17 @@ import {
   StyleSheet,
   TouchableOpacity,
   FlatList,
-  Button,
-  Modal,
 } from "react-native";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  Easing,
-  interpolate,
-} from "react-native-reanimated";
-import DraggableFlatList from "react-native-draggable-flatlist";
+import DraggableFlatList, { RenderItemParams } from "react-native-draggable-flatlist";
 
 import Header from "../../src/components/Header";
-import CompletionAnimation from "../../src/components/animations/CompletionAnimation";
 import { usePageLayout } from "../../src/components/layout/PageLayout";
 import ConfirmModal from "../../src/components/modals/ConfirmModal";
 import { theme } from "../../src/constants/theme";
 import useRoutineStore from "../../src/store/useRoutineStore";
+import { Routine } from "../../src/types";
 
-const formatDuration = (totalMinutes) => {
+const formatDuration = (totalMinutes: number): string => {
   if (totalMinutes === 0) return "0m";
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
@@ -36,17 +27,25 @@ const formatDuration = (totalMinutes) => {
   return duration.trim();
 };
 
-const calculateRoutineDuration = (routine) => {
+const calculateRoutineDuration = (routine: Routine): number => {
   if (!routine || !routine.blocks) return 0;
   return routine.blocks.reduce((total, block) => {
     const blockTotal = (block.actions || []).reduce((blockSum, action) => {
-      return blockSum + (action.duration || 0); // Now uses seconds
+      return blockSum + (action.duration || 0); // in seconds
     }, 0);
     return total + blockTotal;
   }, 0);
 };
 
-const RoutineRow = ({ item, drag, isActive, isEditMode, onDelete }) => {
+interface RoutineRowProps {
+  item: Routine;
+  drag: () => void;
+  isActive: boolean;
+  isEditMode: boolean;
+  onDelete: () => void;
+}
+
+const RoutineRow: React.FC<RoutineRowProps> = ({ item, drag, isActive, isEditMode, onDelete }) => {
   const totalSeconds = calculateRoutineDuration(item);
   const totalMinutes = Math.floor(totalSeconds / 60);
 
@@ -72,7 +71,7 @@ const RoutineRow = ({ item, drag, isActive, isEditMode, onDelete }) => {
         </TouchableOpacity>
         <View style={styles.editMainContent}>
           <Ionicons
-            name={item.icon || "apps-outline"}
+            name={(item.icon as any) || "apps-outline"}
             size={28}
             color={item.color || theme.colors.primary}
             style={styles.icon}
@@ -98,7 +97,7 @@ const RoutineRow = ({ item, drag, isActive, isEditMode, onDelete }) => {
           hitSlop={{ top: 20, bottom: 20, left: 5, right: 5 }}
         >
           <Ionicons
-            name={item.icon || "apps-outline"}
+            name={(item.icon as any) || "apps-outline"}
             size={28}
             color={item.color || theme.colors.primary}
             style={styles.icon}
@@ -133,12 +132,11 @@ const RoutineRow = ({ item, drag, isActive, isEditMode, onDelete }) => {
 export default function RoutineListScreen() {
   const { routines, loadRoutines, deleteRoutine, reorderRoutines } =
     useRoutineStore();
-  const { openMenu } = usePageLayout();
+  const pageLayout = usePageLayout();
   const [isEditMode, setEditMode] = useState(false);
-  const [localRoutines, setLocalRoutines] = useState(routines);
+  const [localRoutines, setLocalRoutines] = useState<Routine[]>(routines);
   const [isModalVisible, setModalVisible] = useState(false);
-  const [selectedRoutine, setSelectedRoutine] = useState(null);
-  const [isAnimationVisible, setAnimationVisible] = useState(false);
+  const [selectedRoutine, setSelectedRoutine] = useState<Routine | null>(null);
 
   useEffect(() => {
     loadRoutines();
@@ -148,7 +146,7 @@ export default function RoutineListScreen() {
     setLocalRoutines(routines);
   }, [routines]);
 
-  const handleDeletePress = (routine) => {
+  const handleDeletePress = (routine: Routine) => {
     setSelectedRoutine(routine);
     setModalVisible(true);
   };
@@ -166,11 +164,21 @@ export default function RoutineListScreen() {
     setSelectedRoutine(null);
   };
 
-  const renderItem = ({ item, drag, isActive }) => (
+  const renderDraggableItem = ({ item, drag, isActive }: RenderItemParams<Routine>) => (
     <RoutineRow
       item={item}
       drag={drag}
       isActive={isActive}
+      isEditMode={isEditMode}
+      onDelete={() => handleDeletePress(item)}
+    />
+  );
+
+  const renderStandardItem = ({ item }: { item: Routine }) => (
+    <RoutineRow
+      item={item}
+      drag={() => {}} // drag is not available in standard FlatList
+      isActive={false} // isActive is not available in standard FlatList
       isEditMode={isEditMode}
       onDelete={() => handleDeletePress(item)}
     />
@@ -182,23 +190,38 @@ export default function RoutineListScreen() {
         title="Flow Day"
         leftElement={
           <TouchableOpacity
-            onPress={openMenu}
+            onPress={pageLayout?.openMenu}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Ionicons name="menu" size={28} color={theme.colors.text} />
           </TouchableOpacity>
         }
         rightElement={
-          <TouchableOpacity
-            onPress={() => setEditMode(!isEditMode)}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons
-              name={isEditMode ? "checkmark-done" : "pencil"}
-              size={24}
-              color={theme.colors.primary}
-            />
-          </TouchableOpacity>
+          <View style={styles.headerRightContainer}>
+            <Link href="/create" asChild>
+              <TouchableOpacity
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={styles.headerButton}
+              >
+                <Ionicons
+                  name="add"
+                  size={28}
+                  color={theme.colors.primary}
+                />
+              </TouchableOpacity>
+            </Link>
+            <TouchableOpacity
+              onPress={() => setEditMode(!isEditMode)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={styles.headerButton}
+            >
+              <Ionicons
+                name={isEditMode ? "checkmark-done" : "pencil"}
+                size={24}
+                color={theme.colors.primary}
+              />
+            </TouchableOpacity>
+          </View>
         }
       />
       {localRoutines.length === 0 ? (
@@ -217,7 +240,7 @@ export default function RoutineListScreen() {
       ) : isEditMode ? (
         <DraggableFlatList
           data={localRoutines}
-          renderItem={renderItem}
+          renderItem={renderDraggableItem}
           keyExtractor={(item) => item.id}
           onDragEnd={({ data }) => {
             setLocalRoutines(data);
@@ -227,7 +250,7 @@ export default function RoutineListScreen() {
       ) : (
         <FlatList
           data={localRoutines}
-          renderItem={renderItem}
+          renderItem={renderStandardItem}
           keyExtractor={(item) => item.id}
         />
       )}
@@ -238,12 +261,18 @@ export default function RoutineListScreen() {
         title="Delete Workflow"
         message={`Are you sure you want to delete "${selectedRoutine?.title}"? This cannot be undone.`}
       />
-      
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  headerRightContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  headerButton: {
+    marginLeft: theme.layout.spacing.md,
+  },
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
