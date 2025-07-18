@@ -11,6 +11,7 @@ import {
 import DraggableFlatList, { RenderItemParams } from "react-native-draggable-flatlist";
 
 import Header from "../../src/components/Header";
+import ActionButton from "../../src/components/ui/ActionButton";
 import { usePageLayout } from "../../src/components/layout/PageLayout";
 import ConfirmModal from "../../src/components/modals/ConfirmModal";
 import { theme } from "../../src/constants/theme";
@@ -197,31 +198,16 @@ export default function RoutineListScreen() {
           </TouchableOpacity>
         }
         rightElement={
-          <View style={styles.headerRightContainer}>
-            <Link href="/create" asChild>
-              <TouchableOpacity
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                style={styles.headerButton}
-              >
-                <Ionicons
-                  name="add"
-                  size={28}
-                  color={theme.colors.primary}
-                />
-              </TouchableOpacity>
-            </Link>
-            <TouchableOpacity
-              onPress={() => setEditMode(!isEditMode)}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              style={styles.headerButton}
-            >
-              <Ionicons
-                name={isEditMode ? "checkmark-done" : "pencil"}
-                size={24}
-                color={theme.colors.primary}
-              />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            onPress={() => setEditMode(!isEditMode)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons
+              name={isEditMode ? "checkmark-done" : "pencil"}
+              size={24}
+              color={theme.colors.primary}
+            />
+          </TouchableOpacity>
         }
       />
       {localRoutines.length === 0 ? (
@@ -261,18 +247,12 @@ export default function RoutineListScreen() {
         title="Delete Workflow"
         message={`Are you sure you want to delete "${selectedRoutine?.title}"? This cannot be undone.`}
       />
+      <ActionButton />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  headerRightContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  headerButton: {
-    marginLeft: theme.layout.spacing.md,
-  },
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,

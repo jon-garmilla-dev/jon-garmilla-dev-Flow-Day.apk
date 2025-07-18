@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter, Link } from "expo-router";
-import React, { useEffect } from "react";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -10,67 +10,118 @@ import {
 } from "react-native";
 
 import Header from "../../../src/components/Header";
+import ConfirmModal from "../../../src/components/modals/ConfirmModal";
+import ActionButton from "../../../src/components/ui/ActionButton";
 import { theme } from "../../../src/constants/theme";
 import useActionLibraryStore from "../../../src/store/useActionLibraryStore";
+import { Action } from "../../../src/types";
 
-const ActionTemplateRow = ({ template }) => (
+interface ActionTemplateRowProps {
+  template: Action;
+  isEditMode: boolean;
+  onDelete: () => void;
+}
+
+const ActionTemplateRow: React.FC<ActionTemplateRowProps> = ({ template, isEditMode, onDelete }) => (
   <View style={styles.actionRow}>
     <View style={styles.actionIconContainer}>
       <Ionicons
-        name={template.icon || "barbell-outline"}
+        name={template.icon as any || "barbell-outline"}
         size={28}
         color={theme.colors.primary}
       />
     </View>
     <View style={styles.actionTextContainer}>
       <Text style={styles.actionTitle}>{template.name}</Text>
-      {template.duration > 0 && (
+      {template.duration && template.duration > 0 && (
         <Text style={styles.actionSubtitle}>
           {Math.floor(template.duration / 60)}m {template.duration % 60}s
         </Text>
       )}
     </View>
-    {/* Add edit/delete buttons here in the future */}
+    {isEditMode && (
+      <TouchableOpacity onPress={onDelete} style={styles.deleteButton}>
+        <Ionicons
+          name="remove-circle-outline"
+          size={28}
+          color={theme.colors.danger}
+        />
+      </TouchableOpacity>
+    )}
   </View>
 );
 
 export default function ActionLibraryScreen() {
   const router = useRouter();
-  const { actionTemplates, loadActionTemplates } = useActionLibraryStore();
+  const { actionTemplates, loadActionTemplates, deleteActionTemplate } = useActionLibraryStore();
+  const [isEditMode, setEditMode] = useState(false);
+  const [selectedAction, setSelectedAction] = useState<Action | null>(null);
+  const [isModalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     loadActionTemplates();
-  }, []);
+  }, [loadActionTemplates]);
+
+  const handleDeletePress = (action: Action) => {
+    setSelectedAction(action);
+    setModalVisible(true);
+  };
+
+  const confirmDelete = () => {
+    if (selectedAction) {
+      deleteActionTemplate(selectedAction.id);
+      setModalVisible(false);
+      setSelectedAction(null);
+    }
+  };
 
   return (
     <View style={styles.container}>
       <Header
         title="Action Library"
         leftElement={
-          <TouchableOpacity onPress={() => router.back()}>
+          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
             <Ionicons name="arrow-back" size={28} color={theme.colors.text} />
+          </TouchableOpacity>
+        }
+        rightElement={
+          <TouchableOpacity onPress={() => setEditMode(!isEditMode)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Ionicons
+              name={isEditMode ? "checkmark-done" : "pencil"}
+              size={24}
+              color={theme.colors.primary}
+            />
           </TouchableOpacity>
         }
       />
       <FlatList
         data={actionTemplates}
-        renderItem={({ item }) => <ActionTemplateRow template={item} />}
+        renderItem={({ item }) => (
+          <ActionTemplateRow
+            template={item}
+            isEditMode={isEditMode}
+            onDelete={() => handleDeletePress(item)}
+          />
+        )}
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>Your action library is empty.</Text>
             <Text style={styles.emptySubtext}>
-              Press the '+' button to create a reusable action.
+              Create a reusable action.
             </Text>
           </View>
         }
-        contentContainerStyle={{ flexGrow: 1 }}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
       />
-      <Link href="/actions/create" asChild>
-        <TouchableOpacity style={styles.fab}>
-          <Ionicons name="add" size={32} color={theme.colors.text} />
-        </TouchableOpacity>
-      </Link>
+      <ConfirmModal
+        visible={isModalVisible}
+        onConfirm={confirmDelete}
+        onCancel={() => setModalVisible(false)}
+        title="Delete Action"
+        message={`Are you sure you want to delete "${selectedAction?.name}"? This cannot be undone.`}
+      />
+      <ActionButton />
     </View>
   );
 }
@@ -105,17 +156,8 @@ const styles = StyleSheet.create({
     color: theme.colors.gray,
     marginTop: 2,
   },
-  fab: {
-    position: "absolute",
-    right: 30,
-    bottom: 30,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 8,
-    backgroundColor: theme.colors.primary,
+  deleteButton: {
+    paddingLeft: theme.layout.spacing.md,
   },
   emptyContainer: {
     flex: 1,
