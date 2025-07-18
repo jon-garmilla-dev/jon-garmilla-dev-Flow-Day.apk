@@ -287,12 +287,11 @@ export default function RoutineRunnerScreen() {
   };
 
   useEffect(() => {
-    const isActive = Object.values(actions).includes("active");
-    if (
-      currentTask &&
-      actions[currentTask.action.id] !== "active" &&
-      !isActive
-    ) {
+    // When the screen mounts or the current task changes,
+    // ensure the action is started if it's not already active.
+    // The startAction logic in the store will handle deactivating any other active actions.
+    if (currentTask && actions[currentTask.action.id] !== "active") {
+      // Use a timeout to allow the UI to mount before updating state
       const timer = setTimeout(() => {
         handleStart();
       }, 0);

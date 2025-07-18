@@ -14,7 +14,7 @@ const useProgressStore = create((set, get) => ({
   loadProgress: async (routine) => {
     if (!routine) return;
     if (get().routineId === routine.id) {
-      return; // Already loaded for this routine
+      return; 
     }
     const date = new Date().toISOString().split("T")[0];
     const key = getProgressKey(routine.id, date);
@@ -33,7 +33,6 @@ const useProgressStore = create((set, get) => ({
           pausedTimers: pausedTimers || {},
         });
       } else {
-        // Initialize progress for a new day
         const initialProgress = {};
         const initialActions = {};
         routine.blocks.forEach((block) => {
@@ -57,32 +56,28 @@ const useProgressStore = create((set, get) => ({
   startAction: (routine, blockId) => {
     const block = routine.blocks.find((b) => b.id === blockId);
     if (!block) return;
-
+  
     const nextAction = block.actions.find(
-      (a) => get().actions[a.id] === "pending",
+      (a) => get().actions[a.id] !== "completed",
     );
-    if (!nextAction) return;
-
+  
+    if (!nextAction) {
+      return;
+    }
+  
     set(
       produce((draft) => {
-        // Set all other active actions to pending
-        Object.keys(draft.actions).forEach(actionId => {
+        // 1. Reset any other action that is currently 'active' to 'pending'.
+        // This ensures only one action is running at a time across all blocks.
+        for (const actionId in draft.actions) {
           if (draft.actions[actionId] === 'active') {
             draft.actions[actionId] = 'pending';
           }
-        });
-
-        // Set all other active blocks to pending
-        Object.keys(draft.progress).forEach(bId => {
-            if(draft.progress[bId] === 'active') {
-                const isComplete = routine.blocks.find(b => b.id === bId)?.actions.every(a => draft.actions[a.id] === 'completed');
-                if(!isComplete) {
-                    draft.progress[bId] = 'pending';
-                }
-            }
-        });
-
+        }
+  
+        // 2. Set the new block to 'active' (without deactivating others).
         draft.progress[blockId] = "active";
+        // 3. Set the new action to 'active'.
         draft.actions[nextAction.id] = "active";
       }),
     );
@@ -98,7 +93,6 @@ const useProgressStore = create((set, get) => ({
           delete draft.pausedTimers[completedActionId];
         }
 
-        // Find which block this action belongs to
         const parentBlock = routine.blocks.find(b => 
           b.actions.some(a => a.id === completedActionId)
         );
@@ -121,8 +115,10 @@ const useProgressStore = create((set, get) => ({
   pauseAction: (routineId, actionId, remainingTime) => {
     set(
       produce((draft) => {
-        draft.pausedTimers = {};
-        if (actionId && remainingTime !== null) {
+        if (actionId && remainingTime === null) {
+          delete draft.pausedTimers[actionId];
+        } 
+        else if (actionId && remainingTime !== null) {
           draft.pausedTimers[actionId] = remainingTime;
         }
       }),
