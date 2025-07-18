@@ -9,8 +9,6 @@ const useProgressStore = create((set, get) => ({
   routineId: null,
   progress: {}, // { [blockId]: 'pending' | 'active' | 'completed', ... }
   actions: {}, // { [actionId]: 'pending' | 'active' | 'completed', ... }
-  currentBlockId: null,
-  currentActionId: null,
   pausedTimers: {}, // { [actionId]: remainingTime }
 
   loadProgress: async (routine) => {
@@ -26,16 +24,12 @@ const useProgressStore = create((set, get) => ({
         const {
           progress,
           actions,
-          currentBlockId,
-          currentActionId,
           pausedTimers,
         } = JSON.parse(storedProgress);
         set({
           routineId: routine.id,
           progress,
           actions,
-          currentBlockId,
-          currentActionId,
           pausedTimers: pausedTimers || {},
         });
       } else {
@@ -52,8 +46,6 @@ const useProgressStore = create((set, get) => ({
           routineId: routine.id,
           progress: initialProgress,
           actions: initialActions,
-          currentBlockId: null,
-          currentActionId: null,
           pausedTimers: {},
         });
       }
@@ -73,10 +65,25 @@ const useProgressStore = create((set, get) => ({
 
     set(
       produce((draft) => {
+        // Set all other active actions to pending
+        Object.keys(draft.actions).forEach(actionId => {
+          if (draft.actions[actionId] === 'active') {
+            draft.actions[actionId] = 'pending';
+          }
+        });
+
+        // Set all other active blocks to pending
+        Object.keys(draft.progress).forEach(bId => {
+            if(draft.progress[bId] === 'active') {
+                const isComplete = routine.blocks.find(b => b.id === bId)?.actions.every(a => draft.actions[a.id] === 'completed');
+                if(!isComplete) {
+                    draft.progress[bId] = 'pending';
+                }
+            }
+        });
+
         draft.progress[blockId] = "active";
-        draft.currentBlockId = blockId;
         draft.actions[nextAction.id] = "active";
-        draft.currentActionId = nextAction.id;
       }),
     );
     get().saveProgress(routine.id);
@@ -86,19 +93,24 @@ const useProgressStore = create((set, get) => ({
     set(
       produce((draft) => {
         draft.actions[completedActionId] = "completed";
-        draft.currentActionId = null;
 
-        const currentBlock = routine.blocks.find(
-          (b) => b.id === draft.currentBlockId,
-        );
-        if (!currentBlock) return;
+        if (draft.pausedTimers[completedActionId]) {
+          delete draft.pausedTimers[completedActionId];
+        }
 
-        const isBlockComplete = currentBlock.actions.every(
-          (a) => draft.actions[a.id] === "completed",
+        // Find which block this action belongs to
+        const parentBlock = routine.blocks.find(b => 
+          b.actions.some(a => a.id === completedActionId)
         );
-        if (isBlockComplete) {
-          draft.progress[draft.currentBlockId] = "completed";
-          draft.currentBlockId = null;
+
+        if (parentBlock) {
+          const isBlockComplete = parentBlock.actions.every(
+            (a) => draft.actions[a.id] === "completed",
+          );
+
+          if (isBlockComplete) {
+            draft.progress[parentBlock.id] = "completed";
+          }
         }
       }),
       false,
@@ -109,17 +121,9 @@ const useProgressStore = create((set, get) => ({
   pauseAction: (routineId, actionId, remainingTime) => {
     set(
       produce((draft) => {
-        // Clear a specific timer (on resume)
-        if (actionId && remainingTime === null) {
-          delete draft.pausedTimers[actionId];
-        }
-        // Set a specific timer (on pause)
-        else if (actionId && remainingTime !== null) {
+        draft.pausedTimers = {};
+        if (actionId && remainingTime !== null) {
           draft.pausedTimers[actionId] = remainingTime;
-        }
-        // Clear all timers (e.g., on routine completion/exit)
-        else {
-          draft.pausedTimers = {};
         }
       }),
     );
@@ -134,8 +138,6 @@ const useProgressStore = create((set, get) => ({
     const {
       progress,
       actions,
-      currentBlockId,
-      currentActionId,
       pausedTimers,
     } = get();
     const date = new Date().toISOString().split("T")[0];
@@ -143,8 +145,6 @@ const useProgressStore = create((set, get) => ({
     const dataToStore = JSON.stringify({
       progress,
       actions,
-      currentBlockId,
-      currentActionId,
       pausedTimers,
     });
     try {
@@ -160,7 +160,6 @@ const useProgressStore = create((set, get) => ({
     const key = getProgressKey(routine.id, date);
     try {
       await AsyncStorage.removeItem(key);
-      // Force reload by resetting the routineId
       set({ routineId: null });
       get().loadProgress(routine);
     } catch (e) {
