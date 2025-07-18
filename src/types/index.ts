@@ -1,7 +1,7 @@
 export interface Action {
   id: string;
   name: string;
-  type: 'timer' | 'reps' | 'weight' | 'note';
+  type: 'timer' | 'reps' | 'weight' | 'note' | 'task';
   duration?: number; // in seconds, for timer type
   reps?: number;
   weight?: number;
@@ -13,6 +13,7 @@ export interface Action {
 export interface Block {
   id: string;
   name:string;
+  icon?: string;
   actions: Action[];
 }
 

@@ -1,12 +1,27 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { v4 as uuidv4 } from "uuid";
 import { create } from "zustand";
+import { Action } from "../types";
 
 const ACTION_LIBRARY_KEY = "@FlowDay:ActionLibrary";
 
-const useActionLibraryStore = create((set, get) => ({
+interface ActionLibraryState {
+  actionTemplates: Action[];
+  selectedTemplateForRoutine: Action | null;
+}
+
+interface ActionLibraryActions {
+  setSelectedTemplateForRoutine: (template: Action | null) => void;
+  loadActionTemplates: () => Promise<void>;
+  saveActionTemplates: (templates: Action[]) => Promise<void>;
+  addActionTemplate: (templateData: Omit<Action, 'id'>) => void;
+  updateActionTemplate: (templateId: string, templateData: Partial<Omit<Action, 'id'>>) => void;
+  deleteActionTemplate: (templateId: string) => void;
+}
+
+const useActionLibraryStore = create<ActionLibraryState & ActionLibraryActions>((set, get) => ({
   actionTemplates: [],
-  selectedTemplateForRoutine: null, // Used to pass data back from picker
+  selectedTemplateForRoutine: null,
 
   setSelectedTemplateForRoutine: (template) =>
     set({ selectedTemplateForRoutine: template }),
@@ -15,7 +30,8 @@ const useActionLibraryStore = create((set, get) => ({
     try {
       const storedTemplates = await AsyncStorage.getItem(ACTION_LIBRARY_KEY);
       if (storedTemplates !== null) {
-        set({ actionTemplates: JSON.parse(storedTemplates) });
+        const templates: Action[] = JSON.parse(storedTemplates);
+        set({ actionTemplates: templates });
       }
     } catch (e) {
       console.error("Failed to load action templates.", e);
@@ -31,7 +47,7 @@ const useActionLibraryStore = create((set, get) => ({
   },
 
   addActionTemplate: (templateData) => {
-    const newTemplate = { ...templateData, id: uuidv4() };
+    const newTemplate: Action = { ...templateData, id: uuidv4() };
     const updatedTemplates = [...get().actionTemplates, newTemplate];
     set({ actionTemplates: updatedTemplates });
     get().saveActionTemplates(updatedTemplates);

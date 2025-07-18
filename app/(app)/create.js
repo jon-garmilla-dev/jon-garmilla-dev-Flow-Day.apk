@@ -9,11 +9,6 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from "react-native";
-import {
-  GestureDetector,
-  Gesture,
-  PanGestureHandler,
-} from "react-native-gesture-handler";
 import DraggableFlatList from "react-native-draggable-flatlist";
 import { v4 as uuidv4 } from "uuid";
 

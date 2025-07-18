@@ -177,6 +177,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: "flex-end",
     backgroundColor: "rgba(0,0,0,0.7)",
+    zIndex: 100, // Add a high zIndex to ensure it's on top
   },
   modalView: {
     height: "60%",

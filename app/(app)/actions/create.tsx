@@ -8,6 +8,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Alert,
 } from "react-native";
 
 import Header from "../../../src/components/Header";
@@ -25,9 +26,14 @@ export default function CreateActionTemplateScreen() {
   const [description, setDescription] = useState("");
   const [isPickerVisible, setPickerVisible] = useState(false);
 
+  const handleSelectIcon = (selectedIcon: string) => {
+    setIcon(selectedIcon);
+    setPickerVisible(false);
+  };
+
   const handleSave = () => {
     if (!name) {
-      alert("Please provide an action name.");
+      Alert.alert("Incomplete Action", "Please provide an action name.");
       return;
     }
     addActionTemplate({
@@ -35,7 +41,7 @@ export default function CreateActionTemplateScreen() {
       icon,
       type: "timer", // All custom actions are of type 'timer' for now
       duration: (parseInt(duration, 10) || 0) * 60, // Convert minutes to seconds
-      description,
+      note: description, // Assuming description maps to note
     });
     router.back();
   };
@@ -45,7 +51,7 @@ export default function CreateActionTemplateScreen() {
       <IconPickerModal
         visible={isPickerVisible}
         onClose={() => setPickerVisible(false)}
-        onSelectIcon={setIcon}
+        onSelectIcon={handleSelectIcon}
       />
       <Header
         title="Create Action"
@@ -61,7 +67,7 @@ export default function CreateActionTemplateScreen() {
             style={styles.iconButton}
             onPress={() => setPickerVisible(true)}
           >
-            <Ionicons name={icon} size={32} color={theme.colors.primary} />
+            <Ionicons name={icon as any} size={32} color={theme.colors.primary} />
           </TouchableOpacity>
           <TextInput
             style={styles.nameInput}
