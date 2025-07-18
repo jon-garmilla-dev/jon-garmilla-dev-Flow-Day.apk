@@ -3,12 +3,13 @@ import { produce } from "immer";
 import "react-native-get-random-values";
 import { v4 as uuidv4 } from "uuid";
 import { create } from "zustand";
+import { Routine, Block, Action } from "../types";
 
 const ROUTINE_INDEX_KEY = "@FlowDay:RoutineIndex";
-const getRoutineKey = (routineId) => `@FlowDay:Routine:${routineId}`;
+const getRoutineKey = (routineId: string) => `@FlowDay:Routine:${routineId}`;
 
 // Helper function to save a single routine and update the index if needed
-const saveRoutine = async (routine, updateIndex = false) => {
+const saveRoutine = async (routine: Routine, updateIndex = false) => {
   try {
     await AsyncStorage.setItem(
       getRoutineKey(routine.id),
@@ -16,7 +17,7 @@ const saveRoutine = async (routine, updateIndex = false) => {
     );
     if (updateIndex) {
       const index = await AsyncStorage.getItem(ROUTINE_INDEX_KEY);
-      const newIndex = index ? JSON.parse(index) : [];
+      const newIndex: string[] = index ? JSON.parse(index) : [];
       if (!newIndex.includes(routine.id)) {
         newIndex.push(routine.id);
         await AsyncStorage.setItem(ROUTINE_INDEX_KEY, JSON.stringify(newIndex));
@@ -27,13 +28,35 @@ const saveRoutine = async (routine, updateIndex = false) => {
   }
 };
 
-const useRoutineStore = create((set, get) => ({
+interface RoutineState {
+  routines: Routine[];
+  activeRoutineId: string | null;
+}
+
+interface RoutineActions {
+  setActiveRoutineId: (routineId: string | null) => void;
+  loadRoutines: () => Promise<void>;
+  addRoutine: (title: string, color?: string, icon?: string, blocks?: Block[]) => string;
+  updateRoutine: (routineId: string, title: string, color?: string, icon?: string) => void;
+  deleteRoutine: (routineId: string) => Promise<void>;
+  reorderRoutines: (reorderedRoutines: Routine[]) => Promise<void>;
+  _updateAndSave: (routineId: string, producer: (routine: Routine) => void) => void;
+  addBlock: (routineId: string, blockData: Omit<Block, 'id' | 'actions'> & { actions?: Action[] }) => string;
+  updateBlock: (routineId: string, blockId: string, name: string) => void;
+  deleteBlock: (routineId: string, blockId: string) => void;
+  reorderBlocks: (routineId: string, reorderedBlocks: Block[]) => void;
+  addAction: (routineId: string, blockId: string, actionData: Omit<Action, 'id'>) => void;
+  updateAction: (routineId: string, blockId: string, actionId: string, actionData: Partial<Action>) => void;
+  deleteAction: (routineId: string, blockId: string, actionId: string) => void;
+  reorderActions: (routineId: string, blockId: string, reorderedActions: Action[]) => void;
+}
+
+const useRoutineStore = create<RoutineState & RoutineActions>((set, get) => ({
   routines: [],
   activeRoutineId: null,
 
   setActiveRoutineId: (routineId) => set({ activeRoutineId: routineId }),
 
-  // --- Persistence ---
   loadRoutines: async () => {
     try {
       const indexJson = await AsyncStorage.getItem(ROUTINE_INDEX_KEY);
@@ -42,13 +65,13 @@ const useRoutineStore = create((set, get) => ({
         return;
       }
 
-      const routineIds = JSON.parse(indexJson);
+      const routineIds: string[] = JSON.parse(indexJson);
       const keys = routineIds.map(getRoutineKey);
       const storedRoutines = await AsyncStorage.multiGet(keys);
 
-      const routines = storedRoutines
+      const routines: Routine[] = storedRoutines
         .map(([, value]) => (value ? JSON.parse(value) : null))
-        .filter(Boolean);
+        .filter((r): r is Routine => r !== null);
 
       set({ routines });
     } catch (e) {
@@ -57,16 +80,15 @@ const useRoutineStore = create((set, get) => ({
     }
   },
 
-  // --- Routines ---
   addRoutine: (
     title,
     color = "#6366F1",
     icon = "apps-outline",
     blocks = [],
   ) => {
-    const newRoutine = { id: uuidv4(), title, color, icon, blocks };
+    const newRoutine: Routine = { id: uuidv4(), title, color, icon, blocks };
     set((state) => ({ routines: [...state.routines, newRoutine] }));
-    saveRoutine(newRoutine, true); // true to update index
+    saveRoutine(newRoutine, true);
     return newRoutine.id;
   },
 
@@ -94,7 +116,7 @@ const useRoutineStore = create((set, get) => ({
       await AsyncStorage.removeItem(getRoutineKey(routineId));
       const indexJson = await AsyncStorage.getItem(ROUTINE_INDEX_KEY);
       if (indexJson) {
-        const newIndex = JSON.parse(indexJson).filter((id) => id !== routineId);
+        const newIndex = JSON.parse(indexJson).filter((id: string) => id !== routineId);
         await AsyncStorage.setItem(ROUTINE_INDEX_KEY, JSON.stringify(newIndex));
       }
     } catch (e) {
@@ -112,7 +134,6 @@ const useRoutineStore = create((set, get) => ({
     }
   },
 
-  // --- Generic update function for Blocks and Actions ---
   _updateAndSave: (routineId, producer) => {
     const updatedRoutines = produce(get().routines, (draft) => {
       const routine = draft.find((r) => r.id === routineId);
@@ -127,9 +148,8 @@ const useRoutineStore = create((set, get) => ({
     }
   },
 
-  // --- Blocks ---
   addBlock: (routineId, blockData) => {
-    const newBlock = { ...blockData, id: uuidv4() };
+    const newBlock: Block = { ...blockData, id: uuidv4(), actions: blockData.actions || [] };
     get()._updateAndSave(routineId, (routine) => {
       routine.blocks.push(newBlock);
     });
@@ -157,9 +177,8 @@ const useRoutineStore = create((set, get) => ({
     });
   },
 
-  // --- Actions ---
   addAction: (routineId, blockId, actionData) => {
-    const newAction = { ...actionData, id: uuidv4() };
+    const newAction: Action = { ...actionData, id: uuidv4() };
     get()._updateAndSave(routineId, (routine) => {
       const block = routine.blocks.find((b) => b.id === blockId);
       if (block) {

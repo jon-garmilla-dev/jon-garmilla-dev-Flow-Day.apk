@@ -1,15 +1,35 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { produce } from "immer";
 import { create } from "zustand";
+import { Routine } from "../types";
 
-const getProgressKey = (routineId, date) =>
+const getProgressKey = (routineId: string, date: string) =>
   `@FlowDay:Progress:${date}:${routineId}`;
 
-const useProgressStore = create((set, get) => ({
+type Status = 'pending' | 'active' | 'completed';
+
+interface ProgressState {
+  routineId: string | null;
+  progress: { [blockId: string]: Status };
+  actions: { [actionId: string]: Status };
+  pausedTimers: { [actionId: string]: number };
+}
+
+interface ProgressActions {
+  loadProgress: (routine: Routine) => Promise<void>;
+  startAction: (routine: Routine, blockId: string) => void;
+  completeAction: (routine: Routine, completedActionId: string) => void;
+  pauseAction: (routineId: string, actionId: string, remainingTime: number | null) => void;
+  forceReloadNextLoad: () => void;
+  saveProgress: (routineId: string) => Promise<void>;
+  resetProgress: (routine: Routine) => Promise<void>;
+}
+
+const useProgressStore = create<ProgressState & ProgressActions>((set, get) => ({
   routineId: null,
-  progress: {}, // { [blockId]: 'pending' | 'active' | 'completed', ... }
-  actions: {}, // { [actionId]: 'pending' | 'active' | 'completed', ... }
-  pausedTimers: {}, // { [actionId]: remainingTime }
+  progress: {},
+  actions: {},
+  pausedTimers: {},
 
   loadProgress: async (routine) => {
     if (!routine || !routine.id) {
@@ -36,8 +56,8 @@ const useProgressStore = create((set, get) => ({
           pausedTimers: pausedTimers || {},
         });
       } else {
-        const initialProgress = {};
-        const initialActions = {};
+        const initialProgress: { [blockId: string]: Status } = {};
+        const initialActions: { [actionId: string]: Status } = {};
         if (Array.isArray(routine.blocks)) {
           routine.blocks.forEach((block) => {
             if (block && block.id && Array.isArray(block.actions)) {
@@ -82,18 +102,13 @@ const useProgressStore = create((set, get) => ({
     }
   
     set(
-      produce((draft) => {
-        // 1. Reset any other action that is currently 'active' to 'pending'.
-        // This ensures only one action is running at a time across all blocks.
+      produce((draft: ProgressState) => {
         for (const actionId in draft.actions) {
           if (draft.actions[actionId] === 'active') {
             draft.actions[actionId] = 'pending';
           }
         }
-  
-        // 2. Set the new block to 'active' (without deactivating others).
         draft.progress[blockId] = "active";
-        // 3. Set the new action to 'active'.
         draft.actions[nextAction.id] = "active";
       }),
     );
@@ -106,7 +121,7 @@ const useProgressStore = create((set, get) => ({
       return;
     }
     set(
-      produce((draft) => {
+      produce((draft: ProgressState) => {
         draft.actions[completedActionId] = "completed";
 
         if (draft.pausedTimers[completedActionId]) {
@@ -126,15 +141,14 @@ const useProgressStore = create((set, get) => ({
             draft.progress[parentBlock.id] = "completed";
           }
         }
-      }),
-      false,
-      () => get().saveProgress(routine.id),
+      })
     );
+    get().saveProgress(routine.id);
   },
 
   pauseAction: (routineId, actionId, remainingTime) => {
     set(
-      produce((draft) => {
+      produce((draft: ProgressState) => {
         if (actionId && remainingTime === null) {
           delete draft.pausedTimers[actionId];
         } 

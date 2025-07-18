@@ -3,7 +3,13 @@ import { View, Text, StyleSheet } from "react-native";
 
 import { theme } from "../constants/theme";
 
-const Header = ({ title, leftElement, rightElement }) => {
+interface HeaderProps {
+  title: string;
+  leftElement?: React.ReactNode;
+  rightElement?: React.ReactNode;
+}
+
+const Header: React.FC<HeaderProps> = ({ title, leftElement, rightElement }) => {
   return (
     <View style={styles.headerContainer}>
       <View style={styles.sideContainer}>{leftElement}</View>

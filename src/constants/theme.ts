@@ -1,4 +1,4 @@
-// src/constants/theme.js
+// src/constants/theme.ts
 
 const palette = {
   // Paleta de Grises (inspirada en GitHub Dark)
@@ -76,4 +76,4 @@ export const theme = {
     },
     headerHeight: 64,
   },
-};
+} as const; // 'as const' makes the object readonly and its properties literal types
