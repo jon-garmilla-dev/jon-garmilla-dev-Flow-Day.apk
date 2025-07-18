@@ -1,6 +1,7 @@
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 
+import ErrorBoundary from "../../src/components/ErrorBoundary";
 import PageLayout from "../../src/components/layout/PageLayout";
 
 // Componente interno para poder usar el contexto del PageLayout
@@ -43,8 +44,10 @@ export default function AppStackLayout() {
   }
 
   return (
-    <PageLayout>
-      <StackNavigator />
-    </PageLayout>
+    <ErrorBoundary>
+      <PageLayout>
+        <StackNavigator />
+      </PageLayout>
+    </ErrorBoundary>
   );
 }

@@ -12,9 +12,12 @@ const useProgressStore = create((set, get) => ({
   pausedTimers: {}, // { [actionId]: remainingTime }
 
   loadProgress: async (routine) => {
-    if (!routine) return;
+    if (!routine || !routine.id) {
+      console.error("Attempted to load progress with invalid routine.", routine);
+      return;
+    }
     if (get().routineId === routine.id) {
-      return; 
+      return;
     }
     const date = new Date().toISOString().split("T")[0];
     const key = getProgressKey(routine.id, date);
@@ -35,12 +38,18 @@ const useProgressStore = create((set, get) => ({
       } else {
         const initialProgress = {};
         const initialActions = {};
-        routine.blocks.forEach((block) => {
-          initialProgress[block.id] = "pending";
-          block.actions.forEach((action) => {
-            initialActions[action.id] = "pending";
+        if (Array.isArray(routine.blocks)) {
+          routine.blocks.forEach((block) => {
+            if (block && block.id && Array.isArray(block.actions)) {
+              initialProgress[block.id] = "pending";
+              block.actions.forEach((action) => {
+                if (action && action.id) {
+                  initialActions[action.id] = "pending";
+                }
+              });
+            }
           });
-        });
+        }
         set({
           routineId: routine.id,
           progress: initialProgress,
@@ -54,11 +63,18 @@ const useProgressStore = create((set, get) => ({
   },
 
   startAction: (routine, blockId) => {
-    const block = routine.blocks.find((b) => b.id === blockId);
-    if (!block) return;
-  
+    if (!routine || !Array.isArray(routine.blocks)) {
+      console.error("startAction: Invalid routine provided.", routine);
+      return;
+    }
+    const block = routine.blocks.find((b) => b && b.id === blockId);
+    if (!block || !Array.isArray(block.actions)) {
+      console.error("startAction: Invalid block found for blockId:", blockId, block);
+      return;
+    }
+
     const nextAction = block.actions.find(
-      (a) => get().actions[a.id] !== "completed",
+      (a) => a && get().actions[a.id] !== "completed",
     );
   
     if (!nextAction) {
@@ -85,6 +101,10 @@ const useProgressStore = create((set, get) => ({
   },
 
   completeAction: (routine, completedActionId) => {
+    if (!routine || !Array.isArray(routine.blocks)) {
+      console.error("completeAction: Invalid routine provided.", routine);
+      return;
+    }
     set(
       produce((draft) => {
         draft.actions[completedActionId] = "completed";
@@ -94,12 +114,12 @@ const useProgressStore = create((set, get) => ({
         }
 
         const parentBlock = routine.blocks.find(b => 
-          b.actions.some(a => a.id === completedActionId)
+          b && Array.isArray(b.actions) && b.actions.some(a => a && a.id === completedActionId)
         );
 
         if (parentBlock) {
           const isBlockComplete = parentBlock.actions.every(
-            (a) => draft.actions[a.id] === "completed",
+            (a) => a && draft.actions[a.id] === "completed",
           );
 
           if (isBlockComplete) {

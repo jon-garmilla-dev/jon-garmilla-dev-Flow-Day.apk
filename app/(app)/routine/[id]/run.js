@@ -24,6 +24,7 @@ import Animated, {
 import { LinearGradient } from "expo-linear-gradient";
 
 import Header from "../../../../src/components/Header";
+import Spinner from "../../../../src/components/ui/Spinner";
 import CompletionAnimation from "../../../../src/components/animations/CompletionAnimation";
 import { theme } from "../../../../src/constants/theme";
 import useProgressStore from "../../../../src/store/useProgressStore";
@@ -31,11 +32,12 @@ import useRoutineStore from "../../../../src/store/useRoutineStore";
 
 // --- Helper Functions ---
 const findCurrentTaskInfo = (routine, blockId, actions) => {
-  if (!routine || !routine.blocks) return null;
-  const block = routine.blocks.find((b) => b.id === blockId);
-  if (!block) return null;
+  if (!routine || !Array.isArray(routine.blocks)) return null;
+  const block = routine.blocks.find((b) => b && b.id === blockId);
+  if (!block || !Array.isArray(block.actions)) return null;
+
   const firstPendingActionIndex = block.actions.findIndex(
-    (action) => actions[action.id] !== "completed",
+    (action) => action && actions[action.id] !== "completed",
   );
   if (firstPendingActionIndex === -1) {
     return {
@@ -46,9 +48,11 @@ const findCurrentTaskInfo = (routine, blockId, actions) => {
       totalTasks: block.actions.length,
     };
   }
-  const currentTask = { block, action: block.actions[firstPendingActionIndex] };
+  const currentTask = block.actions[firstPendingActionIndex]
+    ? { block, action: block.actions[firstPendingActionIndex] }
+    : null;
   const nextTask =
-    firstPendingActionIndex + 1 < block.actions.length
+    firstPendingActionIndex !== -1 && firstPendingActionIndex + 1 < block.actions.length
       ? { block, action: block.actions[firstPendingActionIndex + 1] }
       : null;
   return {
@@ -100,7 +104,8 @@ export default function RoutineRunnerScreen() {
   const [totalRemainingTime, setTotalRemainingTime] = useState(0);
   const [isActionLocked, setIsActionLocked] = useState(false);
   const [isFocusLocked, setIsFocusLocked] = useState(true);
-  const [isPaused, setIsPaused] = useState(false); // Start active
+  const [isPaused, setIsPaused] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   // Animation
   const focusProgress = useSharedValue(0);
   const progress = useSharedValue(0);
@@ -157,23 +162,39 @@ export default function RoutineRunnerScreen() {
 
   // Effects
   useEffect(() => {
-    if (routine) loadProgress(routine);
+    if (routine) {
+      loadProgress(routine);
+    }
   }, [routine, loadProgress]);
+
+  useEffect(() => {
+    // Data validation check
+    if (routine && !block) {
+      // This case means the routine is loaded, but the blockId is invalid.
+      // We should probably show an error and offer to go back.
+      // For now, we'll just stop loading and show the "not found" message later.
+      setIsLoading(false);
+      return;
+    }
+    if (routine && block && taskInfo) {
+      setIsLoading(false);
+    }
+  }, [routine, block, taskInfo]);
 
   // Effect to initialize timers only when the task changes
   useEffect(() => {
-    if (!currentTask) return;
+    if (!currentTask || !currentTask.action) return;
 
     const remainingBlockDuration = block.actions
       .slice(currentIndex)
-      .filter((a) => a.type === "timer" && a.duration)
+      .filter((a) => a && a.type === "timer" && a.duration)
       .reduce((sum, a) => sum + a.duration, 0);
 
     const pausedTime = pausedTimers[currentTask.action.id];
     const initialCountdown = pausedTime !== undefined ? pausedTime : currentTask.action.duration || 0;
-    
+
     let initialTotal = remainingBlockDuration;
-    if (pausedTime !== undefined) {
+    if (pausedTime !== undefined && currentTask.action.duration) {
       const elapsed = currentTask.action.duration - pausedTime;
       initialTotal -= elapsed;
     }
@@ -188,10 +209,10 @@ export default function RoutineRunnerScreen() {
 
   // Effect to run the timer and handle completion
   useEffect(() => {
-    const isTimerAction = currentTask?.action.type === "timer" && currentTask.action.duration > 0;
+    const isTimerAction = currentTask?.action?.type === "timer" && currentTask.action.duration > 0;
     setIsActionLocked(isTimerAction);
 
-    if (isPaused || !isTimerAction) {
+    if (isPaused || !isTimerAction || !currentTask) {
       return;
     }
 
@@ -259,7 +280,7 @@ export default function RoutineRunnerScreen() {
   }, [currentTask, breathingValue]);
 
   const handleComplete = useCallback(() => {
-    if (!currentTask || (focusProgress.value > 0.5 && isActionLocked)) return;
+    if (!currentTask || !currentTask.action || (focusProgress.value > 0.5 && isActionLocked)) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     completeAction(routine, currentTask.action.id);
   }, [
@@ -267,21 +288,24 @@ export default function RoutineRunnerScreen() {
     isActionLocked,
     routine,
     completeAction,
+    focusProgress.value,
   ]);
 
   const handleStart = useCallback(() => {
-    if (currentTask) {
+    if (currentTask && currentTask.block) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       startAction(routine, currentTask.block.id);
     }
   }, [currentTask, routine, startAction]);
 
   const handleTogglePause = () => {
+    if (!currentTask || !currentTask.action) return;
     const newPausedState = !isPaused;
     setIsPaused(newPausedState);
     if (newPausedState) {
       pauseAction(routine.id, currentTask.action.id, countdown);
     } else {
+      // When resuming, clear the paused state
       pauseAction(routine.id, currentTask.action.id, null);
     }
   };
@@ -290,7 +314,7 @@ export default function RoutineRunnerScreen() {
     // When the screen mounts or the current task changes,
     // ensure the action is started if it's not already active.
     // The startAction logic in the store will handle deactivating any other active actions.
-    if (currentTask && actions[currentTask.action.id] !== "active") {
+    if (currentTask && currentTask.action && actions[currentTask.action.id] !== "active") {
       // Use a timeout to allow the UI to mount before updating state
       const timer = setTimeout(() => {
         handleStart();
@@ -357,12 +381,27 @@ export default function RoutineRunnerScreen() {
     };
   });
 
-  if (!routine)
+  if (isLoading) {
     return (
       <View style={styles.container}>
-        <Text style={styles.actionTitle}>Routine not found.</Text>
+        <Spinner />
       </View>
     );
+  }
+
+  if (!routine || !block) {
+    return (
+      <View style={styles.container}>
+        <Header title="Error" />
+        <View style={styles.content}>
+          <Text style={styles.actionTitle}>Routine or Block not found.</Text>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={styles.nextUpText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   if (!currentTask) {
     return <CompletionAnimation onAnimationEnd={() => router.back()} />;
@@ -402,12 +441,12 @@ export default function RoutineRunnerScreen() {
               <View>
                 <View style={styles.blockHeader}>
                   <Ionicons
-                    name={currentTask.action.icon || "ellipse-outline"}
+                    name={currentTask.action?.icon || "ellipse-outline"}
                     size={22}
                     color={theme.colors.gray}
                   />
                   <Text style={styles.blockTitle}>
-                    {currentTask.action.name}
+                    {currentTask.action?.name}
                   </Text>
                   <Text
                     style={styles.progressText}
@@ -416,13 +455,13 @@ export default function RoutineRunnerScreen() {
                 <AnimatedProgressBar
                   progress={progress}
                   primaryColor={theme.colors.primary}
-                  secondaryColor={currentTask.action.color || theme.colors.primary}
+                  secondaryColor={currentTask.action?.color || theme.colors.primary}
                 />
               </View>
 
               <View style={styles.actionContent}>
-                {currentTask.action.type === "timer" &&
-                currentTask.action.duration > 0 ? (
+                {currentTask.action?.type === "timer" &&
+                currentTask.action?.duration > 0 ? (
                   <Animated.View style={animatedBreathingStyle}>
                     <CircularProgress
                       key={`main-${currentTask.action.id}`}
@@ -431,7 +470,7 @@ export default function RoutineRunnerScreen() {
                       radius={100}
                       duration={400}
                       progressValueColor={theme.colors.text}
-                      activeStrokeColor={currentTask.action.color || theme.colors.primary}
+                      activeStrokeColor={currentTask.action?.color || theme.colors.primary}
                       inActiveStrokeColor={theme.colors.border}
                       inActiveStrokeOpacity={0.5}
                       inActiveStrokeWidth={20}
@@ -449,21 +488,21 @@ export default function RoutineRunnerScreen() {
                     style={[{ alignItems: "center" }, animatedMainIconSize]}
                   >
                     <Ionicons
-                      name={currentTask.action.icon || "barbell-outline"}
+                      name={currentTask.action?.icon || "barbell-outline"}
                       size={64}
                       color={theme.colors.primary}
                     />
                     <Animated.Text
                       style={[styles.actionTitle, animatedActionTitleStyle]}
                     >
-                      {currentTask.action.name}
+                      {currentTask.action?.name}
                     </Animated.Text>
                   </Animated.View>
                 )}
               </View>
 
               <View style={styles.footer}>
-                {nextTask ? (
+                {nextTask && nextTask.action ? (
                   <Text style={styles.nextUpText}>
                     Up next: {nextTask.action.name}
                   </Text>
@@ -474,8 +513,8 @@ export default function RoutineRunnerScreen() {
             </View>
           </View>
           <View style={styles.bottomContainer}>
-            {currentTask.action.type === "timer" &&
-            currentTask.action.duration > 0 ? (
+            {currentTask.action?.type === "timer" &&
+            currentTask.action?.duration > 0 ? (
               <TouchableOpacity
                 style={styles.controlButton}
                 onPress={handleTogglePause}
@@ -534,12 +573,12 @@ export default function RoutineRunnerScreen() {
           <View style={styles.focusCard}>
             <View style={styles.blockHeader}>
               <Ionicons
-                name={currentTask.action.icon || "ellipse-outline"}
+                name={currentTask.action?.icon || "ellipse-outline"}
                 size={22}
                 color="white"
               />
               <Text style={[styles.blockTitle, { color: "white" }]}>
-                {currentTask.action.name}
+                {currentTask.action?.name}
               </Text>
               <Text
                 style={[
@@ -551,12 +590,12 @@ export default function RoutineRunnerScreen() {
             <AnimatedProgressBar
               progress={progress}
               primaryColor={theme.colors.primary}
-              secondaryColor={currentTask.action.color || theme.colors.primary}
+              secondaryColor={currentTask.action?.color || theme.colors.primary}
             />
           </View>
           <View style={styles.actionContent}>
-            {currentTask.action.type === "timer" &&
-            currentTask.action.duration > 0 ? (
+            {currentTask.action?.type === "timer" &&
+            currentTask.action?.duration > 0 ? (
               <Animated.View>
                 <CircularProgress
                   key={`focus-${currentTask.action.id}`}
@@ -566,7 +605,7 @@ export default function RoutineRunnerScreen() {
                   duration={400}
                   progressValueColor="white"
                   activeStrokeColor={
-                    currentTask.action.color || theme.colors.primary
+                    currentTask.action?.color || theme.colors.primary
                   }
                   inActiveStrokeColor="rgba(255,255,255,0.2)"
                   inActiveStrokeOpacity={0.5}
@@ -591,7 +630,7 @@ export default function RoutineRunnerScreen() {
                 style={[{ alignItems: "center" }, animatedMainIconSize]}
               >
                 <Ionicons
-                  name={currentTask.action.icon || "barbell-outline"}
+                  name={currentTask.action?.icon || "barbell-outline"}
                   size={80}
                   color="white"
                 />
@@ -602,17 +641,17 @@ export default function RoutineRunnerScreen() {
                     animatedActionTitleStyle,
                   ]}
                 >
-                  {currentTask.action.name}
+                  {currentTask.action?.name}
                 </Animated.Text>
               </Animated.View>
             )}
           </View>
           <View style={styles.bottomContainer}>
-            {currentTask.action.type === "timer" &&
-            currentTask.action.duration > 0 ? (
+            {currentTask.action?.type === "timer" &&
+            currentTask.action?.duration > 0 ? (
               <TouchableOpacity
                 style={styles.controlButton}
-                onPress={() => setIsPaused(!isPaused)}
+                onPress={handleTogglePause}
               >
                 <Ionicons
                   name={isPaused ? "play" : "pause"}
