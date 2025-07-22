@@ -15,6 +15,7 @@ import ActionButton from "../../src/components/ui/ActionButton";
 import { usePageLayout } from "../../src/components/layout/PageLayout";
 import ConfirmModal from "../../src/components/modals/ConfirmModal";
 import { theme } from "../../src/constants/theme";
+import useBlockLibraryStore from "../../src/store/useBlockLibraryStore";
 import useRoutineStore from "../../src/store/useRoutineStore";
 import { Routine } from "../../src/types";
 
@@ -133,6 +134,7 @@ const RoutineRow: React.FC<RoutineRowProps> = ({ item, drag, isActive, isEditMod
 export default function RoutineListScreen() {
   const { routines, loadRoutines, deleteRoutine, reorderRoutines } =
     useRoutineStore();
+  const { loadBlockTemplates } = useBlockLibraryStore();
   const pageLayout = usePageLayout();
   const [isEditMode, setEditMode] = useState(false);
   const [localRoutines, setLocalRoutines] = useState<Routine[]>(routines);
@@ -148,7 +150,8 @@ export default function RoutineListScreen() {
 
   useEffect(() => {
     loadRoutines();
-  }, [loadRoutines]);
+    loadBlockTemplates();
+  }, [loadRoutines, loadBlockTemplates]);
 
   useEffect(() => {
     setLocalRoutines(routines);

@@ -43,6 +43,7 @@ const ActionRow: React.FC<{
           onChangeText={(val) => onUpdate('name', val)}
           placeholder="Action name..."
           placeholderTextColor="#8b949e"
+          selectTextOnFocus
         />
         {item.type === "timer" && (
           <>
@@ -54,6 +55,7 @@ const ActionRow: React.FC<{
                 onUpdate('duration', newDuration);
               }}
               keyboardType="numeric"
+              selectTextOnFocus
             />
             <Text style={styles.actionUnit}>min</Text>
           </>
@@ -202,6 +204,7 @@ export default function CreateBlockTemplateScreen() {
               placeholderTextColor={theme.colors.gray}
               value={name}
               onChangeText={setName}
+              selectTextOnFocus
             />
           </View>
         }
@@ -221,7 +224,7 @@ export default function CreateBlockTemplateScreen() {
       <IconPickerModal
         visible={isPickerVisible}
         onClose={() => setPickerVisible(false)}
-        onSelectIcon={(selectedIcon) => {
+        onSelectIcon={(selectedIcon: string) => {
           setIcon(selectedIcon);
           setPickerVisible(false);
         }}

@@ -97,6 +97,7 @@ export default function CreateActionTemplateScreen() {
             placeholderTextColor={theme.colors.gray}
             value={name}
             onChangeText={setName}
+            selectTextOnFocus
           />
         </View>
 
@@ -114,6 +115,7 @@ export default function CreateActionTemplateScreen() {
             value={duration}
             onChangeText={setDuration}
             keyboardType="number-pad"
+            selectTextOnFocus
           />
           <Text style={styles.unitText}>minutes</Text>
         </View>
@@ -131,6 +133,7 @@ export default function CreateActionTemplateScreen() {
             placeholderTextColor={theme.colors.gray}
             value={description}
             onChangeText={setDescription}
+            selectTextOnFocus
           />
         </View>
 

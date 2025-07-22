@@ -202,9 +202,10 @@ export default function CreateEditRoutineScreen() {
   };
 
   const handleAddNewBlock = () => {
+    const newBlockName = `Block #${blocks.length + 1}`;
     setBlocks([
       ...blocks,
-      { id: uuidv4(), name: "", icon: "cube-outline", actions: [] },
+      { id: uuidv4(), name: newBlockName, icon: "cube-outline", actions: [] },
     ]);
   };
 
@@ -219,26 +220,7 @@ export default function CreateEditRoutineScreen() {
       updateRoutine(routineId, title, color, icon);
       reorderBlocks(routineId, blocks);
     } else {
-      const newRoutine = {
-        id: uuidv4(),
-        title,
-        color,
-        icon,
-        blocks: blocks.map((block) => ({
-          ...block,
-          id: uuidv4(),
-          actions: (block.actions || []).map((action) => ({
-            ...action,
-            id: uuidv4(),
-          })),
-        })),
-      };
-      addRoutine(
-        newRoutine.title,
-        newRoutine.color,
-        newRoutine.icon,
-        newRoutine.blocks,
-      );
+      addRoutine(title, color, icon, blocks);
     }
     router.back();
   };
@@ -289,6 +271,7 @@ export default function CreateEditRoutineScreen() {
             }
             placeholder="Action name..."
             placeholderTextColor="#8b949e"
+            selectTextOnFocus
           />
           {action.type === "timer" && (
             <>
@@ -380,6 +363,7 @@ export default function CreateEditRoutineScreen() {
             }
             placeholder={`Block #${blockIndex + 1} Title`}
             placeholderTextColor="#8b949e"
+            selectTextOnFocus
           />
           <Text style={styles.blockDurationText}>
             {formatDuration(calculateBlockDuration(block))}
@@ -444,36 +428,37 @@ export default function CreateEditRoutineScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      // Handle adding a single action from the action library
       if (selectedTemplateForRoutine && targetBlockIndex !== null) {
-        const newBlocks = [...blocks];
         const newAction = { ...selectedTemplateForRoutine, id: uuidv4() };
-        if (!newBlocks[targetBlockIndex].actions) {
-          newBlocks[targetBlockIndex].actions = [];
-        }
-        newBlocks[targetBlockIndex].actions.push(newAction);
+        const newBlocks = blocks.map((block, index) => {
+          if (index === targetBlockIndex) {
+            return {
+              ...block,
+              actions: [...(block.actions || []), newAction],
+            };
+          }
+          return block;
+        });
         setBlocks(newBlocks);
-        setSelectedTemplateForRoutine(null); // Reset after adding
+        setSelectedTemplateForRoutine(null);
       }
 
-      // Handle adding a block of actions from the block library
       if (selectedBlockTemplate && targetBlockIndex !== null) {
-        const newBlocks = [...blocks];
-        const targetBlock = newBlocks[targetBlockIndex];
-
-        if (!targetBlock.actions) {
-          targetBlock.actions = [];
-        }
-
-        // Create new instances of actions with unique IDs
         const actionsToAdd = selectedBlockTemplate.actions.map((action) => ({
           ...action,
           id: uuidv4(),
         }));
-
-        targetBlock.actions.push(...actionsToAdd);
+        const newBlocks = blocks.map((block, index) => {
+          if (index === targetBlockIndex) {
+            return {
+              ...block,
+              actions: [...(block.actions || []), ...actionsToAdd],
+            };
+          }
+          return block;
+        });
         setBlocks(newBlocks);
-        setSelectedBlockTemplate(null); // Reset after adding
+        setSelectedBlockTemplate(null);
       }
     }, [
       selectedTemplateForRoutine,
@@ -543,6 +528,7 @@ export default function CreateEditRoutineScreen() {
                 onChangeText={setTitle}
                 placeholder="Title"
                 placeholderTextColor="#8b949e"
+                selectTextOnFocus
               />
             </View>
             <ColorPicker selectedColor={color} onSelectColor={setColor} />
