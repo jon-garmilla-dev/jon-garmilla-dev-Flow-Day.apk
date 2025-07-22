@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.10.0](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.9.1...v1.10.0) (2025-07-22)
+
+
+### Features
+
+* Implement background task for routine timers ([861cde4](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/861cde46e37d142e293c577af85b92572ae25bdc))
+
 ### [1.9.1](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.9.0...v1.9.1) (2025-07-22)
 
 ## [1.9.0](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.8.0...v1.9.0) (2025-07-22)

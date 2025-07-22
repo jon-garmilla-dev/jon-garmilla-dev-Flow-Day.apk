@@ -1,7 +1,7 @@
 {
   "name": "flow-day-mobile",
   "main": "expo-router/entry",
-  "version": "1.9.1",
+  "version": "1.10.0",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
