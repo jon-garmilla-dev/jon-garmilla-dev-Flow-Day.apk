@@ -140,34 +140,51 @@ export default function RoutineRunnerScreen() {
   const { block, currentTask, nextTask, currentIndex, totalTasks } = taskInfo;
 
   // --- Foreground Service Logic ---
+  useEffect(() => {
+    // Set a notification handler for the app
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowBanner: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+      }),
+    });
+  }, []);
+
   const startForegroundService = async () => {
-    // 1. Ask for permissions (iOS requires this)
-    await Notifications.requestPermissionsAsync();
+    try {
+      await Notifications.requestPermissionsAsync();
 
-    // 2. Create a channel (Android requires this)
-    await Notifications.setNotificationChannelAsync("routine-timer", {
-      name: "Routine Timer",
-      importance: Notifications.AndroidImportance.LOW, // Low importance to be less intrusive
-    });
+      await Notifications.setNotificationChannelAsync("routine-timer", {
+        name: "Routine Timer",
+        importance: Notifications.AndroidImportance.LOW,
+      });
 
-    // 3. Present the notification
-    await Notifications.presentNotificationAsync({
-      title: "Flow Day",
-      body: `"${routine.title}" is running...`,
-      data: {},
-      ios: {
-        sound: false,
-      },
-      android: {
-        channelId: "routine-timer",
-        sticky: true, // This makes it a foreground service notification
-        color: theme.colors.primary,
-      },
-    });
+      if (routine) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: "Flow Day",
+            body: `"${routine.title}" is running...`,
+            data: {},
+            sound: false,
+            sticky: true, // This is for the foreground service
+            color: theme.colors.primary,
+          },
+          trigger: null, // Show immediately
+        });
+      }
+    } catch (e) {
+      console.error("Failed to start foreground service:", e);
+    }
   };
 
   const stopForegroundService = async () => {
-    await Notifications.dismissAllNotificationsAsync();
+    try {
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      await Notifications.dismissAllNotificationsAsync();
+    } catch (e) {
+      console.error("Failed to stop foreground service:", e);
+    }
   };
 
   const effectiveDurations = useMemo(() => {
@@ -200,11 +217,7 @@ export default function RoutineRunnerScreen() {
   }, [routine, loadProgress]);
 
   useEffect(() => {
-    // Data validation check
     if (routine && !block) {
-      // This case means the routine is loaded, but the blockId is invalid.
-      // We should probably show an error and offer to go back.
-      // For now, we'll just stop loading and show the "not found" message later.
       setIsLoading(false);
       return;
     }
@@ -213,7 +226,6 @@ export default function RoutineRunnerScreen() {
     }
   }, [routine, block, taskInfo]);
 
-  // Effect to initialize timers only when the task changes
   useEffect(() => {
     if (!currentTask || !currentTask.action) return;
 
@@ -234,12 +246,10 @@ export default function RoutineRunnerScreen() {
     setCountdown(initialCountdown);
     setTotalRemainingTime(Math.max(0, initialTotal));
     
-    // Only set to paused if we are loading a specifically paused state
     setIsPaused(pausedTime !== undefined);
 
   }, [currentTask]);
 
-  // Effect to run the timer and handle completion
   useEffect(() => {
     const isTimerAction = currentTask?.action?.type === "timer" && currentTask.action.duration > 0;
     setIsActionLocked(isTimerAction);
@@ -289,11 +299,7 @@ export default function RoutineRunnerScreen() {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        // This check is the source of the warning.
-        // A robust fix is complex, for now, we rely on the double-tap to exit focus.
-        // The main functionality is preserved.
         if (isFocusLocked) {
-          // While in focus lock, prevent back button.
           return true;
         }
         return false;
@@ -347,17 +353,12 @@ export default function RoutineRunnerScreen() {
     if (newPausedState) {
       pauseAction(routine.id, currentTask.action.id, countdown);
     } else {
-      // When resuming, clear the paused state
       pauseAction(routine.id, currentTask.action.id, null);
     }
   };
 
   useEffect(() => {
-    // When the screen mounts or the current task changes,
-    // ensure the action is started if it's not already active.
-    // The startAction logic in the store will handle deactivating any other active actions.
     if (currentTask && currentTask.action && actions[currentTask.action.id] !== "active") {
-      // Use a timeout to allow the UI to mount before updating state
       const timer = setTimeout(() => {
         handleStart();
       }, 0);
