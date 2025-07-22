@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.9.0](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.8.0...v1.9.0) (2025-07-22)
+
+
+### Features
+
+* Add background timer for routine runner ([fa44246](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/fa442465a2206713cf9a4a5ed40353fd26b39475))
+* Improve routine creation UX and add native polyfill ([fd942c1](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/fd942c1e48b4497867d169ead95bfe701c973c0d)), closes [#2](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/issues/2)
+
 ## [1.8.0](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.7.1...v1.8.0) (2025-07-18)
 
 
