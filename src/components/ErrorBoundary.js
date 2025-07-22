@@ -1,3 +1,4 @@
+import { Link } from 'expo-router';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { theme } from '../constants/theme';
@@ -18,6 +19,10 @@ class ErrorBoundary extends React.Component {
     console.error("Uncaught error:", error, errorInfo);
   }
 
+  handleGoHome = () => {
+    this.setState({ hasError: false, error: null });
+  }
+
   render() {
     if (this.state.hasError) {
       // You can render any custom fallback UI
@@ -30,6 +35,11 @@ class ErrorBoundary extends React.Component {
           <Text style={styles.errorText}>
             {this.state.error?.toString()}
           </Text>
+          <Link href="/" asChild>
+            <TouchableOpacity style={styles.button} onPress={this.handleGoHome}>
+              <Text style={styles.buttonText}>Go to Home Screen</Text>
+            </TouchableOpacity>
+          </Link>
         </View>
       );
     }
@@ -66,6 +76,18 @@ const styles = StyleSheet.create({
     color: theme.colors.error,
     textAlign: 'center',
     marginTop: 20,
+  },
+  button: {
+    marginTop: 30,
+    backgroundColor: theme.colors.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  buttonText: {
+    color: 'white',
+    fontFamily: theme.typography.fonts.bold,
+    fontSize: 16,
   }
 });
 

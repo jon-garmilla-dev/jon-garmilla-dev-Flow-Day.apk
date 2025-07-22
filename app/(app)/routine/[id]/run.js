@@ -216,22 +216,41 @@ export default function RoutineRunnerScreen() {
       return;
     }
 
-    const timerId = setInterval(() => {
+    let BackgroundTimer;
+    try {
+      BackgroundTimer = require("react-native-background-timer");
+    } catch (e) {
+      console.log("BackgroundTimer not available, falling back to default timers.");
+    }
+
+    const hasBackgroundSupport = BackgroundTimer && typeof BackgroundTimer.setInterval === 'function';
+    let timerId;
+
+    const tick = () => {
       setCountdown((prevCountdown) => {
         const newCountdown = prevCountdown - 1;
-
         if (newCountdown < 1) {
           handleComplete();
-          clearInterval(timerId);
           return 0;
         }
-        
         setTotalRemainingTime((prevTotal) => prevTotal - 1);
         return newCountdown;
       });
-    }, 1000);
+    };
 
-    return () => clearInterval(timerId);
+    if (hasBackgroundSupport) {
+      timerId = BackgroundTimer.setInterval(tick, 1000);
+    } else {
+      timerId = setInterval(tick, 1000);
+    }
+
+    return () => {
+      if (hasBackgroundSupport && timerId) {
+        BackgroundTimer.clearInterval(timerId);
+      } else if (timerId) {
+        clearInterval(timerId);
+      }
+    };
   }, [isPaused, currentTask, handleComplete]);
 
 
