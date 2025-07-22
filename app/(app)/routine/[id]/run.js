@@ -9,6 +9,7 @@ import {
   BackHandler,
 } from "react-native";
 import * as Haptics from "expo-haptics";
+import * as Notifications from "expo-notifications";
 import CircularProgress from "react-native-circular-progress-indicator";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import Animated, {
@@ -138,6 +139,37 @@ export default function RoutineRunnerScreen() {
 
   const { block, currentTask, nextTask, currentIndex, totalTasks } = taskInfo;
 
+  // --- Foreground Service Logic ---
+  const startForegroundService = async () => {
+    // 1. Ask for permissions (iOS requires this)
+    await Notifications.requestPermissionsAsync();
+
+    // 2. Create a channel (Android requires this)
+    await Notifications.setNotificationChannelAsync("routine-timer", {
+      name: "Routine Timer",
+      importance: Notifications.AndroidImportance.LOW, // Low importance to be less intrusive
+    });
+
+    // 3. Present the notification
+    await Notifications.presentNotificationAsync({
+      title: "Flow Day",
+      body: `"${routine.title}" is running...`,
+      data: {},
+      ios: {
+        sound: false,
+      },
+      android: {
+        channelId: "routine-timer",
+        sticky: true, // This makes it a foreground service notification
+        color: theme.colors.primary,
+      },
+    });
+  };
+
+  const stopForegroundService = async () => {
+    await Notifications.dismissAllNotificationsAsync();
+  };
+
   const effectiveDurations = useMemo(() => {
     if (!block) return { durations: [], total: 0 };
     const timedActions = block.actions.filter(
@@ -213,43 +245,30 @@ export default function RoutineRunnerScreen() {
     setIsActionLocked(isTimerAction);
 
     if (isPaused || !isTimerAction || !currentTask) {
+      stopForegroundService();
       return;
     }
 
-    let BackgroundTimer;
-    try {
-      BackgroundTimer = require("react-native-background-timer");
-    } catch (e) {
-      console.log("BackgroundTimer not available, falling back to default timers.");
-    }
+    startForegroundService();
 
-    const hasBackgroundSupport = BackgroundTimer && typeof BackgroundTimer.setInterval === 'function';
-    let timerId;
-
-    const tick = () => {
+    const timerId = setInterval(() => {
       setCountdown((prevCountdown) => {
         const newCountdown = prevCountdown - 1;
+
         if (newCountdown < 1) {
           handleComplete();
+          clearInterval(timerId);
           return 0;
         }
+        
         setTotalRemainingTime((prevTotal) => prevTotal - 1);
         return newCountdown;
       });
-    };
-
-    if (hasBackgroundSupport) {
-      timerId = BackgroundTimer.setInterval(tick, 1000);
-    } else {
-      timerId = setInterval(tick, 1000);
-    }
+    }, 1000);
 
     return () => {
-      if (hasBackgroundSupport && timerId) {
-        BackgroundTimer.clearInterval(timerId);
-      } else if (timerId) {
-        clearInterval(timerId);
-      }
+      clearInterval(timerId);
+      stopForegroundService();
     };
   }, [isPaused, currentTask, handleComplete]);
 
