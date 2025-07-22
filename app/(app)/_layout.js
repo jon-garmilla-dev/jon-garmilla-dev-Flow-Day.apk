@@ -4,12 +4,12 @@ import { Stack } from "expo-router";
 import ErrorBoundary from "../../src/components/ErrorBoundary";
 import PageLayout from "../../src/components/layout/PageLayout";
 
-// Componente interno para poder usar el contexto del PageLayout
+// Internal component to be able to use the PageLayout context
 function StackNavigator() {
   return (
     <Stack
       screenOptions={{
-        headerShown: false, // Desactivamos la cabecera por defecto
+        headerShown: false, // Disable the header by default
         animation: "fade",
         animationDuration: 250,
         animationTypeForReplace: "push",
@@ -25,7 +25,7 @@ function StackNavigator() {
       <Stack.Screen
         name="routine/[id]/run"
         options={{
-          animation: "fade", // Fade también para run
+          animation: "fade", 
           animationDuration: 250,
         }}
       />

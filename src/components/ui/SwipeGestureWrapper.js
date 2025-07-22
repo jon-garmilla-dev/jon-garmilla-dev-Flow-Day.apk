@@ -17,21 +17,21 @@ const SwipeGestureWrapper = ({
     onMoveShouldSetPanResponder: (evt, gestureState) => {
       const { dx, dy, x0 } = gestureState;
 
-      // Ignorar si es un scroll vertical
+      // Ignore if it's a vertical scroll
       if (Math.abs(dy) > Math.abs(dx) * 1.5) {
         return false;
       }
 
-      const edgeZone = 80; // Zona de activación en los bordes
+      const edgeZone = 80; // Activation zone at the edges
 
-      // Activar si el menú ya está abierto (para cerrarlo)
+      // Activate if the menu is already open (to close it)
       if (isSideMenuOpen) {
-        // Solo capturar si es un deslizamiento real, no un simple toque.
+        // Only capture if it's a real swipe, not just a tap.
         return Math.abs(gestureState.dx) > 5;
       }
 
-      // Activar si el gesto empieza en el borde izquierdo (para abrir menú)
-      // O si empieza en el borde derecho (para ir atrás)
+      // Activate if the gesture starts on the left edge (to open the menu)
+      // Or if it starts on the right edge (to go back)
       if (x0 < edgeZone || x0 > screenWidth - edgeZone) {
         return Math.abs(dx) > 5;
       }
@@ -52,7 +52,7 @@ const SwipeGestureWrapper = ({
       const { dx, vx } = gestureState;
       const edgeZone = 80;
 
-      // Gesto para "Atrás": Empieza en la derecha y va a la izquierda
+      // "Back" gesture: Starts on the right and moves left
       if (
         gestureStartX.current > screenWidth - edgeZone &&
         dx < -50 &&
@@ -64,7 +64,7 @@ const SwipeGestureWrapper = ({
         }
       }
 
-      // Si no es un gesto para atrás, se lo pasamos al PageLayout para que gestione el menú
+      // If it's not a "back" gesture, pass it to PageLayout to manage the menu
       if (onPanEnd) onPanEnd(gestureState);
     },
     onPanResponderTerminate: (evt, gestureState) => {

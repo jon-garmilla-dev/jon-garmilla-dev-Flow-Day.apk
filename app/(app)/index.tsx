@@ -33,7 +33,7 @@ const calculateRoutineDuration = (routine: Routine): number => {
   if (!routine || !routine.blocks) return 0;
   return routine.blocks.reduce((total, block) => {
     const blockTotal = (block.actions || []).reduce((blockSum, action) => {
-      return blockSum + (action.duration || 0); // in seconds
+      return blockSum + (action.duration || 0); // seconds
     }, 0);
     return total + blockTotal;
   }, 0);

@@ -110,9 +110,9 @@ const ActionSheet = ({ isVisible, onClose, onSelect, options }) => {
 
 const styles = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFillObject, // This is crucial
+    ...StyleSheet.absoluteFillObject, 
     backgroundColor: "rgba(0, 0, 0, 0.6)",
-    justifyContent: "flex-end", // Align content to the bottom
+    justifyContent: "flex-end",
   },
   animatedContainer: {
     // No absolute positioning needed here, it's positioned by the overlay's justifyContent
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#21262d",
     borderRadius: 12,
     justifyContent: "center",
-    marginBottom: 10, // Add some space from the bottom edge
+    marginBottom: 10, 
   },
   cancelText: {
     color: "#f0f6fc",
