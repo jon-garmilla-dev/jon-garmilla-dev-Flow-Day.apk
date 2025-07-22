@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.8.0](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.7.1...v1.8.0) (2025-07-18)
+
+
+### Features
+
+* **actions:** Implement create and delete functionality ([40ce3aa](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/40ce3aab4bc58fa2540ba9897a967bfe2b843610))
+* **actions:** Introduce reusable Action Blocks ([85e616a](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/85e616a6fe83cea949d3cbdf89712b2e69937347))
+
+
+### Bug Fixes
+
+* some migration errores ([c04f2cc](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/c04f2cc8e6a832415c6a77e4142985ddbb820bb2))
+
 ### [1.7.1](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.7.0...v1.7.1) (2025-07-18)
 
 ## [1.7.0](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.6.2...v1.7.0) (2025-07-18)
