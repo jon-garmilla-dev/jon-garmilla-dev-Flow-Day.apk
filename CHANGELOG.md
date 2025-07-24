@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.11.0](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.10.0...v1.11.0) (2025-07-24)
+
+
+### Features
+
+* **android:** Add native project and background timer module ([558034c](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/558034cfba9a2d0ac635b4578863b48fb243f73b))
+* Enhance ActionSheet and add project README ([dfca3ff](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/dfca3ff8d1172685f0af76134190b13fc12e69bf))
+
 ## [1.10.0](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.9.1...v1.10.0) (2025-07-22)
 
 
