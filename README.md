@@ -15,7 +15,7 @@ Flow Day Mobile is a powerful and intuitive application designed to help you str
 
 You can download and install the latest versions of the app directly from the releases page:
 
-*   [**Latest Release (v1.9.0)**](https://github.com/jon-garmilla-dev/Flow-Day-mobile/releases/tag/v1.9.0)
+*   [**Latest Release (v1.11.0)**](https://github.com/jon-garmilla-dev/Flow-Day-mobile/releases/tag/v1.11.0)
 *   [**Previous Stable Release (v1.8.0)**](https://github.com/jon-garmilla-dev/Flow-Day-mobile/releases/tag/v1.8.0)
 
 ## Project Structure
