@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.12.0](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.11.0...v1.12.0) (2025-07-24)
+
+
+### Features
+
+* Update application icons and README ([daaab1b](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/commit/daaab1b9e20125305e878c332c3847aeb8d93a3f))
+
 ## [1.11.0](https://github.com/jon-garmilla-dev/jon-garmilla-dev-Flow-Day.apk/compare/v1.10.0...v1.11.0) (2025-07-24)
 
 
