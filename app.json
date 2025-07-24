@@ -34,7 +34,13 @@
             "./src/assets/fonts/DMSans-Bold.ttf"
           ]
         }
-      ]
-    ]
+      ],
+      "./plugins/withBackgroundTimer.js"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "8395defb-a2c1-4509-a449-4941b3248b40"
+      }
+    }
   }
 }

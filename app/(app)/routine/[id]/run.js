@@ -7,6 +7,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   BackHandler,
+  NativeEventEmitter,
+  NativeModules,
 } from "react-native";
 import * as Haptics from "expo-haptics";
 import * as Notifications from "expo-notifications";
@@ -30,6 +32,7 @@ import CompletionAnimation from "../../../../src/components/animations/Completio
 import { theme } from "../../../../src/constants/theme";
 import useProgressStore from "../../../../src/store/useProgressStore";
 import useRoutineStore from "../../../../src/store/useRoutineStore";
+import BackgroundTimer from "../../../../modules/new-background-timer";
 
 // --- Helper Functions ---
 const findCurrentTaskInfo = (routine, blockId, actions) => {
@@ -37,8 +40,9 @@ const findCurrentTaskInfo = (routine, blockId, actions) => {
   const block = routine.blocks.find((b) => b && b.id === blockId);
   if (!block || !Array.isArray(block.actions)) return null;
 
+  // BUGFIX: Correctly find the first non-completed action, including active ones.
   const firstPendingActionIndex = block.actions.findIndex(
-    (action) => action && actions[action.id] !== "completed",
+    (action) => action && (actions[action.id] === "pending" || actions[action.id] === "active"),
   );
   if (firstPendingActionIndex === -1) {
     return {
@@ -107,6 +111,7 @@ export default function RoutineRunnerScreen() {
   const [isFocusLocked, setIsFocusLocked] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasStarted, setHasStarted] = useState(false);
   // Animation
   const focusProgress = useSharedValue(0);
   const progress = useSharedValue(0);
@@ -139,53 +144,6 @@ export default function RoutineRunnerScreen() {
 
   const { block, currentTask, nextTask, currentIndex, totalTasks } = taskInfo;
 
-  // --- Foreground Service Logic ---
-  useEffect(() => {
-    // Set a notification handler for the app
-    Notifications.setNotificationHandler({
-      handleNotification: async () => ({
-        shouldShowBanner: true,
-        shouldPlaySound: false,
-        shouldSetBadge: false,
-      }),
-    });
-  }, []);
-
-  const startForegroundService = async () => {
-    try {
-      await Notifications.requestPermissionsAsync();
-
-      await Notifications.setNotificationChannelAsync("routine-timer", {
-        name: "Routine Timer",
-        importance: Notifications.AndroidImportance.LOW,
-      });
-
-      if (routine) {
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title: "Flow Day",
-            body: `"${routine.title}" is running...`,
-            data: {},
-            sound: false,
-            sticky: true, // This is for the foreground service
-            color: theme.colors.primary,
-          },
-          trigger: null, // Show immediately
-        });
-      }
-    } catch (e) {
-      console.error("Failed to start foreground service:", e);
-    }
-  };
-
-  const stopForegroundService = async () => {
-    try {
-      await Notifications.cancelAllScheduledNotificationsAsync();
-      await Notifications.dismissAllNotificationsAsync();
-    } catch (e) {
-      console.error("Failed to stop foreground service:", e);
-    }
-  };
 
   const effectiveDurations = useMemo(() => {
     if (!block) return { durations: [], total: 0 };
@@ -245,42 +203,56 @@ export default function RoutineRunnerScreen() {
 
     setCountdown(initialCountdown);
     setTotalRemainingTime(Math.max(0, initialTotal));
-    
     setIsPaused(pausedTime !== undefined);
-
-  }, [currentTask]);
+  }, [currentTask, block, currentIndex, pausedTimers]);
 
   useEffect(() => {
     const isTimerAction = currentTask?.action?.type === "timer" && currentTask.action.duration > 0;
     setIsActionLocked(isTimerAction);
 
     if (isPaused || !isTimerAction || !currentTask) {
-      stopForegroundService();
+      if (BackgroundTimer && BackgroundTimer.stopTimer) {
+        BackgroundTimer.stopTimer();
+      }
       return;
     }
 
-    startForegroundService();
+    const pausedTime = pausedTimers[currentTask.action.id];
+    const duration = pausedTime !== undefined ? pausedTime : currentTask.action.duration || 0;
 
-    const timerId = setInterval(() => {
-      setCountdown((prevCountdown) => {
-        const newCountdown = prevCountdown - 1;
-
-        if (newCountdown < 1) {
-          handleComplete();
-          clearInterval(timerId);
-          return 0;
-        }
-        
-        setTotalRemainingTime((prevTotal) => prevTotal - 1);
-        return newCountdown;
+    if (duration > 0) {
+      BackgroundTimer.startTimer({
+        duration: duration * 1000,
+        exerciseName: currentTask.action?.name || 'Exercise',
+        routineName: routine?.title || 'Flow Day'
       });
-    }, 1000);
+    } else {
+      return;
+    }
+
+    const onTick = (e) => {
+      setCountdown(e.remaining);
+      setTotalRemainingTime((prevTotal) => prevTotal - 1);
+      
+      if ([10, 5, 3, 2, 1].includes(e.remaining)) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }
+    };
+
+    const onFinish = () => {
+      handleComplete();
+    };
+
+    const eventEmitter = new NativeEventEmitter(NativeModules.BackgroundTimer);
+    const onTickListener = eventEmitter.addListener('onTick', onTick);
+    const onFinishListener = eventEmitter.addListener('onFinish', onFinish);
 
     return () => {
-      clearInterval(timerId);
-      stopForegroundService();
+      onTickListener.remove();
+      onFinishListener.remove();
+      BackgroundTimer.stopTimer();
     };
-  }, [isPaused, currentTask, handleComplete]);
+  }, [isPaused, currentTask, handleComplete, pausedTimers, routine]);
 
 
   useEffect(() => {
@@ -329,7 +301,14 @@ export default function RoutineRunnerScreen() {
 
   const handleComplete = useCallback(() => {
     if (!currentTask || !currentTask.action || (focusProgress.value > 0.5 && isActionLocked)) return;
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+    // BUGFIX: Prevent completing an action that is not currently active.
+    if (actions[currentTask.action.id] !== 'active') {
+      return;
+    }
+    
+    // Strong vibration for task completion
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     completeAction(routine, currentTask.action.id);
   }, [
     currentTask,
@@ -337,10 +316,12 @@ export default function RoutineRunnerScreen() {
     routine,
     completeAction,
     focusProgress,
+    actions,
   ]);
 
   const handleStart = useCallback(() => {
     if (currentTask && currentTask.block) {
+      // Light vibration when starting a new exercise
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       startAction(routine, currentTask.block.id);
     }
@@ -357,14 +338,21 @@ export default function RoutineRunnerScreen() {
     }
   };
 
+  // Effect to start action only once per task
   useEffect(() => {
-    if (currentTask && currentTask.action && actions[currentTask.action.id] !== "active") {
-      const timer = setTimeout(() => {
+    if (currentTask && currentTask.action) {
+      if (actions[currentTask.action.id] !== "active" && !hasStarted) {
+        setHasStarted(true);
         handleStart();
-      }, 0);
-      return () => clearTimeout(timer);
+      }
     }
-  }, [currentTask, actions, handleStart]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTask, actions, hasStarted]);
+
+  // Reset hasStarted when currentTask changes
+  useEffect(() => {
+    setHasStarted(false);
+  }, [currentTask?.action?.id]);
 
   const doubleTap = Gesture.Tap()
     .numberOfTaps(2)
@@ -511,6 +499,7 @@ export default function RoutineRunnerScreen() {
                       value={countdown}
                       maxValue={currentTask.action.duration}
                       radius={100}
+                      // BUGFIX: Increased duration to 1000ms to prevent erratic animations.
                       duration={400}
                       progressValueColor={theme.colors.text}
                       activeStrokeColor={currentTask.action?.color || theme.colors.primary}

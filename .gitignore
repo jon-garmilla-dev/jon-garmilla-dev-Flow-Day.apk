@@ -14,31 +14,37 @@ dist/
 *.mobileprovision
 *.orig
 
-# Android
+# Android - Build outputs and generated files
 /android/app/build/
 /android/.gradle/
-/android/app/src/main/assets/
+/android/build/
+/android/local.properties
 /android/app/src/main/res/drawable-hdpi/
 /android/app/src/main/res/drawable-mdpi/
 /android/app/src/main/res/drawable-xhdpi/
 /android/app/src/main/res/drawable-xxhdpi/
 /android/app/src/main/res/drawable-xxxhdpi/
 /android/app/src/main/res/raw/
-/android/build/
-/android/gradle.properties
-/android/local.properties
-/android/settings.gradle
 
-# iOS
+# iOS - Build outputs and generated files
 /ios/build/
 /ios/Pods/
 /ios/*.xcworkspace
 /ios/*.xcodeproj/project.xcworkspace/
 /ios/*.xcodeproj/xcuserdata/
 
-# Misc
-.bfg-report/
+# Security - Keep keystores and sensitive files out
+*.keystore
+google-services.json
+GoogleService-Info.plist
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Development logs
+*.log
 
 # Docs
-
 /docs/*

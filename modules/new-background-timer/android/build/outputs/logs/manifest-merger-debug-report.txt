@@ -1,0 +1,16 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /home/jon.garmilla.dev/Dev-Mobile-Apps/jon-garmilla-dev-Flow-Day-mobile/modules/new-background-timer/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest11966987606760912186.xml:2:13-83
+INJECTED from /home/jon.garmilla.dev/Dev-Mobile-Apps/jon-garmilla-dev-Flow-Day-mobile/modules/new-background-timer/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest11966987606760912186.xml:2:13-83
+	package
+		INJECTED from /home/jon.garmilla.dev/Dev-Mobile-Apps/jon-garmilla-dev-Flow-Day-mobile/modules/new-background-timer/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest11966987606760912186.xml
+	xmlns:android
+		ADDED from /home/jon.garmilla.dev/Dev-Mobile-Apps/jon-garmilla-dev-Flow-Day-mobile/modules/new-background-timer/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest11966987606760912186.xml:2:23-81
+uses-sdk
+INJECTED from /home/jon.garmilla.dev/Dev-Mobile-Apps/jon-garmilla-dev-Flow-Day-mobile/modules/new-background-timer/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest11966987606760912186.xml reason: use-sdk injection requested
+INJECTED from /home/jon.garmilla.dev/Dev-Mobile-Apps/jon-garmilla-dev-Flow-Day-mobile/modules/new-background-timer/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest11966987606760912186.xml
+INJECTED from /home/jon.garmilla.dev/Dev-Mobile-Apps/jon-garmilla-dev-Flow-Day-mobile/modules/new-background-timer/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest11966987606760912186.xml
+	android:targetSdkVersion
+		INJECTED from /home/jon.garmilla.dev/Dev-Mobile-Apps/jon-garmilla-dev-Flow-Day-mobile/modules/new-background-timer/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest11966987606760912186.xml
+	android:minSdkVersion
+		INJECTED from /home/jon.garmilla.dev/Dev-Mobile-Apps/jon-garmilla-dev-Flow-Day-mobile/modules/new-background-timer/android/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest11966987606760912186.xml
